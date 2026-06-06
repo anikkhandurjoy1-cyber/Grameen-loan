@@ -290,12 +290,24 @@ table tr:hover td{background:#f7fafd;}
 <!-- LOADER -->
 <div id="loader">
   <div style="text-align:center">
-    <div style="width:70px;height:70px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:36px;">🌾</div>
-    <h2>গ্রামীন আশার আলো</h2>
-    <p>কৃষি সমবায় সমিতি লিঃ</p>
-    <div class="bar"><span></span></div>
+    <div style="position:relative;width:100px;height:100px;margin:0 auto 20px;">
+      <!-- Spinning colorful border -->
+      <div style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,#e74c3c,#e67e22,#f1c40f,#2ecc71,#3498db,#9b59b6,#e74c3c);animation:spin 1.5s linear infinite;"></div>
+      <div style="position:absolute;inset:4px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+        <img src="logo.png" style="width:92px;height:92px;object-fit:cover;border-radius:50%;">
+      </div>
+    </div>
+    <h2 style="color:#fff;font-size:18px;margin-bottom:4px;">গ্রামীন আশার আলো</h2>
+    <p style="color:rgba(255,255,255,.7);font-size:12px;">কৃষি সমবায় সমিতি লিঃ</p>
+    <div style="width:180px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:16px auto 0;overflow:hidden;">
+      <div style="height:100%;background:linear-gradient(90deg,#f1c40f,#2ecc71,#3498db);border-radius:2px;animation:load 2s ease-in-out forwards;"></div>
+    </div>
   </div>
 </div>
+<style>
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes load{0%{width:0}100%{width:100%}}
+</style>
 
 <!-- LOGIN -->
 <div id="loginScreen" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#1a5276 0%,#148f77 100%);align-items:center;justify-content:center;z-index:1000;">
