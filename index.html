@@ -217,7 +217,25 @@ table tr:hover td{background:#f7fafd;}
 .info-item label{font-size:11px;color:var(--text-light);display:block;}
 .info-item p{font-size:13px;font-weight:600;color:var(--text);margin-top:2px;}
 
-/* ── RESPONSIVE ── */
+/* ── QUICK ICONS ── */
+.quick-icon{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 6px;text-align:center;cursor:pointer;transition:.15s;}
+.quick-icon:hover{background:#e8f4fd;border-color:var(--primary);}
+.quick-icon:active{transform:scale(.95);}
+.qi-icon{font-size:22px;margin-bottom:4px;}
+.qi-label{font-size:10px;color:var(--text);line-height:1.3;font-weight:500;}
+
+/* ── PRINT STYLES ── */
+@media print{
+  .header,.sidebar,.sidebar-overlay,.bottom-nav,.no-print,button{display:none!important;}
+  .main{margin:0!important;padding:0!important;}
+  .card{box-shadow:none;border:1px solid #ddd;}
+  .print-header{display:block!important;}
+}
+.print-header{display:none;text-align:center;margin-bottom:16px;}
+.print-header img{width:60px;height:60px;border-radius:50%;object-fit:cover;}
+.print-header h2{font-size:16px;font-weight:700;margin-top:8px;}
+.print-header p{font-size:12px;color:#666;}
+
 @media(min-width:768px){
   .main.shifted{margin-left:var(--sidebar-w);}
   .bottom-nav{display:none!important;}
@@ -233,11 +251,7 @@ table tr:hover td{background:#f7fafd;}
   .stat-grid{grid-template-columns:repeat(3,1fr);}
   table{font-size:12px;}
   table th,table td{padding:7px 8px;}
-}
-@media print{
-  .header,.sidebar,.sidebar-overlay,.bottom-nav,.no-print{display:none!important;}
-  .main{margin:0!important;padding:0!important;}
-  .card{box-shadow:none;border:1px solid #ddd;}
+  #quickAccessGrid{grid-template-columns:repeat(3,1fr);}
 }
 
 /* ── SPECIFIC MODULES ── */
@@ -287,7 +301,8 @@ table tr:hover td{background:#f7fafd;}
 <div id="loginScreen" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#1a5276 0%,#148f77 100%);align-items:center;justify-content:center;z-index:1000;">
   <div class="login-box">
     <div class="logo">
-      <div style="font-size:48px;margin-bottom:8px;">🌾</div>
+      <img src="logo.png" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin-bottom:10px;" onerror="this.style.display='none';document.getElementById('loginEmoji').style.display='block'">
+      <div id="loginEmoji" style="display:none;font-size:48px;margin-bottom:8px;">🌾</div>
       <h2>গ্রামীন আশার আলো<br>কৃষি সমবায় সমিতি লিঃ</h2>
       <p>নিবন্ধন নংঃ- ২০২৫.১.০১.৭২৪০.০২১৩</p>
     </div>
@@ -311,14 +326,32 @@ table tr:hover td{background:#f7fafd;}
 <div class="header">
   <button class="menu-btn" onclick="toggleSidebar()">☰</button>
   <div class="logo-area">
-    <div style="font-size:26px;">🌾</div>
+    <img src="logo.png" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
+    <div style="display:none;font-size:26px;">🌾</div>
     <div>
       <div class="org-name">গ্রামীন আশার আলো</div>
       <div class="org-sub">কৃষি সমবায় সমিতি লিঃ</div>
     </div>
   </div>
   <div class="date-badge" id="headerDate">লোড হচ্ছে...</div>
+  <button class="user-btn" onclick="showBranchModal()" title="শাখা পরিবর্তন" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;">🏢</button>
   <button class="user-btn" onclick="showPage('profile')" title="প্রোফাইল">👤</button>
+</div>
+
+<!-- BRANCH MODAL -->
+<div id="branchModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:800;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:12px;width:100%;max-width:340px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+    <div style="background:var(--primary);color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-weight:700;">🏢 Select Branch</span>
+      <button onclick="document.getElementById('branchModal').style.display='none'" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">×</button>
+    </div>
+    <div style="padding:16px;">
+      <select id="branchSelect" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:7px;font-size:14px;margin-bottom:12px;">
+        <option>— শাখা বাছুন —</option>
+      </select>
+      <button onclick="selectBranch()" style="width:100%;padding:10px;background:var(--primary);color:#fff;border:none;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;">✅ নির্বাচন করুন</button>
+    </div>
+  </div>
 </div>
 
 <!-- SIDEBAR OVERLAY -->
@@ -640,22 +673,69 @@ table tr:hover td{background:#f7fafd;}
           <div style="font-size:15px;font-weight:700;" id="dashDate">—</div>
         </div>
       </div>
+      <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <div style="font-size:12px;opacity:.8;">শাখা:</div>
+        <div style="font-size:13px;font-weight:600;" id="currentBranchName">সব শাখা</div>
+        <button onclick="showBranchModal()" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:3px 10px;border-radius:12px;font-size:11px;cursor:pointer;">পরিবর্তন</button>
+      </div>
       <div style="margin-top:10px;background:rgba(255,255,255,.15);border-radius:6px;padding:8px 12px;font-size:12px;">
-        📢 আজকের আদায় টার্গেট পূরণ করুন।
+        📢 আজকের আদায় টার্গেট পূরণ করুন। <span style="color:#ffd700;font-weight:700;" id="targetPercent">0%</span>
       </div>
     </div>
 
+    <!-- Search Bar -->
+    <div style="margin-bottom:14px;position:relative;">
+      <input type="text" id="dashSearch" placeholder="🔍 মডিউল খুঁজুন..." oninput="searchModules(this.value)"
+        style="width:100%;padding:10px 16px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;">
+      <div id="searchResults" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);z-index:100;max-height:300px;overflow-y:auto;"></div>
+    </div>
+
     <div class="stat-grid">
-      <div class="stat-card blue"><div class="icon">💰</div><div class="val" id="ds-loanTarget">২,৭৭০</div><div class="lbl">আজকের ঋণ আদায়যোগ্য</div></div>
-      <div class="stat-card green"><div class="icon">✅</div><div class="val" id="ds-loanCollect">০</div><div class="lbl">আজকের ঋণ আদায়</div></div>
+      <div class="stat-card blue" onclick="showPage('loanInstallment')" style="cursor:pointer;"><div class="icon">💰</div><div class="val" id="ds-loanTarget">০</div><div class="lbl">আজকের ঋণ আদায়যোগ্য</div></div>
+      <div class="stat-card green" onclick="showPage('loanInstallment')" style="cursor:pointer;"><div class="icon">✅</div><div class="val" id="ds-loanCollect">০</div><div class="lbl">আজকের ঋণ আদায়</div></div>
       <div class="stat-card red"><div class="icon">⚠️</div><div class="val" id="ds-loanDue">০</div><div class="lbl">আজকের ঋণ বকেয়া</div></div>
       <div class="stat-card orange"><div class="icon">📤</div><div class="val" id="ds-disbursment">০</div><div class="lbl">আজকের বিতরণ</div></div>
-      <div class="stat-card teal"><div class="icon">🏦</div><div class="val" id="ds-depositReceive">০</div><div class="lbl">ডিপোজিট গ্রহণ</div></div>
+      <div class="stat-card teal" onclick="showPage('depositReceive')" style="cursor:pointer;"><div class="icon">🏦</div><div class="val" id="ds-depositReceive">০</div><div class="lbl">ডিপোজিট গ্রহণ</div></div>
       <div class="stat-card purple"><div class="icon">💸</div><div class="val" id="ds-depositPayment">০</div><div class="lbl">ডিপোজিট প্রদান</div></div>
     </div>
 
+    <!-- Icon Grid (eKisti style) -->
     <div class="card">
-      <div class="card-title">🏢 কর্মচারীর ঋণ আদায়ের হার</div>
+      <div class="card-title">⚡ দ্রুত অ্যাক্সেস</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;" id="quickAccessGrid">
+        <div class="quick-icon" onclick="showPage('memberAdd')"><div class="qi-icon">👤</div><div class="qi-label">সদস্য ভর্তি</div></div>
+        <div class="quick-icon" onclick="showPage('memberList')"><div class="qi-icon">👥</div><div class="qi-label">সদস্য তালিকা</div></div>
+        <div class="quick-icon" onclick="showPage('memberPassbook')"><div class="qi-icon">📒</div><div class="qi-label">সদস্য পাসবুক</div></div>
+        <div class="quick-icon" onclick="showPage('depositAccountOpen')"><div class="qi-icon">🏦</div><div class="qi-label">নতুন সঞ্চয় হিসাব</div></div>
+        <div class="quick-icon" onclick="showPage('depositReceive')"><div class="qi-icon">💰</div><div class="qi-label">সঞ্চয় জমা</div></div>
+        <div class="quick-icon" onclick="showPage('depositPayment')"><div class="qi-icon">💸</div><div class="qi-label">সঞ্চয় ফেরত</div></div>
+        <div class="quick-icon" onclick="showPage('depositAccountOpen')"><div class="qi-icon">❌</div><div class="qi-label">সঞ্চয় হিসাব ক্লোজ</div></div>
+        <div class="quick-icon" onclick="showPage('loanAccountOpen')"><div class="qi-icon">💳</div><div class="qi-label">নতুন ঋণ হিসাব</div></div>
+        <div class="quick-icon" onclick="showPage('loanInstallment')"><div class="qi-icon">📅</div><div class="qi-label">ঋণের কিস্তি</div></div>
+        <div class="quick-icon" onclick="showPage('samityInstallment')"><div class="qi-icon">🏛️</div><div class="qi-label">সমিতি কালেকশন</div></div>
+        <div class="quick-icon" onclick="showPage('memberInstallment')"><div class="qi-icon">👤</div><div class="qi-label">সদস্য কিস্তি কালেকশন</div></div>
+        <div class="quick-icon" onclick="showPage('collectionSheet')"><div class="qi-icon">📋</div><div class="qi-label">কালেকশন শীট</div></div>
+        <div class="quick-icon" onclick="showPage('accountTransaction')"><div class="qi-icon">📊</div><div class="qi-label">আজকের সকল কালেকশন</div></div>
+        <div class="quick-icon" onclick="showPage('accountTransaction')"><div class="qi-icon">🔄</div><div class="qi-label">একাউন্ট লেনদেন</div></div>
+        <div class="quick-icon" onclick="showPage('ledgerTransaction')"><div class="qi-icon">📒</div><div class="qi-label">লেজার লেনদেন</div></div>
+        <div class="quick-icon" onclick="showPage('rptLoanDisbursement')"><div class="qi-icon">📋</div><div class="qi-label">ডাউচার তালিকা</div></div>
+        <div class="quick-icon" onclick="showPage('staffLoanOpen')"><div class="qi-icon">💼</div><div class="qi-label">পণ্য ঋণ বিতরণ</div></div>
+        <div class="quick-icon" onclick="showPage('rptCollectionSheet')"><div class="qi-icon">✅</div><div class="qi-label">কালেকশন শীট</div></div>
+        <div class="quick-icon" onclick="showPage('cashBankReport')"><div class="qi-icon">🏦</div><div class="qi-label">একাউন্ট ভিত্তিক প্রাপ্তি-প্রদান</div></div>
+        <div class="quick-icon" onclick="showPage('cashBankReport')"><div class="qi-icon">💵</div><div class="qi-label">ক্যাশ বুক (ক্যাশ এবং ব্যাংক)</div></div>
+        <div class="quick-icon" onclick="showPage('rptFdrRegister')"><div class="qi-icon">🏦</div><div class="qi-label">ডি.পি.আর</div></div>
+        <div class="quick-icon" onclick="showPage('rptLoanRecovery')"><div class="qi-icon">💰</div><div class="qi-label">লোন রিকভারি রিপোর্ট</div></div>
+        <div class="quick-icon" onclick="showPage('depositProfitPayment')"><div class="qi-icon">💹</div><div class="qi-label">প্রাপ্তি প্রদান-২</div></div>
+        <div class="quick-icon" onclick="showPage('rptAdmissionRegister')"><div class="qi-icon">📋</div><div class="qi-label">ভর্তি রেজিস্টার</div></div>
+        <div class="quick-icon" onclick="showPage('rptLoanDisbursement')"><div class="qi-icon">📤</div><div class="qi-label">বিতরণ রেজিস্টার</div></div>
+        <div class="quick-icon" onclick="showPage('rptFieldOfficer')"><div class="qi-icon">👔</div><div class="qi-label">ফিল্ড অফিসার রিপোর্ট</div></div>
+        <div class="quick-icon" onclick="showPage('rptMemberBalance')"><div class="qi-icon">⚖️</div><div class="qi-label">সদস্য ব্যালেন্স রিপোর্ট</div></div>
+        <div class="quick-icon" onclick="showPage('dpsDeposit')"><div class="qi-icon">📅</div><div class="qi-label">ডি.পি.এস জমা</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">👔 কর্মচারীর ঋণ আদায়ের হার</div>
       <div id="employeeRecoveryList" style="font-size:13px;color:var(--text-light);">লোড হচ্ছে...</div>
     </div>
 
@@ -663,19 +743,19 @@ table tr:hover td{background:#f7fafd;}
       <div class="card">
         <div class="card-title">আজকের সকল আদায়</div>
         <div style="font-size:13px;">
-          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);">সাধারণ সঞ্চয় <b id="d-gs">০</b></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);">সাধারণ সঞ্চয় <b id="d-gs" style="color:var(--success)">০</b></div>
           <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);">বিশেষ সঞ্চয় <b id="d-ss">০</b></div>
           <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);">স্থায়ী আমানত <b id="d-fdr">০</b></div>
           <div style="display:flex;justify-content:space-between;padding:5px 0;">মেয়াদী আমানত <b id="d-dps">০</b></div>
         </div>
       </div>
       <div class="card">
-        <div class="card-title">সঞ্চয় স্থিতি</div>
+        <div class="card-title">আজকের সকল ফেরত</div>
         <div style="font-size:13px;">
-          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);">সাধারণ সঞ্চয় <b id="tot-gs">২,৩৭,৩৮৫</b></div>
-          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);">বিশেষ সঞ্চয় <b id="tot-ss">০</b></div>
-          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);">স্থায়ী আমানত <b id="tot-fdr">০</b></div>
-          <div style="display:flex;justify-content:space-between;padding:5px 0;">মেয়াদী আমানত <b id="tot-dps">৩,৭১,৩০০</b></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);">সাধারণ সঞ্চয় <b style="color:var(--danger)">০</b></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);">বিশেষ সঞ্চয় <b>০</b></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);">স্থায়ী আমানত <b>০</b></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;">মেয়াদী আমানত <b>০</b></div>
         </div>
       </div>
     </div>
@@ -683,11 +763,11 @@ table tr:hover td{background:#f7fafd;}
     <div class="card">
       <div class="card-title">💳 ঋণ সংক্রান্ত তথ্য</div>
       <div style="font-size:13px;">
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">মোট ঋণ একাউন্ট <b>৬৬</b></div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">মেয়াদ উত্তীর্ণ সংখ্যা <b style="color:var(--danger)">৫</b></div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">বিতরণকৃত টাকার পরিমাণ <b>৭,০৫,৯০০</b></div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">মোট আসল <b>৪,৯৮,২৪১</b></div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;">মোট লভ্যাংশ <b>৯৯,৬৪৯</b></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">মোট ঋণ একাউন্ট <b id="totalLoanAcc">—</b></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">মেয়াদ উত্তীর্ণ সংখ্যা <b style="color:var(--danger)" id="expiredLoan">—</b></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">বিতরণকৃত টাকার পরিমাণ <b id="totalDisbursed">—</b></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">মোট আসল <b id="totalPrincipal">—</b></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;">মোট লভ্যাংশ <b id="totalInterest">—</b></div>
       </div>
     </div>
   </div>
@@ -3395,6 +3475,77 @@ document.addEventListener('click', e => {
     else if (activeTab?.id==='tab-dps') window.saveDepositAccount('dps');
   }
 });
+
+// ─── BRANCH MODAL ───
+window.showBranchModal = async function() {
+  const modal = document.getElementById('branchModal');
+  const sel = document.getElementById('branchSelect');
+  modal.style.display = 'flex';
+  try {
+    const snap = await getDocs(collection(db,'branches'));
+    sel.innerHTML = '<option value="">— সব শাখা —</option>';
+    snap.forEach(d => {
+      const b = d.data();
+      sel.innerHTML += `<option value="${d.id}">${b.code||''} - ${b.name}</option>`;
+    });
+    if (snap.empty) {
+      sel.innerHTML += `<option value="101">101 - প্রধান অফিস</option>`;
+    }
+  } catch(e) {}
+}
+
+window.selectBranch = function() {
+  const sel = document.getElementById('branchSelect');
+  const branchName = sel.options[sel.selectedIndex].text;
+  document.getElementById('currentBranchName').textContent = branchName || 'সব শাখা';
+  document.getElementById('branchModal').style.display = 'none';
+  loadDashboard();
+}
+
+// ─── SEARCH MODULES ───
+const allModules = [
+  {name:'সদস্য ভর্তি',page:'memberAdd',icon:'👤'},
+  {name:'সদস্য তালিকা',page:'memberList',icon:'👥'},
+  {name:'সদস্য পাসবুক',page:'memberPassbook',icon:'📒'},
+  {name:'ডিপোজিট একাউন্ট',page:'depositAccountOpen',icon:'🏦'},
+  {name:'ঋণ একাউন্ট',page:'loanAccountOpen',icon:'💰'},
+  {name:'কিস্তি জমা',page:'loanInstallment',icon:'💳'},
+  {name:'ঋণ পুনঃতফসিল',page:'loanReschedule',icon:'🔄'},
+  {name:'ঋণ মওকুফ',page:'loanWaiver',icon:'✂️'},
+  {name:'সঞ্চয় জমা',page:'depositReceive',icon:'🏦'},
+  {name:'DPS জমা',page:'dpsDeposit',icon:'📅'},
+  {name:'সঞ্চয় ফেরত',page:'depositPayment',icon:'💸'},
+  {name:'মুনাফা প্রদান',page:'depositProfitPayment',icon:'💹'},
+  {name:'শেয়ার পেমেন্ট',page:'sharePayment',icon:'📈'},
+  {name:'কালেকশন শীট',page:'collectionSheet',icon:'📋'},
+  {name:'আন্তঃ শাখা',page:'interBranch',icon:'🔄'},
+  {name:'বেতন সেটআপ',page:'salarySetup',icon:'💵'},
+  {name:'ইউজার তৈরি',page:'createUser',icon:'👑'},
+  {name:'সমিতি সেটআপ',page:'samitySetup',icon:'⚙️'},
+  {name:'Balance Sheet',page:'balanceSheet',icon:'📊'},
+  {name:'Trial Balance',page:'trialBalance',icon:'⚖️'},
+  {name:'FDR রেজিস্টার',page:'rptFdrRegister',icon:'🏦'},
+  {name:'DPS রেজিস্টার',page:'rptDpsRegister',icon:'📅'},
+  {name:'ঋণ মওকুফ রিপোর্ট',page:'rptLoanWaiver',icon:'✂️'},
+  {name:'সদস্য ব্যালেন্স',page:'rptMemberBalance',icon:'💰'},
+  {name:'কালেকশন বিবরণ',page:'rptCollectionDetails',icon:'📊'},
+  {name:'ভর্তি রেজিস্টার',page:'rptAdmissionRegister',icon:'📋'},
+  {name:'লোন কালেকশন',page:'rptLoanCollection',icon:'💳'},
+];
+
+window.searchModules = function(val) {
+  const res = document.getElementById('searchResults');
+  if (!val.trim()) { res.style.display='none'; return; }
+  const filtered = allModules.filter(m => m.name.includes(val) || m.name.toLowerCase().includes(val.toLowerCase()));
+  if (!filtered.length) { res.style.display='none'; return; }
+  res.style.display = 'block';
+  res.innerHTML = filtered.map(m =>
+    `<div onclick="showPage('${m.page}');document.getElementById('dashSearch').value='';document.getElementById('searchResults').style.display='none';"
+      style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid #eee;font-size:13px;">
+      <span style="font-size:18px;">${m.icon}</span>${m.name}
+    </div>`
+  ).join('');
+}
 
 </script>
 
