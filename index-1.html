@@ -1,0 +1,2479 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>গ্রামীন আশার আলো কৃষি সমবায় সমিতি লিঃ</title>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #1a5276;
+  --primary-light: #2980b9;
+  --secondary: #148f77;
+  --accent: #e67e22;
+  --danger: #e74c3c;
+  --warning: #f39c12;
+  --success: #27ae60;
+  --bg: #f0f4f8;
+  --card: #ffffff;
+  --text: #2c3e50;
+  --text-light: #7f8c8d;
+  --border: #dce3ea;
+  --sidebar-w: 260px;
+  --header-h: 56px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --radius: 10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Hind Siliguri',sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
+a{text-decoration:none;color:inherit;}
+button{cursor:pointer;font-family:inherit;}
+input,select,textarea{font-family:inherit;}
+
+/* ── LOADER ── */
+#loader{position:fixed;inset:0;background:var(--primary);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s;}
+#loader img{width:80px;border-radius:50%;margin-bottom:16px;}
+#loader h2{color:#fff;font-size:20px;margin-bottom:4px;}
+#loader p{color:rgba(255,255,255,.7);font-size:13px;}
+#loader .bar{width:200px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin-top:20px;overflow:hidden;}
+#loader .bar span{display:block;height:100%;background:#fff;border-radius:2px;animation:load 2s ease-in-out forwards;}
+@keyframes load{0%{width:0}100%{width:100%}}
+
+/* ── LOGIN ── */
+#loginScreen{display:none;position:fixed;inset:0;background:linear-gradient(135deg,var(--primary) 0%,var(--secondary) 100%);align-items:center;justify-content:center;z-index:1000;}
+.login-box{background:#fff;border-radius:16px;padding:40px;width:360px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.login-box .logo{text-align:center;margin-bottom:24px;}
+.login-box .logo img{width:70px;border-radius:50%;margin-bottom:10px;}
+.login-box .logo h2{font-size:17px;color:var(--primary);line-height:1.4;}
+.login-box .logo p{font-size:12px;color:var(--text-light);margin-top:4px;}
+.login-box label{display:block;font-size:13px;font-weight:500;margin-bottom:6px;color:var(--text);}
+.login-box input{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;transition:.2s;}
+.login-box input:focus{border-color:var(--primary);}
+.login-box .field{margin-bottom:16px;}
+.login-box .btn-login{width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;margin-top:8px;transition:.2s;}
+.login-box .btn-login:hover{background:var(--primary-light);}
+.login-error{color:var(--danger);font-size:13px;margin-top:8px;text-align:center;display:none;}
+
+/* ── APP SHELL ── */
+#app{display:none;}
+
+/* ── HEADER ── */
+.header{position:fixed;top:0;left:0;right:0;height:var(--header-h);background:var(--primary);display:flex;align-items:center;padding:0 16px;z-index:500;gap:12px;}
+.header .menu-btn{background:none;border:none;color:#fff;font-size:22px;padding:4px 8px;}
+.header .logo-area{display:flex;align-items:center;gap:10px;flex:1;}
+.header .logo-area img{width:34px;height:34px;border-radius:50%;object-fit:cover;}
+.header .logo-area .org-name{color:#fff;font-size:14px;font-weight:600;line-height:1.2;}
+.header .logo-area .org-sub{color:rgba(255,255,255,.7);font-size:11px;}
+.header .date-badge{background:rgba(255,255,255,.15);color:#fff;padding:4px 10px;border-radius:20px;font-size:12px;white-space:nowrap;}
+.header .user-btn{background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:16px;}
+
+/* ── SIDEBAR ── */
+.sidebar{position:fixed;top:var(--header-h);left:0;width:var(--sidebar-w);bottom:0;background:#fff;overflow-y:auto;z-index:400;transition:transform .3s;border-right:1px solid var(--border);scrollbar-width:thin;}
+.sidebar.closed{transform:translateX(-100%);}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:399;top:var(--header-h);}
+.sidebar-overlay.show{display:block;}
+
+/* sidebar nav */
+.nav-section{border-bottom:1px solid var(--border);}
+.nav-item{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;cursor:pointer;transition:.15s;font-size:13.5px;font-weight:500;color:var(--text);}
+.nav-item:hover{background:var(--bg);}
+.nav-item .nav-icon{font-size:16px;margin-right:10px;width:20px;text-align:center;}
+.nav-item .arrow{font-size:11px;color:var(--text-light);transition:.2s;}
+.nav-item.open .arrow{transform:rotate(90deg);}
+.nav-item.active{color:var(--primary);background:#e8f4fd;}
+.submenu{display:none;background:#fafbfc;}
+.submenu.open{display:block;}
+.sub-item{padding:9px 16px 9px 46px;cursor:pointer;font-size:13px;color:var(--text-light);transition:.15s;border-left:3px solid transparent;}
+.sub-item:hover{background:var(--bg);color:var(--text);}
+.sub-item.active{color:var(--primary);border-left-color:var(--primary);background:#e8f4fd;font-weight:500;}
+
+/* ── MAIN CONTENT ── */
+.main{margin-top:var(--header-h);padding:16px;transition:margin-left .3s;min-height:calc(100vh - var(--header-h));}
+.main.shifted{margin-left:var(--sidebar-w);}
+
+/* ── PAGE TITLE ── */
+.page-title{font-size:17px;font-weight:700;color:var(--primary);margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px;}
+
+/* ── CARDS ── */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:16px;}
+.card-title{font-size:14px;font-weight:600;color:var(--primary);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+
+/* ── FORM ELEMENTS ── */
+.form-row{display:grid;gap:12px;margin-bottom:12px;}
+.form-row.col2{grid-template-columns:1fr 1fr;}
+.form-row.col3{grid-template-columns:1fr 1fr 1fr;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group label{font-size:12px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.3px;}
+.form-group input,.form-group select,.form-group textarea{padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:13.5px;outline:none;transition:.2s;background:#fff;color:var(--text);}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,82,118,.08);}
+.form-group textarea{resize:vertical;min-height:70px;}
+.form-group .hint{font-size:11px;color:var(--text-light);margin-top:2px;}
+
+/* ── BUTTONS ── */
+.btn{padding:9px 20px;border:none;border-radius:7px;font-size:13.5px;font-weight:600;transition:.2s;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary-light);}
+.btn-success{background:var(--success);color:#fff;}
+.btn-success:hover{opacity:.88;}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-danger:hover{opacity:.88;}
+.btn-warning{background:var(--warning);color:#fff;}
+.btn-secondary{background:var(--border);color:var(--text);}
+.btn-outline{background:transparent;border:1.5px solid var(--primary);color:var(--primary);}
+.btn-sm{padding:6px 14px;font-size:12px;}
+.btn-block{width:100%;justify-content:center;}
+.btn-print{background:var(--primary);color:#fff;}
+.btn-print:hover{background:var(--primary-light);}
+
+/* ── DASHBOARD ── */
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.stat-card{background:var(--card);border-radius:var(--radius);padding:14px 12px;box-shadow:var(--shadow);text-align:center;border-top:3px solid var(--border);}
+.stat-card.blue{border-top-color:var(--primary-light);}
+.stat-card.green{border-top-color:var(--success);}
+.stat-card.orange{border-top-color:var(--accent);}
+.stat-card.red{border-top-color:var(--danger);}
+.stat-card.teal{border-top-color:var(--secondary);}
+.stat-card.purple{border-top-color:#8e44ad;}
+.stat-card .icon{font-size:22px;margin-bottom:4px;}
+.stat-card .val{font-size:18px;font-weight:700;color:var(--primary);}
+.stat-card .lbl{font-size:11px;color:var(--text-light);margin-top:2px;line-height:1.3;}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+table th{background:var(--primary);color:#fff;padding:10px 12px;text-align:left;font-weight:600;white-space:nowrap;}
+table td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+table tr:hover td{background:#f7fafd;}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-success{background:#d5f5e3;color:#1e8449;}
+.badge-danger{background:#fadbd8;color:#c0392b;}
+.badge-warning{background:#fef9e7;color:#d68910;}
+.badge-info{background:#d6eaf8;color:#1a5276;}
+.badge-secondary{background:#f2f3f4;color:#626567;}
+
+/* ── REPORT FILTER ── */
+.report-filter{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:16px;}
+.report-filter .filter-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:12px;}
+.filter-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+
+/* ── SUMMARY BOX ── */
+.summary-box{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;border-radius:var(--radius);padding:14px;margin-bottom:12px;}
+.summary-box .s-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.15);font-size:13px;}
+.summary-box .s-row:last-child{border:none;font-weight:700;font-size:14px;}
+.summary-box .s-row span:last-child{font-weight:600;}
+
+/* ── ALERT ── */
+.alert{padding:12px 16px;border-radius:8px;margin-bottom:12px;font-size:13px;display:flex;align-items:center;gap:8px;}
+.alert-success{background:#d5f5e3;color:#1e8449;border-left:4px solid var(--success);}
+.alert-danger{background:#fadbd8;color:#c0392b;border-left:4px solid var(--danger);}
+.alert-warning{background:#fef9e7;color:#d68910;border-left:4px solid var(--warning);}
+.alert-info{background:#d6eaf8;color:#1a5276;border-left:4px solid var(--primary-light);}
+
+/* ── TAB ── */
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px;overflow-x:auto;}
+.tab-btn{padding:9px 18px;border:none;background:none;font-family:inherit;font-size:13.5px;font-weight:500;color:var(--text-light);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:.2s;}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600;}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* ── MODAL ── */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:800;align-items:center;justify-content:center;padding:16px;}
+.modal.open{display:flex;}
+.modal-box{background:#fff;border-radius:12px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-header h3{font-size:15px;font-weight:700;color:var(--primary);}
+.modal-close{background:none;border:none;font-size:22px;color:var(--text-light);cursor:pointer;}
+.modal-body{padding:20px;}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);z-index:300;padding:4px 0;}
+.bottom-nav .nav-items{display:flex;justify-content:space-around;}
+.bottom-nav .nav-items a{display:flex;flex-direction:column;align-items:center;padding:6px 10px;color:var(--text-light);font-size:11px;gap:3px;}
+.bottom-nav .nav-items a.active{color:var(--primary);}
+.bottom-nav .nav-items a .icon{font-size:20px;}
+
+/* ── PASSBOOK ── */
+.passbook{border:2px solid var(--primary);border-radius:var(--radius);overflow:hidden;}
+.passbook-header{background:var(--primary);color:#fff;padding:14px 16px;}
+.passbook-header h3{font-size:15px;font-weight:700;}
+.passbook-header p{font-size:12px;opacity:.8;margin-top:2px;}
+.passbook-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 16px;background:#f7fafd;border-bottom:1px solid var(--border);}
+.passbook-info .pi-item label{font-size:11px;color:var(--text-light);}
+.passbook-info .pi-item p{font-size:13px;font-weight:600;}
+
+/* ── COLLECTION SHEET ── */
+.collect-member{background:var(--card);border-radius:8px;padding:12px;margin-bottom:8px;border-left:4px solid var(--primary-light);box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.collect-member .name{font-weight:600;font-size:14px;}
+.collect-member .info{font-size:12px;color:var(--text-light);margin-top:2px;}
+.collect-member .amounts{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;}
+.collect-member .amounts .am{text-align:center;}
+.collect-member .amounts .am .v{font-size:14px;font-weight:700;color:var(--primary);}
+.collect-member .amounts .am .l{font-size:10px;color:var(--text-light);}
+
+/* ── INFO GRID ── */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.info-item{background:var(--bg);border-radius:7px;padding:10px;}
+.info-item label{font-size:11px;color:var(--text-light);display:block;}
+.info-item p{font-size:13px;font-weight:600;color:var(--text);margin-top:2px;}
+
+/* ── RESPONSIVE ── */
+@media(min-width:768px){
+  .main.shifted{margin-left:var(--sidebar-w);}
+  .bottom-nav{display:none!important;}
+  .stat-grid{grid-template-columns:repeat(4,1fr);}
+}
+@media(max-width:767px){
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .main{padding:12px;padding-bottom:70px;}
+  .main.shifted{margin-left:0;}
+  .bottom-nav{display:block;}
+  .form-row.col2,.form-row.col3{grid-template-columns:1fr;}
+  .stat-grid{grid-template-columns:repeat(3,1fr);}
+  table{font-size:12px;}
+  table th,table td{padding:7px 8px;}
+}
+@media print{
+  .header,.sidebar,.sidebar-overlay,.bottom-nav,.no-print{display:none!important;}
+  .main{margin:0!important;padding:0!important;}
+  .card{box-shadow:none;border:1px solid #ddd;}
+}
+
+/* ── SPECIFIC MODULES ── */
+.loan-card{border-radius:var(--radius);padding:14px;margin-bottom:10px;border-left:4px solid var(--primary);}
+.loan-card.active{border-left-color:var(--success);background:#f0faf4;}
+.loan-card.overdue{border-left-color:var(--danger);background:#fdf3f2;}
+.loan-card.pending{border-left-color:var(--warning);background:#fefdf0;}
+.loan-card .lc-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.loan-card .lc-name{font-weight:600;font-size:14px;}
+.loan-card .lc-id{font-size:11px;color:var(--text-light);}
+.loan-card .lc-amounts{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;}
+.loan-card .lc-am{text-align:center;}
+.loan-card .lc-am .v{font-size:15px;font-weight:700;}
+.loan-card .lc-am .l{font-size:10px;color:var(--text-light);}
+
+.share-summary{background:linear-gradient(135deg,#8e44ad,#9b59b6);color:#fff;border-radius:var(--radius);padding:14px;margin-bottom:12px;}
+.share-summary .ss-row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid rgba(255,255,255,.15);}
+.share-summary .ss-row:last-child{border:none;font-weight:700;}
+
+.salary-card{border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;}
+.salary-card .emp-name{font-weight:600;font-size:14px;}
+.salary-card .emp-role{font-size:12px;color:var(--text-light);}
+.salary-card .sal-amounts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;}
+.salary-card .sal-am{text-align:center;background:var(--bg);border-radius:6px;padding:8px;}
+.salary-card .sal-am .v{font-size:14px;font-weight:700;color:var(--primary);}
+.salary-card .sal-am .l{font-size:10px;color:var(--text-light);}
+
+.inter-branch-card{border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.inter-branch-card .ib-arrow{font-size:24px;color:var(--primary);}
+.inter-branch-card .ib-info{flex:1;}
+.inter-branch-card .ib-amount{font-size:18px;font-weight:700;color:var(--primary);}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div style="text-align:center">
+    <div style="width:70px;height:70px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:36px;">🌾</div>
+    <h2>গ্রামীন আশার আলো</h2>
+    <p>কৃষি সমবায় সমিতি লিঃ</p>
+    <div class="bar"><span></span></div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="loginScreen" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#1a5276 0%,#148f77 100%);align-items:center;justify-content:center;z-index:1000;">
+  <div class="login-box">
+    <div class="logo">
+      <div style="font-size:48px;margin-bottom:8px;">🌾</div>
+      <h2>গ্রামীন আশার আলো<br>কৃষি সমবায় সমিতি লিঃ</h2>
+      <p>নিবন্ধন নংঃ- ২০২৫.১.০১.৭২৪০.০২১৩</p>
+    </div>
+    <div class="field">
+      <label>ইউজার নাম</label>
+      <input type="text" id="loginUser" placeholder="Username">
+    </div>
+    <div class="field">
+      <label>পাসওয়ার্ড</label>
+      <input type="password" id="loginPass" placeholder="Password">
+    </div>
+    <button class="btn-login" onclick="doLogin()">লগইন করুন →</button>
+    <div class="login-error" id="loginError">ইউজার নাম বা পাসওয়ার্ড ভুল!</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+<!-- HEADER -->
+<div class="header">
+  <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+  <div class="logo-area">
+    <div style="font-size:26px;">🌾</div>
+    <div>
+      <div class="org-name">গ্রামীন আশার আলো</div>
+      <div class="org-sub">কৃষি সমবায় সমিতি লিঃ</div>
+    </div>
+  </div>
+  <div class="date-badge" id="headerDate">লোড হচ্ছে...</div>
+  <button class="user-btn" onclick="showPage('profile')" title="প্রোফাইল">👤</button>
+</div>
+
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+
+  <!-- Dashboard -->
+  <div class="nav-section">
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <span><span class="nav-icon">📊</span>ড্যাশবোর্ড</span>
+    </div>
+  </div>
+
+  <!-- সদস্য পরিচালনা -->
+  <div class="nav-section">
+    <div class="nav-item" onclick="toggleMenu(this)">
+      <span><span class="nav-icon">👥</span>সদস্য পরিচালনা</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="submenu">
+      <div class="sub-item" onclick="showPage('memberAdd')">সদস্য ভর্তি</div>
+      <div class="sub-item" onclick="showPage('memberList')">সদস্য তালিকা</div>
+      <div class="sub-item" onclick="showPage('memberClosing')">সদস্য বন্ধ</div>
+      <div class="sub-item" onclick="showPage('memberTransfer')">সমিতি স্থানান্তর</div>
+    </div>
+  </div>
+
+  <!-- একাউন্ট ওপেনিং -->
+  <div class="nav-section">
+    <div class="nav-item" onclick="toggleMenu(this)">
+      <span><span class="nav-icon">🏦</span>একাউন্ট ওপেনিং</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="submenu">
+      <div class="sub-item" onclick="showPage('depositAccountOpen')">ডিপোজিট একাউন্ট</div>
+      <div class="sub-item" onclick="showPage('loanAccountOpen')">ঋণ একাউন্ট</div>
+      <div class="sub-item" onclick="showPage('loanProposal')">ঋণ প্রস্তাব</div>
+      <div class="sub-item" onclick="showPage('loanProposalList')">ঋণ প্রস্তাব তালিকা</div>
+    </div>
+  </div>
+
+  <!-- লোন ট্রানজেকশন -->
+  <div class="nav-section">
+    <div class="nav-item" onclick="toggleMenu(this)">
+      <span><span class="nav-icon">💰</span>লোন ট্রানজেকশন</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="submenu">
+      <div class="sub-item" onclick="showPage('loanInstallment')">কিস্তি জমা</div>
+      <div class="sub-item" onclick="showPage('loanReschedule')">ঋণ পুনঃতফসিল</div>
+      <div class="sub-item" onclick="showPage('loanWaiver')">ঋণ মওকুফ</div>
+      <div class="sub-item" onclick="showPage('loanEmiPenalty')">অতিরিক্ত জরিমানা</div>
+      <div class="sub-item" onclick="showPage('loanInstallmentCancel')">কিস্তি বাতিল</div>
+    </div>
+  </div>
+
+  <!-- কর্মী ঋণ -->
+  <div class="nav-section">
+    <div class="nav-item" onclick="toggleMenu(this)">
+      <span><span class="nav-icon">👔</span>কর্মী ঋণ পরিচালনা</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="submenu">
+      <div class="sub-item" onclick="showPage('staffLoanOpen')">কর্মী ঋণ হিসাব</div>
+      <div class="sub-item" onclick="showPage('staffLoanInstall')">কর্মী কিস্তি জমা</div>
+    </div>
+  </div>
+
+  <!-- ডিপোজিট ট্রানজেকশন -->
+  <div class="nav-section">
+    <div class="nav-item" onclick="toggleMenu(this)">
+      <span><span class="nav-icon">🏧</span>ডিপোজিট ট্রানজেকশন</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="submenu">
+      <div class="sub-item" onclick="showPage('depositReceive')">সঞ্চয় জমা</div>
+      <div class="sub-item" onclick="showPage('dpsDeposit')">DPS জমা</div>
+      <div class="sub-item" onclick="showPage('depositPayment')">সঞ্চয় ফেরত</div>
+      <div class="sub-item" onclick="showPage('depositProfitPayment')">মুনাফা প্রদান</div>
+      <div class="sub-item" onclick="showPage('depositTransfer')">হিসাব স্থানান্তর/ক্লোজিং</div>
+      <div class="sub-item" onclick="showPage('depositProfitDistribution')">মুনাফা বিতরণ</div>
+      <div class="sub-item" onclick="showPage('depositBlockClear')">ব্লক/ক্লিয়ার</div>
+    </div>
+  </div>
+
+  <!-- শেয়ার লেনদেন -->
+  <div class="nav-section">
+    <div class="nav-item" onclick="toggleMenu(this)">
+      <span><span class="nav-icon">📈</span>শেয়ার লেনদেন</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="submenu">
+      <div class="sub-item" onclick="showPage('sharePayment')">শেয়ার পেমেন্ট</div>
+      <div class="sub-item" onclick="showPage('shareReceive')">শেয়ার গ্রহণ</div>
+    </div>
+  </div>
+
+  <!-- কালেকশন -->
+  <div class="nav-section">
+    <div class="nav-item" onclick="toggleMenu(this)">
+      <span><span class="nav-icon">✅</span>আমার সকল কালেকশন</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="submenu">
+      <div class="sub-item" onclick="showPage('collectionSheet')">কালেকশন শীট</div>
+      <div class="sub-item" onclick="showPage('collectionReceive')">কালেকশন গ্রহণ</div>
+      <div class="sub-item" onclick="showPage('memberPassbook')">সদস্য পাসবুক</div>
+      <div class="sub-item" onclick="showPage('memberInstallment')">সদস্য কিস্তি কালেকশন</div>
+      <div class="sub-item" onclick="showPage('samityInstallment')">সমিতি কিস্তি কালেকশন</div>
+    </div>
+  </div>
+
+  <!-- একাউন্টস (AIS) -->
+  <div class="nav-section">
+    <div class="nav-item" onclick="toggleMenu(this)">
+      <span><span class="nav-icon">📒</span>একাউন্টস (এ.আই.এস)</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="submenu">
+      <div class="sub-item" onclick="showPage('journalVoucher')">জার্নাল ভাউচার</div>
+      <div class="sub-item" onclick="showPage('ledgerTransaction')">লেজার ট্রানজেকশন</div>
+      <div class="sub-item" onclick="showPage('accountTransaction')">একাউন্ট ট্রানজেকশন</div>
+      <div class="sub-item" onclick="showPage('cashBankReport')">ক্যাশ ও ব্যাংক</div>
+    </div>
+  </div>
+
+  <!-- আন্তঃ শাখা -->
+  <div class="nav-section">
+    <div class="nav-item" onclick="toggleMenu(this)">
+      <span><span class="nav-icon">🔄</span>আন্তঃ শাখা লেনদেন</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="submenu">
+      <div class="sub-item" onclick="showPage('interBranch')">আন্তঃ শাখা ট্রানজেকশন</div>
+      <div class="sub-item" onclick="showPage('interBranchList')">ট্রানজেকশন তালিকা</div>
+      <div class="sub-item" onclick="showPage('interBranchReceive')">রিসিভ পেমেন্ট</div>
+    </div>
+  </div>
+
+  <!-- বেতন -->
+  <div class="nav-section">
+    <div class="nav-item" onclick="toggleMenu(this)">
+      <span><span class="nav-icon">💵</span>বেতনঃ</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="submenu">
+      <div class="sub-item" onclick="showPage('salarySetup')">বেতন সেটআপ</div>
+      <div class="sub-item" onclick="showPage('salaryProcess')">বেতন প্রক্রিয়া</div>
+    </div>
+  </div>
+
+  <!-- ইউজার সিটিং -->
+  <div class="nav-section">
+    <div class="nav-item" onclick="toggleMenu(this)">
+      <span><span class="nav-icon">👑</span>ইউজার সিটিং</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="submenu">
+      <div class="sub-item" onclick="showPage('createUser')">ইউজার তৈরি</div>
+      <div class="sub-item" onclick="showPage('userPermissions')">ইউজার পারমিশন</div>
+      <div class="sub-item" onclick="showPage('groupPermission')">গ্রুপ পারমিশন</div>
+    </div>
+  </div>
+
+  <!-- SMS -->
+  <div class="nav-section">
+    <div class="nav-item" onclick="showPage('smsSettings')">
+      <span><span class="nav-icon">📱</span>এসএমএস সেটিংস</span>
+    </div>
+  </div>
+
+  <!-- সেটিংস -->
+  <div class="nav-section">
+    <div class="nav-item" onclick="toggleMenu(this)">
+      <span><span class="nav-icon">⚙️</span>সেটিংস</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="submenu">
+      <div class="sub-item" onclick="showPage('samitySetup')">সমিতি সেটআপ</div>
+      <div class="sub-item" onclick="showPage('directorRegister')">পরিচালক রেজিস্টার</div>
+      <div class="sub-item" onclick="showPage('holidaySetup')">ছুটি সেটআপ</div>
+      <div class="sub-item" onclick="showPage('noticeSetup')">নোটিশ সেটআপ</div>
+      <div class="sub-item" onclick="showPage('samityDayChange')">সমিতির দিন পরিবর্তন</div>
+      <div class="sub-item" onclick="showPage('branchSamityTransfer')">শাখা সমিতি স্থানান্তর</div>
+      <div class="sub-item" onclick="showPage('branchManage')">শাখা পরিচালনা</div>
+      <div class="sub-item" onclick="showPage('employeeRegister')">কর্মী রেজিস্টার</div>
+      <div class="sub-item" onclick="showPage('closingDay')">ব্যবসায়িক দিন বন্ধ</div>
+    </div>
+  </div>
+
+  <!-- AIS রিপোর্ট -->
+  <div class="nav-section">
+    <div class="nav-item" onclick="toggleMenu(this)">
+      <span><span class="nav-icon">📉</span>এ.আই.এস রিপোর্ট</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="submenu">
+      <div class="sub-item" onclick="showPage('balanceSheet')">Balance Sheet</div>
+      <div class="sub-item" onclick="showPage('trialBalance')">Trial Balance</div>
+      <div class="sub-item" onclick="showPage('profitLoss')">Profit & Loss</div>
+      <div class="sub-item" onclick="showPage('incomeExpense')">Income & Expenses</div>
+      <div class="sub-item" onclick="showPage('ledgerStatement')">Ledger Statement</div>
+      <div class="sub-item" onclick="showPage('receiptPayment')">Receipt & Payment</div>
+    </div>
+  </div>
+
+  <!-- কিস্তি রিপোর্ট -->
+  <div class="nav-section">
+    <div class="nav-item" onclick="toggleMenu(this)">
+      <span><span class="nav-icon">📋</span>কিস্তি রিপোর্টস সমূহ</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="submenu">
+      <div class="sub-item" onclick="showPage('rptCollectionSheet')">কালেকশন শীট</div>
+      <div class="sub-item" onclick="showPage('rptDepositCollectionSheet')">ডিপোজিট কালেকশন শীট</div>
+      <div class="sub-item" onclick="showPage('rptCollectionDetails')">কালেকশন বিবরণ</div>
+      <div class="sub-item" onclick="showPage('rptCollectionSummary')">কালেকশন সারসংক্ষেপ</div>
+      <div class="sub-item" onclick="showPage('rptTargetAchievement')">টার্গেট বনাম অর্জন</div>
+      <div class="sub-item" onclick="showPage('rptFieldOfficer')">ফিল্ড অফিসার রিপোর্ট</div>
+      <div class="sub-item" onclick="showPage('rptSamityWiseTxn')">সমিতিভিত্তিক লেনদেন</div>
+      <div class="sub-item" onclick="showPage('rptDateWiseTopsheet')">তারিখভিত্তিক টপশীট</div>
+    </div>
+  </div>
+
+  <!-- ব্যালেন্স রিপোর্ট -->
+  <div class="nav-section">
+    <div class="nav-item" onclick="toggleMenu(this)">
+      <span><span class="nav-icon">⚖️</span>ব্যালেন্স রিপোর্ট</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="submenu">
+      <div class="sub-item" onclick="showPage('rptMemberPassbook')">সদস্য পাসবুক</div>
+      <div class="sub-item" onclick="showPage('rptMemberBalance')">সদস্য ব্যালেন্স</div>
+      <div class="sub-item" onclick="showPage('rptSamityBalance')">সমিতি ব্যালেন্স</div>
+      <div class="sub-item" onclick="showPage('rptMemberLoanBalance')">সদস্য ঋণ ব্যালেন্স</div>
+      <div class="sub-item" onclick="showPage('rptSamityLoanHistory')">সমিতি ঋণ হিস্টি</div>
+      <div class="sub-item" onclick="showPage('rptMonthlyDeposit')">মাসিক সঞ্চয় লেনদেন</div>
+      <div class="sub-item" onclick="showPage('rptDepositProfitBalance')">ডিপোজিট লাভ ব্যালেন্স</div>
+      <div class="sub-item" onclick="showPage('rptMemberProfitBalance')">সদস্য মুনাফা ব্যালেন্স</div>
+      <div class="sub-item" onclick="showPage('rptZeroTransaction')">জিরো ট্রানজেকশন</div>
+    </div>
+  </div>
+
+  <!-- ডিপোজিট রেজিস্টার রিপোর্ট -->
+  <div class="nav-section">
+    <div class="nav-item" onclick="toggleMenu(this)">
+      <span><span class="nav-icon">🏦</span>ডিপোজিট রেজিস্টার রি...</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="submenu">
+      <div class="sub-item" onclick="showPage('rptFdrRegister')">FDR রেজিস্টার</div>
+      <div class="sub-item" onclick="showPage('rptDpsRegister')">DPS রেজিস্টার</div>
+      <div class="sub-item" onclick="showPage('rptSavingsRegister')">সেভিংস রেজিস্টার</div>
+      <div class="sub-item" onclick="showPage('rptDepositCollection')">ডিপোজিট কালেকশন</div>
+      <div class="sub-item" onclick="showPage('rptSavingsReturn')">সঞ্চয় ফেরত রেজিস্টার</div>
+      <div class="sub-item" onclick="showPage('rptProfitPaymentRegister')">লভ্যাংশ প্রদান রেজিস্টার</div>
+      <div class="sub-item" onclick="showPage('rptDpsTargetCollection')">DPS টার্গেট বনাম সংগ্রহ</div>
+      <div class="sub-item" onclick="showPage('rptDepositReceive')">ডিপোজিট রিসিভ রিপোর্ট</div>
+      <div class="sub-item" onclick="showPage('rptDepositPayment')">ডিপোজিট পেমেন্ট রিপোর্ট</div>
+    </div>
+  </div>
+
+  <!-- লোন রেজিস্টার রিপোর্ট -->
+  <div class="nav-section">
+    <div class="nav-item" onclick="toggleMenu(this)">
+      <span><span class="nav-icon">💳</span>লোন রেজিস্টার রিপোর্ট</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="submenu">
+      <div class="sub-item" onclick="showPage('rptLoanCollection')">লোন কালেকশন রেজিস্টার</div>
+      <div class="sub-item" onclick="showPage('rptLoanDisbursement')">বিতরণ রেজিস্টার</div>
+      <div class="sub-item" onclick="showPage('rptLoanDisbCollection')">বিতরণ ও কালেকশন</div>
+      <div class="sub-item" onclick="showPage('rptFullyPaidLoan')">সম্পূর্ণ পরিশোধিত ঋণ</div>
+      <div class="sub-item" onclick="showPage('rptLoanRecovery')">ঋণ আদায়ের বিস্তারিত</div>
+      <div class="sub-item" onclick="showPage('rptLoanWaiver')">ঋণ মওকুফ রিপোর্ট</div>
+      <div class="sub-item" onclick="showPage('rptLoanLLP')">ঋণ ফছ সিকিউরিটি (LLP)</div>
+      <div class="sub-item" onclick="showPage('rptWrittenOff')">Written Off রেজিস্টার</div>
+      <div class="sub-item" onclick="showPage('rptLoanInstallmentReceive')">কিস্তি প্রাপ্তি রিপোর্ট</div>
+    </div>
+  </div>
+
+  <!-- MIS রেজিস্টার রিপোর্ট -->
+  <div class="nav-section">
+    <div class="nav-item" onclick="toggleMenu(this)">
+      <span><span class="nav-icon">📊</span>MIS রেজিস্টার রিপোর্ট</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="submenu">
+      <div class="sub-item" onclick="showPage('rptAdmissionRegister')">ভর্তি রেজিস্টার</div>
+      <div class="sub-item" onclick="showPage('rptSamityMemberRegister')">সমবায় সদস্য রেজিস্টার</div>
+      <div class="sub-item" onclick="showPage('rptPeriodicalProgress')">পর্যায়ক্রমিক অগ্রগতি</div>
+      <div class="sub-item" onclick="showPage('rptSamityPerformance')">সমিতি পারফরম্যাল রিপোর্ট</div>
+      <div class="sub-item" onclick="showPage('rptMemberDetails')">সদস্য বিবরণ রিপোর্ট</div>
+    </div>
+  </div>
+
+  <div style="padding:16px;text-align:center;">
+    <button onclick="doLogout()" style="background:var(--danger);color:#fff;border:none;padding:9px 24px;border-radius:7px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;">🚪 লগআউট</button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main" id="mainContent">
+
+  <!-- ════ DASHBOARD ════ -->
+  <div id="page-dashboard" class="page">
+    <div class="page-title">📊 ড্যাশবোর্ড</div>
+
+    <div class="card" style="background:linear-gradient(135deg,#1a5276,#148f77);color:#fff;padding:14px 16px;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-size:13px;opacity:.8;">স্বাগতম!</div>
+          <div style="font-size:17px;font-weight:700;" id="dashWelcome">লোড হচ্ছে...</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:12px;opacity:.8;">ব্যবসায়িক তারিখ</div>
+          <div style="font-size:15px;font-weight:700;" id="dashDate">—</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;background:rgba(255,255,255,.15);border-radius:6px;padding:8px 12px;font-size:12px;">
+        📢 আজকের আদায় টার্গেট পূরণ করুন।
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card blue"><div class="icon">💰</div><div class="val" id="ds-loanTarget">২,৭৭০</div><div class="lbl">আজকের ঋণ আদায়যোগ্য</div></div>
+      <div class="stat-card green"><div class="icon">✅</div><div class="val" id="ds-loanCollect">০</div><div class="lbl">আজকের ঋণ আদায়</div></div>
+      <div class="stat-card red"><div class="icon">⚠️</div><div class="val" id="ds-loanDue">০</div><div class="lbl">আজকের ঋণ বকেয়া</div></div>
+      <div class="stat-card orange"><div class="icon">📤</div><div class="val" id="ds-disbursment">০</div><div class="lbl">আজকের বিতরণ</div></div>
+      <div class="stat-card teal"><div class="icon">🏦</div><div class="val" id="ds-depositReceive">০</div><div class="lbl">ডিপোজিট গ্রহণ</div></div>
+      <div class="stat-card purple"><div class="icon">💸</div><div class="val" id="ds-depositPayment">০</div><div class="lbl">ডিপোজিট প্রদান</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🏢 কর্মচারীর ঋণ আদায়ের হার</div>
+      <div id="employeeRecoveryList" style="font-size:13px;color:var(--text-light);">লোড হচ্ছে...</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div class="card">
+        <div class="card-title">আজকের সকল আদায়</div>
+        <div style="font-size:13px;">
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);">সাধারণ সঞ্চয় <b id="d-gs">০</b></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);">বিশেষ সঞ্চয় <b id="d-ss">০</b></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);">স্থায়ী আমানত <b id="d-fdr">০</b></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;">মেয়াদী আমানত <b id="d-dps">০</b></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">সঞ্চয় স্থিতি</div>
+        <div style="font-size:13px;">
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);">সাধারণ সঞ্চয় <b id="tot-gs">২,৩৭,৩৮৫</b></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);">বিশেষ সঞ্চয় <b id="tot-ss">০</b></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);">স্থায়ী আমানত <b id="tot-fdr">০</b></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;">মেয়াদী আমানত <b id="tot-dps">৩,৭১,৩০০</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">💳 ঋণ সংক্রান্ত তথ্য</div>
+      <div style="font-size:13px;">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">মোট ঋণ একাউন্ট <b>৬৬</b></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">মেয়াদ উত্তীর্ণ সংখ্যা <b style="color:var(--danger)">৫</b></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">বিতরণকৃত টাকার পরিমাণ <b>৭,০৫,৯০০</b></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">মোট আসল <b>৪,৯৮,২৪১</b></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;">মোট লভ্যাংশ <b>৯৯,৬৪৯</b></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ MEMBER ADD ════ -->
+  <div id="page-memberAdd" class="page" style="display:none;">
+    <div class="page-title">👥 সদস্য ভর্তি</div>
+    <div class="card">
+      <div class="card-title">নতুন সদস্য নিবন্ধন</div>
+      <div class="form-row col2">
+        <div class="form-group"><label>পুরো নাম *</label><input type="text" placeholder="সদস্যের পুরো নাম"></div>
+        <div class="form-group"><label>মোবাইল *</label><input type="tel" placeholder="01XXXXXXXXX"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>পিতার নাম</label><input type="text"></div>
+        <div class="form-group"><label>মাতার নাম</label><input type="text"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>জাতীয় পরিচয়পত্র নং</label><input type="text"></div>
+        <div class="form-group"><label>জন্ম তারিখ</label><input type="date"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— বাছুন —</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>ভর্তির তারিখ *</label><input type="date"></div>
+        <div class="form-group"><label>শেয়ার সংখ্যা</label><input type="number" value="1"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>পেশা</label><input type="text"></div>
+        <div class="form-group"><label>সদস্যের ধরন</label><select><option>সাধারণ</option><option>পরিচালক</option></select></div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;"><label>ঠিকানা</label><textarea rows="2"></textarea></div>
+      <button class="btn btn-primary btn-block">✅ সদস্য সংরক্ষণ করুন</button>
+    </div>
+  </div>
+
+  <!-- ════ MEMBER LIST ════ -->
+  <div id="page-memberList" class="page" style="display:none;">
+    <div class="page-title">👥 সদস্য তালিকা</div>
+    <div class="card">
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <input type="text" placeholder="🔍 নাম / মোবাইল / আইডি" style="flex:1;min-width:160px;padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;">
+        <select style="padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;"><option>সব শাখা</option></select>
+        <button class="btn btn-primary btn-sm" onclick="showPage('memberAdd')">+ যোগ</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>আইডি</th><th>নাম</th><th>মোবাইল</th><th>শাখা</th><th>সমিতি</th><th>অবস্থা</th><th>কাজ</th></tr></thead>
+          <tbody id="memberTableBody"><tr><td colspan="7" style="text-align:center;color:var(--text-light);">কোনো সদস্য নেই</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ DEPOSIT ACCOUNT OPENING ════ -->
+  <div id="page-depositAccountOpen" class="page" style="display:none;">
+    <div class="page-title">🏦 ডিপোজিট একাউন্ট ওপেনিং</div>
+    <div class="card">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(this,'tab-savings')">সাধারণ সঞ্চয় (GS)</button>
+        <button class="tab-btn" onclick="switchTab(this,'tab-special')">বিশেষ সঞ্চয় (SS)</button>
+        <button class="tab-btn" onclick="switchTab(this,'tab-fdr')">FDR</button>
+        <button class="tab-btn" onclick="switchTab(this,'tab-dps')">DPS</button>
+      </div>
+
+      <div id="tab-savings" class="tab-content active">
+        <div class="card-title">সাধারণ সঞ্চয় একাউন্ট (2001-GS)</div>
+        <div class="form-row col2">
+          <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+          <div class="form-group"><label>সমিতি</label><select><option>— বাছুন —</option></select></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>সদস্য আইডি *</label><input type="text" placeholder="সদস্য আইডি লিখুন"></div>
+          <div class="form-group"><label>সদস্যের নাম</label><input type="text" readonly placeholder="স্বয়ংক্রিয়" style="background:#f5f5f5"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>একাউন্ট খোলার তারিখ *</label><input type="date"></div>
+          <div class="form-group"><label>প্রাথমিক জমা (৳)</label><input type="number" placeholder="0.00"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:14px;"><label>মন্তব্য</label><textarea rows="2"></textarea></div>
+        <button class="btn btn-success btn-block">✅ একাউন্ট খুলুন</button>
+      </div>
+
+      <div id="tab-special" class="tab-content">
+        <div class="card-title">বিশেষ সঞ্চয় একাউন্ট (2002-SS)</div>
+        <div class="form-row col2">
+          <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+          <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>একাউন্ট খোলার তারিখ *</label><input type="date"></div>
+          <div class="form-group"><label>প্রাথমিক জমা (৳)</label><input type="number" placeholder="0.00"></div>
+        </div>
+        <button class="btn btn-success btn-block" style="margin-top:8px;">✅ একাউন্ট খুলুন</button>
+      </div>
+
+      <div id="tab-fdr" class="tab-content">
+        <div class="card-title">FDR একাউন্ট</div>
+        <div class="form-row col2">
+          <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+          <div class="form-group"><label>FDR ধরন *</label>
+            <select>
+              <option>2003 -FDR-M- FDR (Monthly profit)</option>
+              <option>2004 -FDR-Y- FDR (Yearly profit)</option>
+              <option>2005 -FDR-MAT- FDR (Maturity profit)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+          <div class="form-group"><label>আমানতের পরিমাণ (৳) *</label><input type="number"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>সুদের হার (%)</label><input type="number" placeholder="0.00"></div>
+          <div class="form-group"><label>মেয়াদ (মাস)</label><input type="number"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>শুরুর তারিখ *</label><input type="date"></div>
+          <div class="form-group"><label>মেয়াদপূর্তির তারিখ</label><input type="date" readonly style="background:#f5f5f5"></div>
+        </div>
+        <button class="btn btn-success btn-block" style="margin-top:8px;">✅ FDR একাউন্ট খুলুন</button>
+      </div>
+
+      <div id="tab-dps" class="tab-content">
+        <div class="card-title">DPS একাউন্ট</div>
+        <div class="form-row col2">
+          <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+          <div class="form-group"><label>DPS ধরন *</label>
+            <select>
+              <option>2007 -MDPS-3- 3 Year Monthly DPS</option>
+              <option>2008 -MDPS-5- 5 Year Monthly DPS</option>
+              <option>2009 -MDPS-7- 7 Year Monthly DPS</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+          <div class="form-group"><label>মাসিক কিস্তি (৳) *</label><input type="number"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>শুরুর তারিখ *</label><input type="date"></div>
+          <div class="form-group"><label>মেয়াদপূর্তি তারিখ</label><input type="date" readonly style="background:#f5f5f5"></div>
+        </div>
+        <button class="btn btn-success btn-block" style="margin-top:8px;">✅ DPS একাউন্ট খুলুন</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ LOAN ACCOUNT OPEN ════ -->
+  <div id="page-loanAccountOpen" class="page" style="display:none;">
+    <div class="page-title">💰 ঋণ একাউন্ট ওপেনিং</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>ঋণের ধরন *</label>
+          <select>
+            <option>3001 -GL- General Loan</option>
+            <option>3002 -PL- Product Loan</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>সমিতি</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text" placeholder="সদস্য আইডি লিখুন"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>সদস্যের নাম</label><input type="text" readonly style="background:#f5f5f5" placeholder="স্বয়ংক্রিয়"></div>
+        <div class="form-group"><label>মোবাইল</label><input type="text" readonly style="background:#f5f5f5"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>ঋণের পরিমাণ (৳) *</label><input type="number" id="loanAmount"></div>
+        <div class="form-group"><label>সুদের হার (%) *</label><input type="number" id="loanRate"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>মেয়াদ (মাস) *</label><input type="number" id="loanTenure"></div>
+        <div class="form-group"><label>কিস্তির ধরন</label><select><option>মাসিক</option><option>সাপ্তাহিক</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>শুরুর তারিখ *</label><input type="date"></div>
+        <div class="form-group"><label>উদ্দেশ্য</label><select><option>কৃষি</option><option>ব্যবসা</option><option>শিক্ষা</option><option>গৃহ নির্মাণ</option></select></div>
+      </div>
+      <div class="summary-box" style="margin-top:4px;">
+        <div class="s-row"><span>মূল টাকা</span><span id="ls-principal">—</span></div>
+        <div class="s-row"><span>মোট সুদ</span><span id="ls-interest">—</span></div>
+        <div class="s-row"><span>মোট দেয়</span><span id="ls-total">—</span></div>
+        <div class="s-row"><span>মাসিক কিস্তি</span><span id="ls-emi">—</span></div>
+      </div>
+      <button class="btn btn-primary btn-block">✅ ঋণ একাউন্ট খুলুন</button>
+    </div>
+  </div>
+
+  <!-- ════ LOAN INSTALLMENT ════ -->
+  <div id="page-loanInstallment" class="page" style="display:none;">
+    <div class="page-title">💳 ঋণের কিস্তি জমা</div>
+    <div class="card">
+      <div class="card-title">Loan Installment Receive</div>
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;"><label>ঋণ একাউন্ট</label><select><option>— ঋণ বাছুন —</option></select></div>
+      <div class="info-grid" style="margin-bottom:14px;">
+        <div class="info-item"><label>আজকের বকেয়া</label><p style="color:var(--danger)">৳০</p></div>
+        <div class="info-item"><label>মাসিক কিস্তি</label><p>৳০</p></div>
+        <div class="info-item"><label>মোট কিস্তি পরিশোধ</label><p style="color:var(--success)">৳০</p></div>
+        <div class="info-item"><label>মোট ঋণ বকেয়া</label><p style="color:var(--danger)">৳০</p></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>জমার পরিমাণ (৳) *</label><input type="number"></div>
+        <div class="form-group"><label>জরিমানা চার্জ (৳)</label><input type="number" value="0"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>কিস্তির তারিখ *</label><input type="date"></div>
+        <div class="form-group"><label>মন্তব্য</label><input type="text"></div>
+      </div>
+      <button class="btn btn-success btn-block">✅ Receive Installment</button>
+    </div>
+  </div>
+
+  <!-- ════ LOAN RESCHEDULE ════ -->
+  <div id="page-loanReschedule" class="page" style="display:none;">
+    <div class="page-title">🔄 ঋণ পুনঃতফসিল (Loan Reschedule)</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;"><label>ঋণ একাউন্ট *</label><select><option>— ঋণ বাছুন —</option></select></div>
+      <div class="info-grid" style="margin-bottom:14px;">
+        <div class="info-item"><label>বর্তমান বকেয়া</label><p style="color:var(--danger)">৳০</p></div>
+        <div class="info-item"><label>বকেয়া কিস্তি</label><p>০টি</p></div>
+        <div class="info-item"><label>মূল পরিমাণ</label><p>৳০</p></div>
+        <div class="info-item"><label>সুদ বকেয়া</label><p>৳০</p></div>
+      </div>
+      <div class="card-title" style="margin-top:4px;">নতুন তফসিল</div>
+      <div class="form-row col2">
+        <div class="form-group"><label>নতুন মেয়াদ (মাস) *</label><input type="number"></div>
+        <div class="form-group"><label>নতুন সুদের হার (%)</label><input type="number"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>পুনঃতফসিলের তারিখ *</label><input type="date"></div>
+        <div class="form-group"><label>কারণ</label><input type="text"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;"><label>মন্তব্য</label><textarea rows="2"></textarea></div>
+      <button class="btn btn-warning btn-block">🔄 পুনঃতফসিল করুন</button>
+    </div>
+  </div>
+
+  <!-- ════ LOAN WAIVER ════ -->
+  <div id="page-loanWaiver" class="page" style="display:none;">
+    <div class="page-title">✂️ ঋণ মওকুফ (Loan Waiver)</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;"><label>ঋণ একাউন্ট *</label><select><option>— ঋণ বাছুন —</option></select></div>
+      <div class="info-grid" style="margin-bottom:14px;">
+        <div class="info-item"><label>মোট বকেয়া</label><p style="color:var(--danger)">৳০</p></div>
+        <div class="info-item"><label>আসল বকেয়া</label><p>৳০</p></div>
+        <div class="info-item"><label>সুদ বকেয়া</label><p>৳০</p></div>
+        <div class="info-item"><label>জরিমানা বকেয়া</label><p>৳০</p></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>মওকুফের পরিমাণ (৳) *</label><input type="number"></div>
+        <div class="form-group"><label>মওকুফের ধরন</label><select><option>সুদ মওকুফ</option><option>আসল মওকুফ</option><option>সম্পূর্ণ মওকুফ</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>তারিখ *</label><input type="date"></div>
+        <div class="form-group"><label>অনুমোদনকারী</label><input type="text"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;"><label>কারণ/মন্তব্য *</label><textarea rows="2" placeholder="মওকুফের কারণ লিখুন"></textarea></div>
+      <button class="btn btn-danger btn-block">✅ মওকুফ নিশ্চিত করুন</button>
+    </div>
+  </div>
+
+  <!-- ════ EMI PENALTY ════ -->
+  <div id="page-loanEmiPenalty" class="page" style="display:none;">
+    <div class="page-title">⚡ অতিরিক্ত EMI জরিমানা</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;"><label>ঋণ একাউন্ট *</label><select><option>— ঋণ বাছুন —</option></select></div>
+      <div class="form-row col2">
+        <div class="form-group"><label>জরিমানার পরিমাণ (৳) *</label><input type="number"></div>
+        <div class="form-group"><label>জরিমানার কারণ</label><select><option>বিলম্ব</option><option>চেক বাউন্স</option><option>অন্যান্য</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>তারিখ *</label><input type="date"></div>
+        <div class="form-group"><label>মন্তব্য</label><input type="text"></div>
+      </div>
+      <button class="btn btn-danger btn-block" style="margin-top:8px;">⚡ জরিমানা যোগ করুন</button>
+    </div>
+  </div>
+
+  <!-- ════ LOAN PROPOSAL ════ -->
+  <div id="page-loanProposal" class="page" style="display:none;">
+    <div class="page-title">📝 ঋণ প্রস্তাব (Loan Proposal)</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>প্রস্তাবিত ঋণ (৳) *</label><input type="number"></div>
+        <div class="form-group"><label>ঋণের উদ্দেশ্য *</label><select><option>কৃষি</option><option>ব্যবসা</option><option>শিক্ষা</option><option>গৃহ নির্মাণ</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>জামিনদারের নাম</label><input type="text"></div>
+        <div class="form-group"><label>জামিনদারের মোবাইল</label><input type="tel"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;"><label>বিবরণ</label><textarea rows="3"></textarea></div>
+      <button class="btn btn-primary btn-block">📝 প্রস্তাব দাখিল করুন</button>
+    </div>
+  </div>
+
+  <!-- ════ DEPOSIT RECEIVE ════ -->
+  <div id="page-depositReceive" class="page" style="display:none;">
+    <div class="page-title">🏦 সঞ্চয় জমা (Deposit Receive)</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— বাছুন —</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+        <div class="form-group"><label>একাউন্ট ধরন</label>
+          <select>
+            <option>2001 -GS- General Savings</option>
+            <option>2002 -SS- Security Savings</option>
+          </select>
+        </div>
+      </div>
+      <div class="info-grid" style="margin-bottom:14px;">
+        <div class="info-item"><label>সদস্যের নাম</label><p>—</p></div>
+        <div class="info-item"><label>বর্তমান ব্যালেন্স</label><p style="color:var(--success)">৳০</p></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>জমার পরিমাণ (৳) *</label><input type="number"></div>
+        <div class="form-group"><label>তারিখ *</label><input type="date"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;"><label>মন্তব্য</label><input type="text"></div>
+      <button class="btn btn-success btn-block">✅ সঞ্চয় জমা করুন</button>
+    </div>
+  </div>
+
+  <!-- ════ DPS DEPOSIT ════ -->
+  <div id="page-dpsDeposit" class="page" style="display:none;">
+    <div class="page-title">📅 DPS কিস্তি জমা</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;"><label>DPS একাউন্ট *</label><select><option>— DPS বাছুন —</option></select></div>
+      <div class="info-grid" style="margin-bottom:14px;">
+        <div class="info-item"><label>DPS ধরন</label><p>—</p></div>
+        <div class="info-item"><label>মাসিক কিস্তি</label><p>৳০</p></div>
+        <div class="info-item"><label>মোট জমা</label><p style="color:var(--success)">৳০</p></div>
+        <div class="info-item"><label>মেয়াদপূর্তি</label><p>—</p></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>কিস্তির পরিমাণ (৳) *</label><input type="number"></div>
+        <div class="form-group"><label>তারিখ *</label><input type="date"></div>
+      </div>
+      <button class="btn btn-success btn-block" style="margin-top:8px;">✅ DPS জমা করুন</button>
+    </div>
+  </div>
+
+  <!-- ════ DEPOSIT PAYMENT ════ -->
+  <div id="page-depositPayment" class="page" style="display:none;">
+    <div class="page-title">💸 সঞ্চয় ফেরত (Deposit Payment)</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;"><label>ডিপোজিট একাউন্ট *</label><select><option>— একাউন্ট বাছুন —</option></select></div>
+      <div class="info-grid" style="margin-bottom:14px;">
+        <div class="info-item"><label>একাউন্ট ব্যালেন্স</label><p style="color:var(--success)">৳০</p></div>
+        <div class="info-item"><label>উপলব্ধ ব্যালেন্স</label><p>৳০</p></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>ফেরতের পরিমাণ (৳) *</label><input type="number"></div>
+        <div class="form-group"><label>কারণ</label><select><option>আংশিক উত্তোলন</option><option>সম্পূর্ণ বন্ধ</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>তারিখ *</label><input type="date"></div>
+        <div class="form-group"><label>অনুমোদনকারী</label><input type="text"></div>
+      </div>
+      <button class="btn btn-warning btn-block" style="margin-top:8px;">💸 সঞ্চয় ফেরত দিন</button>
+    </div>
+  </div>
+
+  <!-- ════ DEPOSIT PROFIT PAYMENT ════ -->
+  <div id="page-depositProfitPayment" class="page" style="display:none;">
+    <div class="page-title">💹 ডিপোজিট মুনাফা প্রদান</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;"><label>ডিপোজিট একাউন্ট *</label><select><option>— FDR/DPS বাছুন —</option></select></div>
+      <div class="info-grid" style="margin-bottom:14px;">
+        <div class="info-item"><label>আমানতের পরিমাণ</label><p>৳০</p></div>
+        <div class="info-item"><label>সুদের হার</label><p>০%</p></div>
+        <div class="info-item"><label>প্রাপ্য মুনাফা</label><p style="color:var(--success)">৳০</p></div>
+        <div class="info-item"><label>শেষ প্রদানের তারিখ</label><p>—</p></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>মুনাফার পরিমাণ (৳) *</label><input type="number"></div>
+        <div class="form-group"><label>প্রদানের তারিখ *</label><input type="date"></div>
+      </div>
+      <button class="btn btn-success btn-block" style="margin-top:8px;">💹 মুনাফা প্রদান করুন</button>
+    </div>
+  </div>
+
+  <!-- ════ DEPOSIT TRANSFER ════ -->
+  <div id="page-depositTransfer" class="page" style="display:none;">
+    <div class="page-title">🔀 ডিপোজিট হিসাব স্থানান্তর/ক্লোজিং</div>
+    <div class="card">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(this,'tab-transfer')">হিসাব স্থানান্তর</button>
+        <button class="tab-btn" onclick="switchTab(this,'tab-closing')">হিসাব ক্লোজিং</button>
+      </div>
+      <div id="tab-transfer" class="tab-content active">
+        <div class="form-row col2">
+          <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+          <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>উৎস একাউন্ট *</label><select><option>— বাছুন —</option></select></div>
+          <div class="form-group"><label>গন্তব্য একাউন্ট *</label><select><option>— বাছুন —</option></select></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>পরিমাণ (৳) *</label><input type="number"></div>
+          <div class="form-group"><label>তারিখ *</label><input type="date"></div>
+        </div>
+        <button class="btn btn-primary btn-block" style="margin-top:8px;">🔀 স্থানান্তর করুন</button>
+      </div>
+      <div id="tab-closing" class="tab-content">
+        <div class="form-row col2">
+          <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+          <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px;"><label>একাউন্ট *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-row col2">
+          <div class="form-group"><label>ক্লোজিংয়ের তারিখ *</label><input type="date"></div>
+          <div class="form-group"><label>কারণ</label><input type="text"></div>
+        </div>
+        <button class="btn btn-danger btn-block" style="margin-top:8px;">❌ একাউন্ট বন্ধ করুন</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ SHARE PAYMENT ════ -->
+  <div id="page-sharePayment" class="page" style="display:none;">
+    <div class="page-title">📈 শেয়ার পেমেন্ট (Share Payment)</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+      </div>
+      <div class="share-summary">
+        <div class="ss-row"><span>বর্তমান শেয়ার সংখ্যা</span><span id="cur-shares">০</span></div>
+        <div class="ss-row"><span>শেয়ারের মূল্য/পিস</span><span>৳১০০</span></div>
+        <div class="ss-row"><span>মোট শেয়ার মূল্য</span><span id="total-share-val">৳০</span></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>শেয়ার সংখ্যা *</label><input type="number" min="1"></div>
+        <div class="form-group"><label>পেমেন্টের পরিমাণ (৳) *</label><input type="number"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>তারিখ *</label><input type="date"></div>
+        <div class="form-group"><label>পেমেন্ট পদ্ধতি</label><select><option>নগদ</option><option>ব্যাংক</option></select></div>
+      </div>
+      <button class="btn btn-success btn-block" style="margin-top:8px;">✅ শেয়ার পেমেন্ট করুন</button>
+    </div>
+  </div>
+
+  <!-- ════ SHARE RECEIVE ════ -->
+  <div id="page-shareReceive" class="page" style="display:none;">
+    <div class="page-title">📊 শেয়ার গ্রহণ (Share Receive)</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>শেয়ার ফেরতের সংখ্যা *</label><input type="number" min="1"></div>
+        <div class="form-group"><label>ফেরতের পরিমাণ (৳) *</label><input type="number"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>তারিখ *</label><input type="date"></div>
+        <div class="form-group"><label>কারণ</label><input type="text"></div>
+      </div>
+      <button class="btn btn-warning btn-block" style="margin-top:8px;">📊 শেয়ার গ্রহণ করুন</button>
+    </div>
+  </div>
+
+  <!-- ════ STAFF LOAN ════ -->
+  <div id="page-staffLoanOpen" class="page" style="display:none;">
+    <div class="page-title">👔 কর্মী ঋণ হিসাব (Staff Loan Account)</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>কর্মী নাম *</label><select><option>— কর্মী বাছুন —</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>ঋণের পরিমাণ (৳) *</label><input type="number"></div>
+        <div class="form-group"><label>সুদের হার (%)</label><input type="number"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>মেয়াদ (মাস) *</label><input type="number"></div>
+        <div class="form-group"><label>কিস্তির ধরন</label><select><option>মাসিক</option><option>বেতন কর্তন</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>শুরুর তারিখ *</label><input type="date"></div>
+        <div class="form-group"><label>উদ্দেশ্য</label><input type="text"></div>
+      </div>
+      <button class="btn btn-primary btn-block" style="margin-top:8px;">✅ কর্মী ঋণ খুলুন</button>
+    </div>
+  </div>
+
+  <!-- ════ STAFF LOAN INSTALLMENT ════ -->
+  <div id="page-staffLoanInstall" class="page" style="display:none;">
+    <div class="page-title">👔 কর্মী কিস্তি জমা</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>কর্মী *</label><select><option>— কর্মী বাছুন —</option></select></div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;"><label>ঋণ একাউন্ট *</label><select><option>— বাছুন —</option></select></div>
+      <div class="info-grid" style="margin-bottom:14px;">
+        <div class="info-item"><label>মোট ঋণ</label><p>৳০</p></div>
+        <div class="info-item"><label>বকেয়া</label><p style="color:var(--danger)">৳০</p></div>
+        <div class="info-item"><label>মাসিক কিস্তি</label><p>৳০</p></div>
+        <div class="info-item"><label>পরিশোধিত</label><p style="color:var(--success)">৳০</p></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>কিস্তির পরিমাণ (৳) *</label><input type="number"></div>
+        <div class="form-group"><label>তারিখ *</label><input type="date"></div>
+      </div>
+      <button class="btn btn-success btn-block" style="margin-top:8px;">✅ কিস্তি জমা করুন</button>
+    </div>
+  </div>
+
+  <!-- ════ COLLECTION SHEET ════ -->
+  <div id="page-collectionSheet" class="page" style="display:none;">
+    <div class="page-title">📋 কালেকশন শীট</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>সমিতি *</label><select><option>— বাছুন —</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>তারিখ *</label><input type="date"></div>
+        <div class="form-group"><label>ধরন</label><select><option>সব</option><option>ঋণ কিস্তি</option><option>সঞ্চয়</option><option>DPS</option></select></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+        <button class="btn btn-primary">🔍 লোড করুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div id="collectionSheetData">
+      <div class="collect-member">
+        <div class="name">রহিম উদ্দিন (M-0001)</div>
+        <div class="info">সমিতি: আশার আলো ● কর্মী: Sabikun</div>
+        <div class="amounts">
+          <div class="am"><div class="v" style="color:var(--danger)">৳৫০০</div><div class="l">ঋণ কিস্তি</div></div>
+          <div class="am"><div class="v" style="color:var(--success)">৳১০০</div><div class="l">সঞ্চয়</div></div>
+          <div class="am"><div class="v" style="color:var(--primary)">৳৩০০</div><div class="l">DPS</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ MEMBER PASSBOOK ════ -->
+  <div id="page-memberPassbook" class="page" style="display:none;">
+    <div class="page-title">📒 সদস্য পাসবুক</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>একাউন্ট ধরন</label><select><option>সব</option><option>সঞ্চয়</option><option>ঋণ</option><option>DPS</option><option>FDR</option></select></div>
+        <div class="form-group"><label>তারিখ হতে</label><input type="date"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;">
+        <button class="btn btn-primary">🔍 দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="passbook">
+      <div class="passbook-header">
+        <h3>গ্রামীন আশার আলো কৃষি সমবায় সমিতি লিঃ</h3>
+        <p>সদস্য পাসবুক</p>
+      </div>
+      <div class="passbook-info">
+        <div class="pi-item"><label>সদস্যের নাম</label><p>—</p></div>
+        <div class="pi-item"><label>সদস্য আইডি</label><p>—</p></div>
+        <div class="pi-item"><label>শাখা</label><p>—</p></div>
+        <div class="pi-item"><label>সমিতি</label><p>—</p></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>তারিখ</th><th>বিবরণ</th><th>ডেবিট</th><th>ক্রেডিট</th><th>ব্যালেন্স</th></tr></thead>
+          <tbody><tr><td colspan="5" style="text-align:center;color:var(--text-light)">সদস্য আইডি দিয়ে অনুসন্ধান করুন</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ INTER BRANCH ════ -->
+  <div id="page-interBranch" class="page" style="display:none;">
+    <div class="page-title">🔄 আন্তঃ শাখা ট্রানজেকশন</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>প্রেরক শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>প্রাপক শাখা *</label><select><option>— বাছুন —</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>পরিমাণ (৳) *</label><input type="number"></div>
+        <div class="form-group"><label>ট্রানজেকশনের ধরন</label><select><option>নগদ স্থানান্তর</option><option>পণ্য পাঠানো</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>তারিখ *</label><input type="date"></div>
+        <div class="form-group"><label>রেফারেন্স নং</label><input type="text"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;"><label>বিবরণ</label><textarea rows="2"></textarea></div>
+      <button class="btn btn-primary btn-block">🔄 ট্রানজেকশন সম্পন্ন করুন</button>
+    </div>
+  </div>
+
+  <!-- ════ SALARY SETUP ════ -->
+  <div id="page-salarySetup" class="page" style="display:none;">
+    <div class="page-title">💵 বেতন সেটআপ (Employee Salary Setup)</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>কর্মীর নাম *</label><select><option>— কর্মী বাছুন —</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>মূল বেতন (৳) *</label><input type="number"></div>
+        <div class="form-group"><label>বাড়ি ভাড়া ভাতা (৳)</label><input type="number" value="0"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>চিকিৎসা ভাতা (৳)</label><input type="number" value="0"></div>
+        <div class="form-group"><label>পরিবহন ভাতা (৳)</label><input type="number" value="0"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>অন্যান্য ভাতা (৳)</label><input type="number" value="0"></div>
+        <div class="form-group"><label>কার্যকর তারিখ *</label><input type="date"></div>
+      </div>
+      <div class="summary-box" style="margin-top:8px;">
+        <div class="s-row"><span>মোট বেতন</span><span>৳০</span></div>
+        <div class="s-row"><span>কর্তন</span><span>৳০</span></div>
+        <div class="s-row"><span>নিট বেতন</span><span>৳০</span></div>
+      </div>
+      <button class="btn btn-primary btn-block">✅ বেতন সেটআপ সংরক্ষণ</button>
+    </div>
+  </div>
+
+  <!-- ════ SALARY PROCESS ════ -->
+  <div id="page-salaryProcess" class="page" style="display:none;">
+    <div class="page-title">💵 বেতন প্রক্রিয়া (Employee Salary Process)</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>মাস/বছর *</label><input type="month"></div>
+      </div>
+      <button class="btn btn-primary" style="margin-bottom:14px;">🔍 কর্মী লোড করুন</button>
+      <div id="salaryList">
+        <div class="salary-card">
+          <div class="emp-name">Sabikun Naher</div>
+          <div class="emp-role">তত্ত্বাবধায়ক অফিসার</div>
+          <div class="sal-amounts">
+            <div class="sal-am"><div class="v">৳১৫,০০০</div><div class="l">মোট বেতন</div></div>
+            <div class="sal-am"><div class="v" style="color:var(--danger)">৳৫০০</div><div class="l">কর্তন</div></div>
+            <div class="sal-am"><div class="v" style="color:var(--success)">৳১৪,৫০০</div><div class="l">নিট বেতন</div></div>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:8px;">
+            <span class="badge badge-warning">অপেক্ষমান</span>
+            <button class="btn btn-success btn-sm">✅ প্রদান করুন</button>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" style="margin-top:12px;">💵 সকল বেতন প্রদান করুন</button>
+    </div>
+  </div>
+
+  <!-- ════ CREATE USER ════ -->
+  <div id="page-createUser" class="page" style="display:none;">
+    <div class="page-title">👑 ইউজার তৈরি</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>পুরো নাম *</label><input type="text"></div>
+        <div class="form-group"><label>ইউজার নাম *</label><input type="text"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>পাসওয়ার্ড *</label><input type="password"></div>
+        <div class="form-group"><label>ভূমিকা *</label>
+          <select>
+            <option>Admin</option>
+            <option>Branch Manager</option>
+            <option>Field Officer</option>
+            <option>Data Entry</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>মোবাইল</label><input type="tel"></div>
+      </div>
+      <button class="btn btn-primary btn-block" style="margin-top:8px;">✅ ইউজার তৈরি করুন</button>
+    </div>
+    <div class="card">
+      <div class="card-title">ইউজার তালিকা</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>নাম</th><th>Username</th><th>ভূমিকা</th><th>শাখা</th><th>অবস্থা</th><th>কাজ</th></tr></thead>
+          <tbody id="userTableBody"><tr><td colspan="6" style="text-align:center;color:var(--text-light)">কোনো ইউজার নেই</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ USER PERMISSIONS ════ -->
+  <div id="page-userPermissions" class="page" style="display:none;">
+    <div class="page-title">🔒 ইউজার পারমিশন</div>
+    <div class="card">
+      <div class="form-group" style="margin-bottom:14px;"><label>ইউজার নির্বাচন *</label><select><option>— ইউজার বাছুন —</option></select></div>
+      <div class="card-title">মডিউল অ্যাক্সেস</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <label style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:7px;cursor:pointer;">
+          <input type="checkbox" checked> সদস্য পরিচালনা
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:7px;cursor:pointer;">
+          <input type="checkbox" checked> লোন ট্রানজেকশন
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:7px;cursor:pointer;">
+          <input type="checkbox" checked> ডিপোজিট ট্রানজেকশন
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:7px;cursor:pointer;">
+          <input type="checkbox"> শেয়ার লেনদেন
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:7px;cursor:pointer;">
+          <input type="checkbox"> কর্মী ঋণ
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:7px;cursor:pointer;">
+          <input type="checkbox"> বেতন ব্যবস্থাপনা
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:7px;cursor:pointer;">
+          <input type="checkbox"> রিপোর্ট
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:7px;cursor:pointer;">
+          <input type="checkbox"> সেটিংস
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:7px;cursor:pointer;">
+          <input type="checkbox"> একাউন্টস (AIS)
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:7px;cursor:pointer;">
+          <input type="checkbox"> আন্তঃ শাখা
+        </label>
+      </div>
+      <button class="btn btn-primary btn-block" style="margin-top:14px;">🔒 পারমিশন সংরক্ষণ</button>
+    </div>
+  </div>
+
+  <!-- ════ SETTINGS / SAMITY SETUP ════ -->
+  <div id="page-samitySetup" class="page" style="display:none;">
+    <div class="page-title">⚙️ সমিতি সেটআপ (Opening New Samity)</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>সমিতির নাম *</label><input type="text"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>সমিতির কোড</label><input type="text"></div>
+        <div class="form-group"><label>ফিল্ড অফিসার *</label><select><option>— বাছুন —</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>সমিতির দিন</label>
+          <select>
+            <option>রবিবার</option><option>সোমবার</option><option>মঙ্গলবার</option>
+            <option>বুধবার</option><option>বৃহস্পতিবার</option><option>শুক্রবার</option><option>শনিবার</option>
+          </select>
+        </div>
+        <div class="form-group"><label>শুরুর তারিখ *</label><input type="date"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;"><label>ঠিকানা</label><textarea rows="2"></textarea></div>
+      <button class="btn btn-primary btn-block">✅ সমিতি সংরক্ষণ করুন</button>
+    </div>
+  </div>
+
+  <!-- ════ HOLIDAY SETUP ════ -->
+  <div id="page-holidaySetup" class="page" style="display:none;">
+    <div class="page-title">🗓️ ছুটি সেটআপ (Manage Holiday)</div>
+    <div class="card">
+      <div class="card-title">নতুন ছুটি যোগ করুন</div>
+      <div class="form-row col2">
+        <div class="form-group"><label>ছুটির নাম *</label><input type="text" placeholder="ঈদুল ফিতর"></div>
+        <div class="form-group"><label>তারিখ *</label><input type="date"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>ছুটির ধরন</label><select><option>সরকারি</option><option>ঐচ্ছিক</option><option>সাপ্তাহিক</option></select></div>
+        <div class="form-group"><label>প্রযোজ্য শাখা</label><select><option>সব শাখা</option></select></div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:4px;">+ ছুটি যোগ করুন</button>
+    </div>
+    <div class="card">
+      <div class="card-title">ছুটির তালিকা</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ছুটির নাম</th><th>তারিখ</th><th>ধরন</th><th>কাজ</th></tr></thead>
+          <tbody><tr><td>ঈদুল ফিতর</td><td>—</td><td><span class="badge badge-info">সরকারি</span></td><td><button class="btn btn-danger btn-sm">মুছুন</button></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ NOTICE SETUP ════ -->
+  <div id="page-noticeSetup" class="page" style="display:none;">
+    <div class="page-title">📢 নোটিশ সেটআপ (Notice Update)</div>
+    <div class="card">
+      <div class="form-group" style="margin-bottom:12px;"><label>নোটিশের শিরোনাম *</label><input type="text"></div>
+      <div class="form-row col2">
+        <div class="form-group"><label>প্রকাশের তারিখ *</label><input type="date"></div>
+        <div class="form-group"><label>মেয়াদ শেষের তারিখ</label><input type="date"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;"><label>নোটিশের বিষয়বস্তু *</label><textarea rows="4"></textarea></div>
+      <button class="btn btn-primary btn-block">📢 নোটিশ প্রকাশ করুন</button>
+    </div>
+  </div>
+
+  <!-- ════ BRANCH MANAGE ════ -->
+  <div id="page-branchManage" class="page" style="display:none;">
+    <div class="page-title">🏢 শাখা পরিচালনা (Manage Branch)</div>
+    <div class="card">
+      <div class="card-title">নতুন শাখা যোগ করুন</div>
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখার নাম *</label><input type="text"></div>
+        <div class="form-group"><label>শাখা কোড *</label><input type="text"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখার ধরন</label><select><option>প্রধান অফিস</option><option>শাখা অফিস</option></select></div>
+        <div class="form-group"><label>ম্যানেজার</label><select><option>— বাছুন —</option></select></div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;"><label>ঠিকানা</label><textarea rows="2"></textarea></div>
+      <button class="btn btn-primary">+ শাখা যোগ করুন</button>
+    </div>
+    <div class="card">
+      <div class="card-title">শাখা তালিকা</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>শাখার নাম</th><th>কোড</th><th>ধরন</th><th>ঠিকানা</th><th>কাজ</th></tr></thead>
+          <tbody id="branchTableBody"><tr><td colspan="6" style="text-align:center;color:var(--text-light)">কোনো শাখা নেই</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ DIRECTOR REGISTER ════ -->
+  <div id="page-directorRegister" class="page" style="display:none;">
+    <div class="page-title">👤 পরিচালক রেজিস্টার (Director Register)</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>পরিচালকের নাম *</label><input type="text"></div>
+        <div class="form-group"><label>পদবি *</label><select><option>সভাপতি</option><option>সম্পাদক</option><option>কোষাধ্যক্ষ</option><option>পরিচালক</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>মোবাইল</label><input type="tel"></div>
+        <div class="form-group"><label>নির্বাচনের তারিখ</label><input type="date"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;"><label>ঠিকানা</label><textarea rows="2"></textarea></div>
+      <button class="btn btn-primary btn-block">✅ পরিচালক যোগ করুন</button>
+    </div>
+  </div>
+
+  <!-- ════ EMPLOYEE REGISTER ════ -->
+  <div id="page-employeeRegister" class="page" style="display:none;">
+    <div class="page-title">👨‍💼 কর্মী রেজিস্টার (Employee Register)</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>কর্মীর নাম *</label><input type="text"></div>
+        <div class="form-group"><label>পদবি *</label><select><option>Branch Manager</option><option>Field Officer</option><option>Data Entry</option><option>Accountant</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>মোবাইল *</label><input type="tel"></div>
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>যোগদানের তারিখ</label><input type="date"></div>
+        <div class="form-group"><label>জাতীয় পরিচয়পত্র</label><input type="text"></div>
+      </div>
+      <button class="btn btn-primary btn-block" style="margin-top:8px;">✅ কর্মী নিবন্ধন করুন</button>
+    </div>
+  </div>
+
+  <!-- ════ JOURNAL VOUCHER ════ -->
+  <div id="page-journalVoucher" class="page" style="display:none;">
+    <div class="page-title">📒 জার্নাল ভাউচার পোস্টিং</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>ভাউচার তারিখ *</label><input type="date"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;"><label>বিবরণ *</label><input type="text"></div>
+      <div class="card-title">ডেবিট এন্ট্রি</div>
+      <div class="form-row col2" style="margin-bottom:8px;">
+        <div class="form-group"><label>একাউন্ট</label><select><option>— একাউন্ট বাছুন —</option></select></div>
+        <div class="form-group"><label>পরিমাণ (৳)</label><input type="number"></div>
+      </div>
+      <div class="card-title" style="margin-top:4px;">ক্রেডিট এন্ট্রি</div>
+      <div class="form-row col2" style="margin-bottom:14px;">
+        <div class="form-group"><label>একাউন্ট</label><select><option>— একাউন্ট বাছুন —</option></select></div>
+        <div class="form-group"><label>পরিমাণ (৳)</label><input type="number"></div>
+      </div>
+      <button class="btn btn-primary btn-block">📒 ভাউচার পোস্ট করুন</button>
+    </div>
+  </div>
+
+  <!-- ════ REPORT PAGES (Common Filter Template) ════ -->
+
+  <!-- Balance Sheet -->
+  <div id="page-balanceSheet" class="page" style="display:none;">
+    <div class="page-title">📊 Balance Sheet (Asset & Liabilities)</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>রিপোর্টের তারিখ</label><input type="date"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Trial Balance -->
+  <div id="page-trialBalance" class="page" style="display:none;">
+    <div class="page-title">⚖️ Trial Balance</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>তারিখ হতে</label><input type="date"></div>
+        <div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Generic Report Pages - using a reusable pattern -->
+
+  <!-- All remaining report pages with standard filter -->
+  <div id="page-profitLoss" class="page" style="display:none;"><div class="page-title">💹 Profit & Loss Report</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>তারিখ হতে</label><input type="date"></div><div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <!-- FDR Register Report -->
+  <div id="page-rptFdrRegister" class="page" style="display:none;">
+    <div class="page-title">🏦 FDR রেজিস্টার রিপোর্ট</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>একাউন্ট ধরন</label>
+          <select>
+            <option>— সব —</option>
+            <option>2003 -FDR-M- FDR (Monthly profit)</option>
+            <option>2004 -FDR-Y- FDR (Yearly profit)</option>
+            <option>2005 -FDR-MAT- FDR (Maturity profit)</option>
+          </select>
+        </div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি</label><input type="text"></div>
+        <div class="form-group"><label>পর্যন্ত তারিখ</label><input type="date"></div>
+        <div class="form-group"><label>একাউন্ট অবস্থা</label>
+          <select>
+            <option>All Open Only</option>
+            <option>Upto Date Closed Only</option>
+            <option>Open From and Upto Date</option>
+            <option>Closed From and Upto Date</option>
+            <option>Maturity Date Between</option>
+          </select>
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- DPS Register Report -->
+  <div id="page-rptDpsRegister" class="page" style="display:none;">
+    <div class="page-title">📅 DPS রেজিস্টার রিপোর্ট</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>DPS ধরন</label>
+          <select>
+            <option>— সব —</option>
+            <option>2007 -MDPS-3- 3 Year Monthly DPS</option>
+            <option>2008 -MDPS-5- 5 Year Monthly DPS</option>
+            <option>2009 -MDPS-7- 7 Year Monthly DPS</option>
+          </select>
+        </div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি</label><input type="text"></div>
+        <div class="form-group"><label>পর্যন্ত তারিখ</label><input type="date"></div>
+        <div class="form-group"><label>একাউন্ট অবস্থা</label>
+          <select>
+            <option>All Open Only</option>
+            <option>Upto Date Closed Only</option>
+            <option>Open From and Upto Date</option>
+            <option>Maturity Date Between</option>
+          </select>
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Savings Register -->
+  <div id="page-rptSavingsRegister" class="page" style="display:none;">
+    <div class="page-title">🏦 সেভিংস রেজিস্টার রিপোর্ট</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>একাউন্ট ধরন</label>
+          <select>
+            <option>— সব —</option>
+            <option>2001 -GS- General Savings</option>
+            <option>2002 -SS- Security Savings</option>
+          </select>
+        </div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি</label><input type="text"></div>
+        <div class="form-group"><label>পর্যন্ত তারিখ</label><input type="date"></div>
+        <div class="form-group"><label>একাউন্ট অবস্থা</label>
+          <select><option>All Open Only</option><option>Upto Date Closed Only</option></select>
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Loan Collection Register -->
+  <div id="page-rptLoanCollection" class="page" style="display:none;">
+    <div class="page-title">💳 লোন কালেকশন রেজিস্টার</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>একাউন্ট ধরন</label>
+          <select><option>— সব —</option><option>3001 -GL- General Loan</option><option>3002 -PL- Product Loan</option></select>
+        </div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি</label><input type="text"></div>
+        <div class="form-group"><label>পর্যন্ত তারিখ</label><input type="date"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Loan Waiver Report -->
+  <div id="page-rptLoanWaiver" class="page" style="display:none;">
+    <div class="page-title">✂️ ঋণ মওকুফ রিপোর্ট</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>একাউন্ট ধরন</label><select><option>— সব —</option><option>3001 -GL- General Loan</option><option>3002 -PL- Product Loan</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি</label><input type="text"></div>
+        <div class="form-group"><label>তারিখ হতে</label><input type="date"></div>
+        <div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Fully Paid Loan -->
+  <div id="page-rptFullyPaidLoan" class="page" style="display:none;">
+    <div class="page-title">✅ সম্পূর্ণ পরিশোধিত ঋণ রেজিস্টার</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>একাউন্ট ধরন</label><select><option>— সব —</option><option>3001 -GL- General Loan</option><option>3002 -PL- Product Loan</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি</label><input type="text"></div>
+        <div class="form-group"><label>পর্যন্ত তারিখ</label><input type="date"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- LLP Report -->
+  <div id="page-rptLoanLLP" class="page" style="display:none;">
+    <div class="page-title">🔒 Loan Loss Provisioning (LLP) Report</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>একাউন্ট ধরন</label><select><option>— সব —</option><option>3001 -GL- General Loan</option><option>3002 -PL- Product Loan</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি</label><input type="text"></div>
+        <div class="form-group"><label>কিস্তির ফ্রিকোয়েন্সি</label><select><option>— বাছুন —</option><option>সাপ্তাহিক</option><option>মাসিক</option></select></div>
+        <div class="form-group"><label>রিপোর্টের তারিখ</label><input type="date"></div>
+        <div class="form-group"><label>রিপোর্টের নাম</label><select><option>— বাছুন —</option></select></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Written Off -->
+  <div id="page-rptWrittenOff" class="page" style="display:none;">
+    <div class="page-title">📝 Written Off Register Report</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>একাউন্ট ধরন</label><select><option>— সব —</option><option>3001 -GL- General Loan</option><option>3002 -PL- Product Loan</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি</label><input type="text"></div>
+        <div class="form-group"><label>কিস্তির ফ্রিকোয়েন্সি</label><select><option>— বাছুন —</option><option>সাপ্তাহিক</option><option>মাসিক</option></select></div>
+        <div class="form-group"><label>রিপোর্টের তারিখ</label><input type="date"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Deposit Profit Payment Register -->
+  <div id="page-rptProfitPaymentRegister" class="page" style="display:none;">
+    <div class="page-title">💹 Deposit Profit Payment Register</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>একাউন্ট ধরন</label><select><option>— সব —</option><option>2003-FDR-M</option><option>2004-FDR-Y</option><option>2007-MDPS-3</option><option>2008-MDPS-5</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি</label><input type="text"></div>
+        <div class="form-group"><label>তারিখ হতে</label><input type="date"></div>
+        <div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Member Profit Balance -->
+  <div id="page-rptMemberProfitBalance" class="page" style="display:none;">
+    <div class="page-title">💰 Member Profit Balance Report</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>একাউন্ট ধরন</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি</label><input type="text"></div>
+        <div class="form-group"><label>তারিখ হতে</label><input type="date"></div>
+        <div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Zero Transaction Report -->
+  <div id="page-rptZeroTransaction" class="page" style="display:none;">
+    <div class="page-title">⭕ Zero Transaction Report</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>একাউন্ট ধরন</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি</label><input type="text"></div>
+        <div class="form-group"><label>তারিখ হতে</label><input type="date"></div>
+        <div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Monthly Deposit Transaction -->
+  <div id="page-rptMonthlyDeposit" class="page" style="display:none;">
+    <div class="page-title">📅 Monthly Deposit Transaction Report</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>একাউন্ট ধরন</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি</label><input type="text"></div>
+        <div class="form-group"><label>ট্রানজেকশন বছর</label><input type="number" placeholder="2026"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- DPS Target VS Collection -->
+  <div id="page-rptDpsTargetCollection" class="page" style="display:none;">
+    <div class="page-title">🎯 DPS Target VS Collection Report</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>DPS ধরন</label><select><option>— সব —</option><option>2007-MDPS-3</option><option>2008-MDPS-5</option><option>2009-MDPS-7</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>তারিখ হতে</label><input type="date"></div>
+        <div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Admission Register (MIS) -->
+  <div id="page-rptAdmissionRegister" class="page" style="display:none;">
+    <div class="page-title">📋 ভর্তি রেজিস্টার</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>103 - পাবই শাখা_০</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>তারিখ হতে</label><input type="date"></div>
+        <div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div>
+        <div class="form-group"><label>সদস্যের অবস্থা</label><select><option>সব</option><option>সক্রিয়</option><option>নিষ্ক্রিয়</option></select></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Periodical Progress -->
+  <div id="page-rptPeriodicalProgress" class="page" style="display:none;">
+    <div class="page-title">📈 পর্যায়ক্রমিক অগ্রগতি রিপোর্ট</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>103 - পাবই শাখা_০</option></select></div>
+        <div class="form-group"><label>তারিখ হতে</label><input type="date"></div>
+        <div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div>
+        <div class="form-group"><label>রিপোর্ট ধরন</label><select><option>Employee Wise</option><option>Samity Wise</option><option>Branch Wise</option></select></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Samity Performance -->
+  <div id="page-rptSamityPerformance" class="page" style="display:none;">
+    <div class="page-title">🏆 Samity Performance Report</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>শাখার ধরন</label><select><option>Only Me</option><option>All Branch</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>তারিখ হতে</label><input type="date"></div>
+        <div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Member Details Report -->
+  <div id="page-rptMemberDetails" class="page" style="display:none;">
+    <div class="page-title">👥 Member Details Report</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>103 - পাবই শাখা_০</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>রিপোর্টের তারিখ</label><input type="date"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Loan Recovery Details -->
+  <div id="page-rptLoanRecovery" class="page" style="display:none;">
+    <div class="page-title">💰 Loan Recovery Details Report</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>তারিখ হতে</label><input type="date"></div>
+        <div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div>
+        <div class="form-group"><label>Recovery Type</label><select><option>All</option><option>Regular</option><option>Advance</option><option>Due</option><option>Expire</option></select></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Loan Installment Receive Report -->
+  <div id="page-rptLoanInstallmentReceive" class="page" style="display:none;">
+    <div class="page-title">📋 Loan Installment Receive Report</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>একাউন্ট ধরন</label><select><option>— সব —</option><option>3001 -GL- General Loan</option><option>3002 -PL- Product Loan</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি</label><input type="text"></div>
+        <div class="form-group"><label>পর্যন্ত তারিখ</label><input type="date"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Loan Disbursement Register -->
+  <div id="page-rptLoanDisbursement" class="page" style="display:none;">
+    <div class="page-title">📤 Loan Disbursement Register Report</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>একাউন্ট ধরন</label><select><option>— সব —</option><option>3001 -GL- General Loan</option><option>3002 -PL- Product Loan</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি</label><input type="text"></div>
+        <div class="form-group"><label>তারিখ হতে</label><input type="date"></div>
+        <div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div>
+        <div class="form-group"><label>বিতরণের দিন</label><input type="number" placeholder="মাসের দিন"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Loan Disbursement & Collection -->
+  <div id="page-rptLoanDisbCollection" class="page" style="display:none;">
+    <div class="page-title">📊 Loan Disbursement & Collection Register</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>একাউন্ট ধরন</label><select><option>— সব —</option><option>3001 -GL- General Loan</option><option>3002 -PL- Product Loan</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি</label><input type="text"></div>
+        <div class="form-group"><label>পর্যন্ত তারিখ</label><input type="date"></div>
+        <div class="form-group"><label>একাউন্ট অবস্থা</label><select><option>All Open Only</option><option>Closed</option></select></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Member Balance -->
+  <div id="page-rptMemberBalance" class="page" style="display:none;">
+    <div class="page-title">💰 Member Balance Report</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি</label><input type="text"></div>
+        <div class="form-group"><label>তারিখ হতে</label><input type="date"></div>
+        <div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Target VS Collection -->
+  <div id="page-rptTargetAchievement" class="page" style="display:none;">
+    <div class="page-title">🎯 Target VS Collection Report</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>একাউন্ট ধরন</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি</label><input type="text"></div>
+        <div class="form-group"><label>তারিখ হতে</label><input type="date"></div>
+        <div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Deposit Receive Report -->
+  <div id="page-rptDepositReceive" class="page" style="display:none;">
+    <div class="page-title">🏦 Deposit Receive Report</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি</label><input type="text"></div>
+        <div class="form-group"><label>তারিখ হতে</label><input type="date"></div>
+        <div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Deposit Payment Report -->
+  <div id="page-rptDepositPayment" class="page" style="display:none;">
+    <div class="page-title">💸 Deposit Payment Report</div>
+    <div class="report-filter">
+      <div class="filter-grid">
+        <div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি</label><input type="text"></div>
+        <div class="form-group"><label>তারিখ হতে</label><input type="date"></div>
+        <div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary">🔍 রিপোর্ট দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+    </div>
+    <div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div>
+  </div>
+
+  <!-- Placeholder pages for remaining -->
+  <div id="page-memberClosing" class="page" style="display:none;"><div class="page-title">❌ সদস্য বন্ধ</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div></div><div class="form-row col2"><div class="form-group"><label>বন্ধের কারণ *</label><select><option>মৃত্যু</option><option>স্বেচ্ছায়</option><option>বদলি</option></select></div><div class="form-group"><label>তারিখ *</label><input type="date"></div></div><button class="btn btn-danger btn-block" style="margin-top:8px;">❌ সদস্য বন্ধ করুন</button></div></div>
+
+  <div id="page-memberTransfer" class="page" style="display:none;"><div class="page-title">🔀 সমিতি স্থানান্তর</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div></div><div class="form-row col2"><div class="form-group"><label>বর্তমান সমিতি</label><input type="text" readonly style="background:#f5f5f5"></div><div class="form-group"><label>নতুন সমিতি *</label><select><option>— বাছুন —</option></select></div></div><div class="form-row col2"><div class="form-group"><label>তারিখ *</label><input type="date"></div><div class="form-group"><label>কারণ</label><input type="text"></div></div><button class="btn btn-primary btn-block" style="margin-top:8px;">🔀 স্থানান্তর করুন</button></div></div>
+
+  <div id="page-loanInstallmentCancel" class="page" style="display:none;"><div class="page-title">❌ কিস্তি বাতিল</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div></div><div class="form-group" style="margin-bottom:12px;"><label>ঋণ একাউন্ট</label><select><option>— বাছুন —</option></select></div><div class="form-group" style="margin-bottom:12px;"><label>কিস্তির তারিখ *</label><input type="date"></div><div class="form-group" style="margin-bottom:14px;"><label>বাতিলের কারণ *</label><textarea rows="2"></textarea></div><button class="btn btn-danger btn-block">❌ কিস্তি বাতিল করুন</button></div></div>
+
+  <div id="page-loanProposalList" class="page" style="display:none;"><div class="page-title">📝 ঋণ প্রস্তাব তালিকা</div><div class="card"><div class="table-wrap"><table><thead><tr><th>আইডি</th><th>সদস্যের নাম</th><th>প্রস্তাবিত ঋণ</th><th>উদ্দেশ্য</th><th>তারিখ</th><th>অবস্থা</th><th>কাজ</th></tr></thead><tbody><tr><td colspan="7" style="text-align:center;color:var(--text-light)">কোনো প্রস্তাব নেই</td></tr></tbody></table></div></div></div>
+
+  <div id="page-depositProfitDistribution" class="page" style="display:none;"><div class="page-title">💹 ডিপোজিট মুনাফা বিতরণ</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>বিতরণের মাস</label><input type="month"></div></div><div class="form-row col2"><div class="form-group"><label>একাউন্ট ধরন</label><select><option>সব FDR/DPS</option><option>শুধু FDR</option><option>শুধু DPS</option></select></div><div class="form-group"><label>মুনাফার হার (%)</label><input type="number"></div></div><button class="btn btn-success btn-block" style="margin-top:8px;">💹 মুনাফা বিতরণ করুন</button></div></div>
+
+  <div id="page-depositBlockClear" class="page" style="display:none;"><div class="page-title">🔒 ডিপোজিট ব্লক/ক্লিয়ার</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div></div><div class="form-group" style="margin-bottom:12px;"><label>একাউন্ট *</label><select><option>— বাছুন —</option></select></div><div class="form-row col2"><div class="form-group"><label>কাজ</label><select><option>ব্লক করুন</option><option>ব্লক সরান</option></select></div><div class="form-group"><label>কারণ</label><input type="text"></div></div><button class="btn btn-warning btn-block" style="margin-top:8px;">🔒 সংরক্ষণ করুন</button></div></div>
+
+  <div id="page-collectionReceive" class="page" style="display:none;"><div class="page-title">✅ কালেকশন গ্রহণ (Collection Receive)</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>সমিতি *</label><select><option>— বাছুন —</option></select></div></div><div class="form-row col2"><div class="form-group"><label>তারিখ *</label><input type="date"></div><div class="form-group"><label>কালেকশনের ধরন</label><select><option>সব</option><option>ঋণ</option><option>সঞ্চয়</option></select></div></div><button class="btn btn-success btn-block" style="margin-top:8px;">✅ কালেকশন গ্রহণ করুন</button></div></div>
+
+  <div id="page-memberInstallment" class="page" style="display:none;"><div class="page-title">💳 সদস্য কিস্তি কালেকশন</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div></div><button class="btn btn-primary" style="margin-top:4px;">🔍 লোড করুন</button></div></div>
+
+  <div id="page-samityInstallment" class="page" style="display:none;"><div class="page-title">🏛️ সমিতি কিস্তি কালেকশন</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>সমিতি *</label><select><option>— বাছুন —</option></select></div></div><div class="form-row col2"><div class="form-group"><label>তারিখ *</label><input type="date"></div><div class="form-group"><label>কালেকশনের ধরন</label><select><option>সব</option><option>ঋণ</option><option>সঞ্চয়</option></select></div></div><button class="btn btn-primary btn-block" style="margin-top:8px;">🔍 সমিতি লোড করুন</button></div></div>
+
+  <div id="page-cashBankReport" class="page" style="display:none;"><div class="page-title">💵 ক্যাশ ও ব্যাংক (Cash & Bank)</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>তারিখ হতে</label><input type="date"></div><div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <div id="page-accountTransaction" class="page" style="display:none;"><div class="page-title">📒 Account Transaction</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>একাউন্ট *</label><select><option>— বাছুন —</option></select></div></div><div class="form-row col2"><div class="form-group"><label>তারিখ হতে</label><input type="date"></div><div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div></div><button class="btn btn-primary" style="margin-top:4px;">🔍 দেখুন</button></div></div>
+
+  <div id="page-ledgerTransaction" class="page" style="display:none;"><div class="page-title">📒 Ledger Transaction</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>Ledger *</label><select><option>— বাছুন —</option></select></div></div><div class="form-row col2"><div class="form-group"><label>তারিখ হতে</label><input type="date"></div><div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div></div><button class="btn btn-primary" style="margin-top:4px;">🔍 দেখুন</button></div></div>
+
+  <div id="page-interBranchList" class="page" style="display:none;"><div class="page-title">📋 আন্তঃ শাখা ট্রানজেকশন তালিকা</div><div class="card"><div class="table-wrap"><table><thead><tr><th>তারিখ</th><th>প্রেরক শাখা</th><th>প্রাপক শাখা</th><th>পরিমাণ</th><th>ধরন</th><th>অবস্থা</th></tr></thead><tbody><tr><td colspan="6" style="text-align:center;color:var(--text-light)">কোনো ট্রানজেকশন নেই</td></tr></tbody></table></div></div></div>
+
+  <div id="page-interBranchReceive" class="page" style="display:none;"><div class="page-title">📥 Inter Branch Receive Payment</div><div class="card"><div class="form-row col2"><div class="form-group"><label>প্রেরক শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>পরিমাণ (৳) *</label><input type="number"></div></div><div class="form-row col2"><div class="form-group"><label>রেফারেন্স নং *</label><input type="text"></div><div class="form-group"><label>তারিখ *</label><input type="date"></div></div><button class="btn btn-success btn-block" style="margin-top:8px;">✅ রিসিভ নিশ্চিত করুন</button></div></div>
+
+  <div id="page-groupPermission" class="page" style="display:none;"><div class="page-title">👥 গ্রুপ পারমিশন</div><div class="card"><div class="form-row col2"><div class="form-group"><label>গ্রুপের নাম *</label><input type="text" placeholder="যেমন: Field Officer Group"></div><div class="form-group"><label>বিবরণ</label><input type="text"></div></div><div class="card-title">মডিউল পারমিশন</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><label style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:7px;cursor:pointer;"><input type="checkbox" checked> সদস্য ভর্তি</label><label style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:7px;cursor:pointer;"><input type="checkbox" checked> কিস্তি জমা</label><label style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:7px;cursor:pointer;"><input type="checkbox" checked> সঞ্চয় জমা</label><label style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:7px;cursor:pointer;"><input type="checkbox"> ঋণ মওকুফ</label></div><button class="btn btn-primary btn-block" style="margin-top:14px;">✅ গ্রুপ সংরক্ষণ করুন</button></div></div>
+
+  <div id="page-smsSettings" class="page" style="display:none;"><div class="page-title">📱 SMS সেটিংস</div><div class="card"><div class="form-row col2"><div class="form-group"><label>API Key</label><input type="text"></div><div class="form-group"><label>Sender ID</label><input type="text"></div></div><div class="card-title" style="margin-top:8px;">SMS Template</div><div class="form-group" style="margin-bottom:12px;"><label>কিস্তি জমার SMS</label><textarea rows="3" placeholder="প্রিয় {নাম}, আপনার ৳{পরিমাণ} কিস্তি গ্রহণ করা হয়েছে।"></textarea></div><div class="form-group" style="margin-bottom:14px;"><label>বকেয়া সতর্কতার SMS</label><textarea rows="3" placeholder="প্রিয় {নাম}, আপনার ৳{বকেয়া} বকেয়া কিস্তি পরিশোধ করুন।"></textarea></div><button class="btn btn-primary btn-block">💾 সেটিংস সংরক্ষণ করুন</button></div></div>
+
+  <div id="page-samityDayChange" class="page" style="display:none;"><div class="page-title">📅 সমিতির দিন পরিবর্তন</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>সমিতি *</label><select><option>— বাছুন —</option></select></div></div><div class="form-row col2"><div class="form-group"><label>বর্তমান দিন</label><input type="text" readonly style="background:#f5f5f5"></div><div class="form-group"><label>নতুন দিন *</label><select><option>রবিবার</option><option>সোমবার</option><option>মঙ্গলবার</option><option>বুধবার</option><option>বৃহস্পতিবার</option><option>শুক্রবার</option><option>শনিবার</option></select></div></div><div class="form-group" style="margin-bottom:14px;"><label>কার্যকর তারিখ *</label><input type="date"></div><button class="btn btn-warning btn-block">📅 দিন পরিবর্তন করুন</button></div></div>
+
+  <div id="page-branchSamityTransfer" class="page" style="display:none;"><div class="page-title">🔀 Branch Samity Transfer</div><div class="card"><div class="form-row col2"><div class="form-group"><label>বর্তমান শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>বর্তমান সমিতি *</label><select><option>— বাছুন —</option></select></div></div><div class="form-row col2"><div class="form-group"><label>নতুন শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>নতুন সমিতি *</label><select><option>— বাছুন —</option></select></div></div><div class="form-row col2"><div class="form-group"><label>তারিখ *</label><input type="date"></div><div class="form-group"><label>কারণ</label><input type="text"></div></div><button class="btn btn-primary btn-block" style="margin-top:8px;">🔀 স্থানান্তর করুন</button></div></div>
+
+  <div id="page-closingDay" class="page" style="display:none;"><div class="page-title">🔒 Closing Business Day</div><div class="card"><div class="alert alert-warning">⚠️ সতর্কতা: ব্যবসায়িক দিন বন্ধ করার আগে নিশ্চিত করুন সব ট্রানজেকশন সম্পন্ন হয়েছে।</div><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>ব্যবসায়িক তারিখ</label><input type="date"></div></div><button class="btn btn-danger btn-block" style="margin-top:8px;">🔒 দিন বন্ধ করুন</button></div></div>
+
+  <div id="page-incomeExpense" class="page" style="display:none;"><div class="page-title">📊 Income & Expenses Report</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>তারিখ হতে</label><input type="date"></div><div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <div id="page-ledgerStatement" class="page" style="display:none;"><div class="page-title">📋 Ledger Statement</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>Ledger</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>তারিখ হতে</label><input type="date"></div><div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <div id="page-receiptPayment" class="page" style="display:none;"><div class="page-title">💵 Receipt & Payment</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>তারিখ হতে</label><input type="date"></div><div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <div id="page-rptSamityBalance" class="page" style="display:none;"><div class="page-title">🏛️ সমিতি ব্যালেন্স রিপোর্ট</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div><div class="form-group"><label>তারিখ হতে</label><input type="date"></div><div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <div id="page-rptMemberLoanBalance" class="page" style="display:none;"><div class="page-title">💳 সদস্য ঋণ ব্যালেন্স</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div><div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div><div class="form-group"><label>সদস্য আইডি</label><input type="text"></div><div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <div id="page-rptSamityLoanHistory" class="page" style="display:none;"><div class="page-title">📜 সমিতি ঋণ হিস্টি</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div><div class="form-group"><label>তারিখ হতে</label><input type="date"></div><div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <div id="page-rptDepositProfitBalance" class="page" style="display:none;"><div class="page-title">💰 ডিপোজিট লাভ ব্যালেন্স</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div><div class="form-group"><label>একাউন্ট ধরন</label><select><option>— সব —</option></select></div><div class="form-group"><label>সদস্য আইডি</label><input type="text"></div><div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <div id="page-rptMemberPassbook" class="page" style="display:none;"><div class="page-title">📒 সদস্য পাসবুক রিপোর্ট</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div><div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div><div class="form-group"><label>সদস্য আইডি</label><input type="text"></div><div class="form-group"><label>তারিখ হতে</label><input type="date"></div><div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <div id="page-rptCollectionSheet" class="page" style="display:none;"><div class="page-title">📋 কালেকশন শীট রিপোর্ট</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div><div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div><div class="form-group"><label>তারিখ</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <div id="page-rptDepositCollectionSheet" class="page" style="display:none;"><div class="page-title">🏦 ডিপোজিট কালেকশন শীট</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div><div class="form-group"><label>তারিখ</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <div id="page-rptCollectionDetails" class="page" style="display:none;"><div class="page-title">📊 কালেকশন বিবরণ রিপোর্ট</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div><div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div><div class="form-group"><label>তারিখ হতে</label><input type="date"></div><div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <div id="page-rptCollectionSummary" class="page" style="display:none;"><div class="page-title">📈 কালেকশন সারসংক্ষেপ রিপোর্ট</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div><div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div><div class="form-group"><label>তারিখ হতে</label><input type="date"></div><div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <div id="page-rptFieldOfficer" class="page" style="display:none;"><div class="page-title">👤 Field Officers Report</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div><div class="form-group"><label>তারিখ হতে</label><input type="date"></div><div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <div id="page-rptSamityWiseTxn" class="page" style="display:none;"><div class="page-title">🏛️ সমিতিভিত্তিক লেনদেন সারসংক্ষেপ</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div><div class="form-group"><label>তারিখ হতে</label><input type="date"></div><div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <div id="page-rptDateWiseTopsheet" class="page" style="display:none;"><div class="page-title">📅 Date Wise Collection Topsheet</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div><div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div><div class="form-group"><label>তারিখ</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <div id="page-rptSavingsReturn" class="page" style="display:none;"><div class="page-title">💸 সঞ্চয় ফেরত রেজিস্টার</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div><div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div><div class="form-group"><label>সদস্য আইডি</label><input type="text"></div><div class="form-group"><label>তারিখ হতে</label><input type="date"></div><div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <div id="page-rptDepositCollection" class="page" style="display:none;"><div class="page-title">🏦 ডিপোজিট কালেকশন রিপোর্ট</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div><div class="form-group"><label>কর্মী</label><select><option>— সব —</option></select></div><div class="form-group"><label>সদস্য আইডি</label><input type="text"></div><div class="form-group"><label>তারিখ হতে</label><input type="date"></div><div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <div id="page-rptSamityMemberRegister" class="page" style="display:none;"><div class="page-title">📋 সমবায় সদস্য রেজিস্টার</div><div class="report-filter"><div class="filter-grid"><div class="form-group"><label>শাখা</label><select><option>— সব —</option></select></div><div class="form-group"><label>সমিতি</label><select><option>— সব —</option></select></div><div class="form-group"><label>তারিখ হতে</label><input type="date"></div><div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date"></div></div><div class="filter-actions"><button class="btn btn-primary">🔍 দেখুন</button><button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button></div></div><div class="card"><div style="text-align:center;color:var(--text-light);padding:20px;">ফিল্টার দিয়ে রিপোর্ট লোড করুন</div></div></div>
+
+  <!-- Profile -->
+  <div id="page-profile" class="page" style="display:none;">
+    <div class="page-title">👤 প্রোফাইল</div>
+    <div class="card">
+      <div style="text-align:center;padding:20px 0;">
+        <div style="font-size:60px;margin-bottom:10px;">👤</div>
+        <h3 id="profileName" style="font-size:18px;color:var(--primary);">Admin</h3>
+        <p id="profileRole" style="color:var(--text-light);margin-top:4px;">Administrator</p>
+      </div>
+      <div class="info-grid">
+        <div class="info-item"><label>ইউজার নাম</label><p id="profileUsername">admin</p></div>
+        <div class="info-item"><label>শাখা</label><p>প্রধান অফিস</p></div>
+        <div class="info-item"><label>শেষ লগইন</label><p id="profileLastLogin">—</p></div>
+        <div class="info-item"><label>একাউন্ট তৈরি</label><p>—</p></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔒 পাসওয়ার্ড পরিবর্তন</div>
+      <div class="form-group" style="margin-bottom:12px;"><label>বর্তমান পাসওয়ার্ড</label><input type="password"></div>
+      <div class="form-group" style="margin-bottom:12px;"><label>নতুন পাসওয়ার্ড</label><input type="password"></div>
+      <div class="form-group" style="margin-bottom:14px;"><label>নতুন পাসওয়ার্ড আবার</label><input type="password"></div>
+      <button class="btn btn-primary btn-block">🔒 পাসওয়ার্ড পরিবর্তন করুন</button>
+    </div>
+    <div style="text-align:center;margin-top:8px;">
+      <button onclick="doLogout()" class="btn btn-danger">🚪 লগআউট</button>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="nav-items">
+    <a href="#" class="active" onclick="showPage('dashboard');return false;"><span class="icon">🏠</span>হোম</a>
+    <a href="#" onclick="showPage('memberList');return false;"><span class="icon">👥</span>সদস্য</a>
+    <a href="#" onclick="showPage('loanInstallment');return false;"><span class="icon">💳</span>কিস্তি</a>
+    <a href="#" onclick="showPage('collectionSheet');return false;"><span class="icon">✅</span>কালেকশন</a>
+    <a href="#" onclick="toggleSidebar();return false;"><span class="icon">☰</span>মেনু</a>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<script>
+// ─── STATE ───
+let currentUser = null;
+let sidebarOpen = false;
+
+// ─── INIT ───
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('loader').style.opacity = '0';
+    setTimeout(() => {
+      document.getElementById('loader').style.display = 'none';
+      const saved = localStorage.getItem('grameenUser');
+      if (saved) {
+        currentUser = JSON.parse(saved);
+        startApp();
+      } else {
+        document.getElementById('loginScreen').style.display = 'flex';
+      }
+    }, 500);
+  }, 2000);
+});
+
+// ─── LOGIN ───
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value.trim();
+  // Demo credentials
+  const users = [
+    {username:'admin',password:'admin123',name:'Admin',role:'Administrator'},
+    {username:'manager',password:'manager123',name:'Branch Manager',role:'Branch Manager'},
+    {username:'fo',password:'fo123',name:'Field Officer',role:'Field Officer'}
+  ];
+  const found = users.find(x => x.username === u && x.password === p);
+  if (found) {
+    currentUser = found;
+    localStorage.setItem('grameenUser', JSON.stringify(found));
+    document.getElementById('loginScreen').style.display = 'none';
+    startApp();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+  }
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const ls = document.getElementById('loginScreen');
+    if (ls && ls.style.display === 'flex') doLogin();
+  }
+});
+
+function doLogout() {
+  localStorage.removeItem('grameenUser');
+  currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+// ─── APP START ───
+function startApp() {
+  document.getElementById('app').style.display = 'block';
+  updateDate();
+  setInterval(updateDate, 60000);
+  if (currentUser) {
+    document.getElementById('dashWelcome').textContent = 'স্বাগতম, ' + currentUser.name + '!';
+    document.getElementById('profileName').textContent = currentUser.name;
+    document.getElementById('profileRole').textContent = currentUser.role;
+    document.getElementById('profileUsername').textContent = currentUser.username;
+    document.getElementById('profileLastLogin').textContent = new Date().toLocaleDateString('bn-BD');
+  }
+  // default: show dashboard
+  showPage('dashboard');
+  // On desktop, open sidebar
+  if (window.innerWidth >= 768) {
+    document.getElementById('sidebar').classList.remove('closed');
+    document.getElementById('mainContent').classList.add('shifted');
+    sidebarOpen = true;
+  }
+}
+
+function updateDate() {
+  const now = new Date();
+  const opts = {year:'numeric',month:'long',day:'numeric'};
+  const d = now.toLocaleDateString('bn-BD', opts);
+  const el = document.getElementById('headerDate');
+  const el2 = document.getElementById('dashDate');
+  if (el) el.textContent = d;
+  if (el2) el2.textContent = d;
+  // set all date inputs to today
+  const today = now.toISOString().split('T')[0];
+  document.querySelectorAll('input[type="date"]:not([readonly])').forEach(inp => {
+    if (!inp.value) inp.value = today;
+  });
+}
+
+// ─── SIDEBAR ───
+function toggleSidebar() {
+  sidebarOpen = !sidebarOpen;
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  const mc = document.getElementById('mainContent');
+  if (sidebarOpen) {
+    sb.classList.remove('closed');
+    sb.classList.add('open');
+    if (window.innerWidth >= 768) mc.classList.add('shifted');
+    else ov.classList.add('show');
+  } else {
+    sb.classList.remove('open');
+    sb.classList.add('closed');
+    mc.classList.remove('shifted');
+    ov.classList.remove('show');
+  }
+}
+function closeSidebar() {
+  sidebarOpen = false;
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar').classList.add('closed');
+  document.getElementById('mainContent').classList.remove('shifted');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+}
+
+// ─── NAV ───
+function toggleMenu(el) {
+  const sub = el.nextElementSibling;
+  const isOpen = sub.classList.contains('open');
+  // close all
+  document.querySelectorAll('.submenu.open').forEach(s => s.classList.remove('open'));
+  document.querySelectorAll('.nav-item.open').forEach(n => n.classList.remove('open'));
+  if (!isOpen) {
+    sub.classList.add('open');
+    el.classList.add('open');
+  }
+}
+
+function showPage(pageId) {
+  // hide all pages
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  // show target
+  const target = document.getElementById('page-' + pageId);
+  if (target) {
+    target.style.display = 'block';
+    window.scrollTo(0, 0);
+  }
+  // update active nav
+  document.querySelectorAll('.sub-item').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  // close sidebar on mobile
+  if (window.innerWidth < 768) closeSidebar();
+}
+
+// ─── TABS ───
+function switchTab(btn, tabId) {
+  const parent = btn.closest('.card') || btn.closest('.tabs').parentElement;
+  parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  parent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  const tc = document.getElementById(tabId);
+  if (tc) tc.classList.add('active');
+}
+</script>
+
+</body>
+</html>
