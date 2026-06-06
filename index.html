@@ -795,8 +795,24 @@ table tr:hover td{background:#f7fafd;}
         <div class="form-group"><label>মাতার নাম</label><input type="text"></div>
       </div>
       <div class="form-row col2">
+        <div class="form-group"><label>স্বামী / স্ত্রী</label><input type="text"></div>
+        <div class="form-group"><label>বৈবাহিক অবস্থা</label><select><option>অবিবাহিত</option><option>বিবাহিত</option><option>বিধবা/বিপত্নীক</option><option>তালাকপ্রাপ্ত</option></select></div>
+      </div>
+      <div class="form-row col2">
         <div class="form-group"><label>জাতীয় পরিচয়পত্র নং</label><input type="text"></div>
+        <div class="form-group"><label>জন্ম সনদ নং</label><input type="text"></div>
+      </div>
+      <div class="form-row col2">
         <div class="form-group"><label>জন্ম তারিখ</label><input type="date"></div>
+        <div class="form-group"><label>রক্তের গ্রুপ</label><select><option>— বাছুন —</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>লিঙ্গ</label><select><option>পুরুষ</option><option>মহিলা</option><option>অন্যান্য</option></select></div>
+        <div class="form-group"><label>ধর্ম</label><select><option>ইসলাম</option><option>হিন্দু</option><option>খ্রিস্টান</option><option>বৌদ্ধ</option><option>অন্যান্য</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>ই-মেইল</label><input type="email"></div>
+        <div class="form-group"><label>মাসিক আয় (৳)</label><input type="number" value="0.0"></div>
       </div>
       <div class="form-row col2">
         <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
@@ -804,14 +820,92 @@ table tr:hover td{background:#f7fafd;}
       </div>
       <div class="form-row col2">
         <div class="form-group"><label>ভর্তির তারিখ *</label><input type="date"></div>
-        <div class="form-group"><label>শেয়ার সংখ্যা</label><input type="number" value="1"></div>
+        <div class="form-group"><label>শেয়ার পরিমাণ TK</label><input type="number" value="0"></div>
       </div>
       <div class="form-row col2">
         <div class="form-group"><label>পেশা</label><input type="text"></div>
-        <div class="form-group"><label>সদস্যের ধরন</label><select><option>সাধারণ</option><option>পরিচালক</option></select></div>
+        <div class="form-group"><label>রেফারেন্স</label><input type="text"></div>
       </div>
-      <div class="form-group" style="margin-bottom:14px;"><label>ঠিকানা</label><textarea rows="2"></textarea></div>
-      <button class="btn btn-primary btn-block">✅ সদস্য সংরক্ষণ করুন</button>
+      <div class="form-row col2">
+        <div class="form-group"><label>বর্তমান ঠিকানা</label><textarea rows="2"></textarea></div>
+        <div class="form-group"><label>স্থায়ী ঠিকানা</label><textarea rows="2"></textarea></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>ভর্তি ফি (৳)</label><input type="number" value="0.00"></div>
+        <div class="form-group"><label>পাসবই ফি (৳)</label><input type="number" value="0.00"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;"><label>সদস্যের ধরন</label><select><option>সাধারণ</option><option>পরিচালক</option></select></div>
+
+      <!-- সদস্যের ছবি ও স্বাক্ষর -->
+      <div style="background:#e8f4fd;border-radius:8px;padding:12px;margin-bottom:14px;">
+        <div style="font-weight:600;color:var(--primary);margin-bottom:10px;font-size:13px;">📷 সদস্যের ছবি ও স্বাক্ষর</div>
+        <div class="form-row col2">
+          <div class="form-group">
+            <label>Profile Pic</label>
+            <input type="file" accept="image/*" id="memberProfilePic" onchange="previewImage(this,'memberProfilePreview')">
+            <div style="margin-top:8px;width:80px;height:80px;border:2px dashed var(--border);border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fff;">
+              <img id="memberProfilePreview" src="" style="width:100%;height:100%;object-fit:cover;display:none;">
+              <span style="font-size:10px;color:var(--text-light);text-align:center;" id="memberProfileText">preview</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Signature Pic</label>
+            <input type="file" accept="image/*" id="memberSignaturePic" onchange="previewImage(this,'memberSignaturePreview')">
+            <div style="margin-top:8px;width:80px;height:80px;border:2px dashed var(--border);border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fff;">
+              <img id="memberSignaturePreview" src="" style="width:100%;height:100%;object-fit:cover;display:none;">
+              <span style="font-size:10px;color:var(--text-light);text-align:center;" id="memberSignatureText">preview</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- নমিনির তথ্য -->
+      <div style="background:#f0faf4;border-radius:8px;padding:12px;margin-bottom:14px;">
+        <div style="font-weight:600;color:var(--success);margin-bottom:10px;font-size:13px;">👤 নমিনির তথ্য</div>
+        <div class="form-row col2">
+          <div class="form-group"><label>নমিনির নাম</label><input type="text"></div>
+          <div class="form-group"><label>সম্পর্ক</label><select><option>স্বামী</option><option>স্ত্রী</option><option>পিতা</option><option>মাতা</option><option>পুত্র</option><option>কন্যা</option><option>ভাই</option><option>বোন</option><option>অন্যান্য</option></select></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>পিতার নাম</label><input type="text"></div>
+          <div class="form-group"><label>মাতার নাম</label><input type="text"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>মোবাইল</label><input type="tel"></div>
+          <div class="form-group"><label>জাতীয় পরিচয়পত্র</label><input type="text"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:10px;"><label>ঠিকানা</label><textarea rows="2"></textarea></div>
+
+        <!-- নমিনির ছবি ও স্বাক্ষর -->
+        <div class="form-row col2">
+          <div class="form-group">
+            <label>নমিনির Profile Pic</label>
+            <input type="file" accept="image/*" onchange="previewImage(this,'nomineeProfilePreview')">
+            <div style="margin-top:8px;width:80px;height:80px;border:2px dashed var(--border);border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fff;">
+              <img id="nomineeProfilePreview" src="" style="width:100%;height:100%;object-fit:cover;display:none;">
+              <span style="font-size:10px;color:var(--text-light);">preview</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>নমিনির Signature</label>
+            <input type="file" accept="image/*" onchange="previewImage(this,'nomineeSignPreview')">
+            <div style="margin-top:8px;width:80px;height:80px;border:2px dashed var(--border);border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fff;">
+              <img id="nomineeSignPreview" src="" style="width:100%;height:100%;object-fit:cover;display:none;">
+              <span style="font-size:10px;color:var(--text-light);">preview</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Documents Upload -->
+      <div style="background:#fef9e7;border-radius:8px;padding:12px;margin-bottom:14px;">
+        <div style="font-weight:600;color:var(--warning);margin-bottom:10px;font-size:13px;">📎 Upload Documents</div>
+        <input type="file" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx">
+        <div style="font-size:11px;color:var(--text-light);margin-top:4px;">Allowed: jpg, jpeg, png, pdf, doc, docx, xls, xlsx</div>
+      </div>
+
+      <button class="btn btn-primary btn-block">✅ সদস্য তৈরি</button>
+      <button class="btn btn-outline btn-block" style="margin-top:8px;">🔍 সদস্য সার্চ</button>
     </div>
   </div>
 
@@ -972,58 +1066,129 @@ table tr:hover td{background:#f7fafd;}
 
   <!-- ════ LOAN INSTALLMENT ════ -->
   <div id="page-loanInstallment" class="page" style="display:none;">
-    <div class="page-title">💳 ঋণের কিস্তি জমা</div>
+    <div class="page-title">💳 Loan Installment Receive</div>
     <div class="card">
-      <div class="card-title">Loan Installment Receive</div>
       <div class="form-row col2">
-        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
-        <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
-      </div>
-      <div class="form-group" style="margin-bottom:12px;"><label>ঋণ একাউন্ট</label><select><option>— ঋণ বাছুন —</option></select></div>
-      <div class="info-grid" style="margin-bottom:14px;">
-        <div class="info-item"><label>আজকের বকেয়া</label><p style="color:var(--danger)">৳০</p></div>
-        <div class="info-item"><label>মাসিক কিস্তি</label><p>৳০</p></div>
-        <div class="info-item"><label>মোট কিস্তি পরিশোধ</label><p style="color:var(--success)">৳০</p></div>
-        <div class="info-item"><label>মোট ঋণ বকেয়া</label><p style="color:var(--danger)">৳০</p></div>
+        <div class="form-group"><label>শাখা নাম *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><select><option>— বাছুন —</option></select></div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label>জমার পরিমাণ (৳) *</label><input type="number"></div>
-        <div class="form-group"><label>জরিমানা চার্জ (৳)</label><input type="number" value="0"></div>
+        <div class="form-group"><label>সদস্য একাউন্ট *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>জমার পরিমাণ</label><input type="number" value="0.0"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>আজকের বকেয়া</label><input type="text" readonly style="background:#fff0f0;color:var(--danger);font-weight:700;"></div>
+        <div class="form-group"><label>জরিমানা চার্জ</label><input type="number" value="0.0"></div>
       </div>
       <div class="form-row col2">
         <div class="form-group"><label>কিস্তির তারিখ *</label><input type="date"></div>
+        <div class="form-group"><label>মোট কিস্তি</label><input type="text" readonly style="background:#f5f5f5;"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>মোট কিস্তি পরিশোধ হয়েছে</label><input type="text" readonly style="background:#f5f5f5;"></div>
+        <div class="form-group"><label>মোট ঋণের পরিমাণ</label><input type="text" readonly style="background:#f5f5f5;"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>মোট ঋণ পরিশোধ হয়েছে</label><input type="text" readonly style="background:#f0faf4;color:var(--success);font-weight:700;"></div>
+        <div class="form-group"><label>মোট ঋণ বকেয়া</label><input type="text" readonly style="background:#fff0f0;color:var(--danger);font-weight:700;"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>মেয়াদ উত্তীর্ণের তারিখ</label><input type="date" readonly style="background:#f5f5f5;"></div>
+        <div class="form-group">
+          <label>সঞ্চয় একাউন্ট থেকে Transfer</label>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+            <input type="checkbox" id="transferFromDeposit" style="width:18px;height:18px;">
+            <label for="transferFromDeposit" style="font-size:13px;">Transfer From Same Customer Deposit</label>
+          </div>
+        </div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>সঞ্চয় একাউন্ট</label><select><option>— বাছুন —</option></select></div>
         <div class="form-group"><label>মন্তব্য</label><input type="text"></div>
       </div>
-      <button class="btn btn-success btn-block">✅ Receive Installment</button>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+        <button class="btn btn-success">✅ Receive Installment</button>
+        <button class="btn btn-outline">🔍 Search Receive Installment</button>
+      </div>
     </div>
   </div>
 
   <!-- ════ LOAN RESCHEDULE ════ -->
   <div id="page-loanReschedule" class="page" style="display:none;">
-    <div class="page-title">🔄 ঋণ পুনঃতফসিল (Loan Reschedule)</div>
+    <div class="page-title">🔄 Loan Reschedule</div>
     <div class="card">
-      <div class="form-row col2">
-        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
-        <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+      <!-- Current Loan Details -->
+      <div style="background:#e8f4fd;border-radius:8px;padding:12px;margin-bottom:14px;">
+        <div style="font-weight:700;color:var(--primary);margin-bottom:10px;">Current Loan Details</div>
+        <div class="form-row col2">
+          <div class="form-group"><label>Branch Name</label><select><option>— বাছুন —</option></select></div>
+          <div class="form-group"><label>Member Name *</label><select><option>— বাছুন —</option></select></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>Loan Account *</label><select><option>— বাছুন —</option></select></div>
+          <div class="form-group"><label>Loan Disburse Amount</label><input type="text" readonly value="0.0" style="background:#f5f5f5;"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>Loan Disburse Profit</label><input type="text" readonly value="0.0" style="background:#f5f5f5;"></div>
+          <div class="form-group"><label>Disburse Date</label><input type="date" readonly style="background:#f5f5f5;"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>Previous Installment Amount</label><input type="text" readonly style="background:#f5f5f5;"></div>
+          <div class="form-group"><label>Total Installment</label><input type="text" readonly style="background:#f5f5f5;"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>Total Installment Paid</label><input type="text" readonly style="background:#f0faf4;"></div>
+          <div class="form-group"><label>Total Loan Amount</label><input type="text" readonly style="background:#f5f5f5;"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>Total Loan Paid</label><input type="text" readonly style="background:#f0faf4;color:var(--success);font-weight:700;"></div>
+          <div class="form-group"><label>Total Loan Due</label><input type="text" readonly style="background:#fff0f0;color:var(--danger);font-weight:700;"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>Total Due Principal</label><input type="number" value="0.0"></div>
+          <div class="form-group"><label>Total Due Profit</label><input type="number" value="0.0"></div>
+        </div>
+        <div class="form-group"><label>Expired Date</label><input type="date" readonly style="background:#f5f5f5;"></div>
       </div>
-      <div class="form-group" style="margin-bottom:12px;"><label>ঋণ একাউন্ট *</label><select><option>— ঋণ বাছুন —</option></select></div>
-      <div class="info-grid" style="margin-bottom:14px;">
-        <div class="info-item"><label>বর্তমান বকেয়া</label><p style="color:var(--danger)">৳০</p></div>
-        <div class="info-item"><label>বকেয়া কিস্তি</label><p>০টি</p></div>
-        <div class="info-item"><label>মূল পরিমাণ</label><p>৳০</p></div>
-        <div class="info-item"><label>সুদ বকেয়া</label><p>৳০</p></div>
+
+      <!-- New Loan Reschedule Details -->
+      <div style="background:#f0faf4;border-radius:8px;padding:12px;margin-bottom:14px;">
+        <div style="font-weight:700;color:var(--success);margin-bottom:10px;">New Loan Reschedule Details</div>
+        <div class="form-row col2">
+          <div class="form-group"><label>Installment Frequency *</label><select><option>Select</option><option>সাপ্তাহিক</option><option>পাক্ষিক</option><option>মাসিক</option></select></div>
+          <div class="form-group"><label>Additional Profit Amount *</label><input type="number" value="0.0"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>Loan Profit Amount</label><input type="number" value="0.0"></div>
+          <div class="form-group"><label>Reschedule Date *</label><input type="date"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>Total Loan Amount *</label><input type="number" value="0.0"></div>
+          <div class="form-group"><label>Installment Amount *</label><input type="number" value="0.0"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>No of Installment</label><input type="number"></div>
+          <div class="form-group"><label>1st Installment Date</label><input type="date"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>Installment Expiry Date</label><input type="date"></div>
+          <div class="form-group"><label>Form Fee</label><input type="number" value="0.0"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>Health Service Fee</label><input type="number" value="0.0"></div>
+          <div class="form-group"><label>Risk Insurance</label><input type="number" value="0.0"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="form-group"><label>Document Fee</label><input type="number" value="0.0"></div>
+          <div class="form-group"><label>EMI Locker Fee</label><input type="number" value="0.0"></div>
+        </div>
+        <div class="form-group"><label>Others Fee</label><input type="number" value="0.0"></div>
       </div>
-      <div class="card-title" style="margin-top:4px;">নতুন তফসিল</div>
-      <div class="form-row col2">
-        <div class="form-group"><label>নতুন মেয়াদ (মাস) *</label><input type="number"></div>
-        <div class="form-group"><label>নতুন সুদের হার (%)</label><input type="number"></div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-success">✅ Submit Reschedule</button>
+        <button class="btn btn-outline">🔍 Search Reschedule</button>
       </div>
-      <div class="form-row col2">
-        <div class="form-group"><label>পুনঃতফসিলের তারিখ *</label><input type="date"></div>
-        <div class="form-group"><label>কারণ</label><input type="text"></div>
-      </div>
-      <div class="form-group" style="margin-bottom:14px;"><label>মন্তব্য</label><textarea rows="2"></textarea></div>
-      <button class="btn btn-warning btn-block">🔄 পুনঃতফসিল করুন</button>
     </div>
   </div>
 
@@ -3485,7 +3650,24 @@ document.addEventListener('click', e => {
   }
 });
 
-// ─── BRANCH MODAL ───
+// ─── PREVIEW IMAGE ───
+window.previewImage = function(input, previewId) {
+  const preview = document.getElementById(previewId);
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      if (preview) {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        const textEl = preview.nextElementSibling;
+        if (textEl) textEl.style.display = 'none';
+      }
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+
 window.showBranchModal = async function() {
   const modal = document.getElementById('branchModal');
   const sel = document.getElementById('branchSelect');
