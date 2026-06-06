@@ -663,14 +663,11 @@ table tr:hover td{background:#f7fafd;}
     <div class="page-title">📊 ড্যাশবোর্ড</div>
 
     <div class="card" style="background:linear-gradient(135deg,#1a5276,#148f77);color:#fff;padding:14px 16px;margin-bottom:16px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <img src="logo.png" style="width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.5);" onerror="this.style.display='none'">
         <div>
-          <div style="font-size:13px;opacity:.8;">স্বাগতম!</div>
-          <div style="font-size:17px;font-weight:700;" id="dashWelcome">লোড হচ্ছে...</div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-size:12px;opacity:.8;">ব্যবসায়িক তারিখ</div>
-          <div style="font-size:15px;font-weight:700;" id="dashDate">—</div>
+          <div style="font-size:12px;opacity:.8;">স্বাগতম!</div>
+          <div style="font-size:15px;font-weight:700;" id="dashWelcome">গ্রামীন আশার আলো কৃষি সমবায় সমিতি লিঃ</div>
         </div>
       </div>
       <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
@@ -2507,7 +2504,7 @@ function startApp() {
   updateDate();
   setInterval(updateDate, 60000);
   if (currentUser) {
-    document.getElementById('dashWelcome').textContent = 'স্বাগতম, ' + (currentUser.name||currentUser.email) + '!';
+    document.getElementById('dashWelcome').textContent = 'গ্রামীন আশার আলো কৃষি সমবায় সমিতি লিঃ';
     document.getElementById('profileName').textContent = currentUser.name || currentUser.email;
     document.getElementById('profileRole').textContent = currentUser.role || 'Admin';
     document.getElementById('profileUsername').textContent = currentUser.email;
