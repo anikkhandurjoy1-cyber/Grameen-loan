@@ -2642,19 +2642,24 @@ function todayStr() { return new Date().toISOString().split('T')[0]; }
 // ─── INIT ───
 window.addEventListener('load', () => {
   setTimeout(() => {
-    document.getElementById('loader').style.opacity = '0';
+    const loader = document.getElementById('loader');
+    loader.style.opacity = '0';
+    loader.style.transition = 'opacity 0.5s';
     setTimeout(() => {
-      document.getElementById('loader').style.display = 'none';
+      loader.style.display = 'none';
     }, 500);
-  }, 2000);
+  }, 2500);
 });
 
 // ─── AUTH STATE ───
 onAuthStateChanged(auth, async (user) => {
+  // Make sure loader is hidden first
+  const loader = document.getElementById('loader');
+  if (loader) loader.style.display = 'none';
+
   if (user) {
-    // load user profile from Firestore
     try {
-      const uSnap = await getDocs(query(collection(db,'users'), where('uid','==',user.uid)));
+      const uSnap = await getDocs(query(collection(db,'users'), where('email','==',user.email)));
       if (!uSnap.empty) {
         currentUser = { uid: user.uid, email: user.email, ...uSnap.docs[0].data() };
       } else {
