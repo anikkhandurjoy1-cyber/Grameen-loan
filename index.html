@@ -2641,14 +2641,23 @@ function todayStr() { return new Date().toISOString().split('T')[0]; }
 
 // ─── INIT ───
 window.addEventListener('load', () => {
+  // Force show login after 3 seconds no matter what
   setTimeout(() => {
     const loader = document.getElementById('loader');
-    loader.style.opacity = '0';
-    loader.style.transition = 'opacity 0.5s';
-    setTimeout(() => {
-      loader.style.display = 'none';
-    }, 500);
-  }, 2500);
+    if (loader) {
+      loader.style.opacity = '0';
+      loader.style.transition = 'opacity 0.5s';
+      setTimeout(() => {
+        loader.style.display = 'none';
+        // If app and login both hidden, show login
+        const app = document.getElementById('app');
+        const login = document.getElementById('loginScreen');
+        if (app.style.display === 'none' && login.style.display === 'none') {
+          login.style.display = 'flex';
+        }
+      }, 500);
+    }
+  }, 3000);
 });
 
 // ─── AUTH STATE ───
