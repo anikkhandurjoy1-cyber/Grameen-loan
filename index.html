@@ -1640,35 +1640,64 @@ table tr:hover td{background:#f7fafd;}
 
   <!-- ════ CREATE USER ════ -->
   <div id="page-createUser" class="page" style="display:none;">
-    <div class="page-title">👑 ইউজার তৈরি</div>
+    <div class="page-title">👑 কর্মী/ইউজার ম্যানেজমেন্ট</div>
+
+    <div class="alert alert-info">
+      ℹ️ নতুন কর্মী যোগ করলে তারা এই email ও password দিয়ে login করতে পারবেন। Role অনুযায়ী তারা শুধু নির্দিষ্ট menu দেখতে পাবেন।
+    </div>
+
     <div class="card">
+      <div class="card-title">➕ নতুন কর্মী যোগ করুন</div>
       <div class="form-row col2">
-        <div class="form-group"><label>পুরো নাম *</label><input type="text"></div>
-        <div class="form-group"><label>ইউজার নাম *</label><input type="text"></div>
+        <div class="form-group"><label>পুরো নাম *</label><input type="text" id="newUserName" placeholder="যেমন: Nazma Khatun"></div>
+        <div class="form-group"><label>Email *</label><input type="email" id="newUserEmail" placeholder="nazma@grameen.com"></div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label>পাসওয়ার্ড *</label><input type="password"></div>
-        <div class="form-group"><label>ভূমিকা *</label>
-          <select>
-            <option>Admin</option>
-            <option>Branch Manager</option>
-            <option>Field Officer</option>
-            <option>Data Entry</option>
+        <div class="form-group"><label>Password *</label><input type="password" id="newUserPass" placeholder="কমপক্ষে ৬ অক্ষর"></div>
+        <div class="form-group"><label>ভূমিকা (Role) *</label>
+          <select id="newUserRole">
+            <option value="Field Officer">Field Officer (কর্মী)</option>
+            <option value="Branch Manager">Branch Manager</option>
+            <option value="Data Entry">Data Entry</option>
+            <option value="Admin">Admin</option>
           </select>
         </div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label>শাখা</label><select><option>— বাছুন —</option></select></div>
-        <div class="form-group"><label>মোবাইল</label><input type="tel"></div>
+        <div class="form-group"><label>শাখা</label>
+          <select id="newUserBranch"><option value="">— বাছুন —</option></select>
+        </div>
+        <div class="form-group"><label>মোবাইল</label><input type="tel" id="newUserMobile" placeholder="01XXXXXXXXX"></div>
       </div>
-      <button class="btn btn-primary btn-block" style="margin-top:8px;">✅ ইউজার তৈরি করুন</button>
+
+      <!-- Role Access Info -->
+      <div style="background:#f8f9fa;border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;">
+        <div style="font-weight:600;margin-bottom:8px;">🔐 Role অনুযায়ী Access:</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <div style="background:#d5f5e3;padding:6px 10px;border-radius:6px;">
+            <b>Admin</b><br>সব কিছু দেখতে ও করতে পারবেন
+          </div>
+          <div style="background:#d6eaf8;padding:6px 10px;border-radius:6px;">
+            <b>Branch Manager</b><br>শাখার সব কাজ + বেশিরভাগ রিপোর্ট
+          </div>
+          <div style="background:#fef9e7;padding:6px 10px;border-radius:6px;">
+            <b>Field Officer</b><br>শুধু কালেকশন, কিস্তি, সঞ্চয়
+          </div>
+          <div style="background:#fdedec;padding:6px 10px;border-radius:6px;">
+            <b>Data Entry</b><br>সদস্য ও কিস্তি entry মাত্র
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-block" onclick="createStaffUser()">✅ কর্মী তৈরি করুন</button>
     </div>
+
     <div class="card">
-      <div class="card-title">ইউজার তালিকা</div>
+      <div class="card-title">👥 কর্মী তালিকা</div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>নাম</th><th>Username</th><th>ভূমিকা</th><th>শাখা</th><th>অবস্থা</th><th>কাজ</th></tr></thead>
-          <tbody id="userTableBody"><tr><td colspan="6" style="text-align:center;color:var(--text-light)">কোনো ইউজার নেই</td></tr></tbody>
+          <thead><tr><th>নাম</th><th>Email</th><th>Role</th><th>শাখা</th><th>মোবাইল</th><th>অবস্থা</th><th>কাজ</th></tr></thead>
+          <tbody id="userTableBody"><tr><td colspan="7" style="text-align:center;color:var(--text-light)">লোড হচ্ছে...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -2687,6 +2716,8 @@ function startApp() {
     document.getElementById('profileUsername').textContent = currentUser.email;
     document.getElementById('profileLastLogin').textContent = new Date().toLocaleDateString('bn-BD');
   }
+  // Apply role-based access
+  applyRoleAccess(currentUser.role || 'Admin');
   showPage('dashboard');
   loadDashboard();
   if (window.innerWidth >= 768) {
@@ -2694,6 +2725,85 @@ function startApp() {
     document.getElementById('mainContent').classList.add('shifted');
     sidebarOpen = true;
   }
+}
+
+// ══════════════════════════════════════
+// ─── ROLE-BASED ACCESS CONTROL ───
+// ══════════════════════════════════════
+
+// Role permissions definition
+const rolePermissions = {
+  'Admin': ['all'],
+  'Branch Manager': [
+    'dashboard','memberAdd','memberList','memberClosing','memberTransfer',
+    'depositAccountOpen','loanAccountOpen','loanProposal','loanProposalList',
+    'loanInstallment','loanReschedule','loanWaiver','loanEmiPenalty','loanInstallmentCancel',
+    'depositReceive','dpsDeposit','depositPayment','depositProfitPayment','depositTransfer',
+    'sharePayment','shareReceive',
+    'collectionSheet','collectionReceive','memberPassbook','memberInstallment','samityInstallment',
+    'interBranch','interBranchList','interBranchReceive',
+    'rptCollectionSheet','rptCollectionDetails','rptCollectionSummary',
+    'rptMemberBalance','rptMemberPassbook','rptLoanCollection','rptDepositReceive',
+    'rptLoanDisbursement','rptMemberLoanBalance','rptAdmissionRegister',
+    'rptSamityBalance','rptFdrRegister','rptDpsRegister','rptSavingsRegister',
+    'profile'
+  ],
+  'Field Officer': [
+    'dashboard',
+    'memberAdd','memberList',
+    'loanInstallment',
+    'depositReceive','dpsDeposit','depositPayment',
+    'collectionSheet','collectionReceive','memberPassbook',
+    'memberInstallment','samityInstallment',
+    'rptCollectionSheet','rptMemberPassbook',
+    'profile'
+  ],
+  'Data Entry': [
+    'dashboard',
+    'memberAdd','memberList',
+    'loanInstallment',
+    'depositReceive','dpsDeposit',
+    'collectionSheet',
+    'profile'
+  ]
+};
+
+// Sidebar menu permissions
+const menuPermissions = {
+  'Admin': 'all',
+  'Branch Manager': ['সদস্য পরিচালনা','একাউন্ট ওপেনিং','লোন ট্রানজেকশন','ডিপোজিট ট্রানজেকশন','শেয়ার লেনদেন','আমার সকল কালেকশন','আন্তঃ শাখা লেনদেন','ব্যালেন্স রিপোর্ট','কিস্তি রিপোর্টস সমূহ','ডিপোজিট রেজিস্টার রি...','লোন রেজিস্টার রিপোর্ট','MIS রেজিস্টার রিপোর্ট'],
+  'Field Officer': ['সদস্য পরিচালনা','আমার সকল কালেকশন','লোন ট্রানজেকশন','ডিপোজিট ট্রানজেকশন'],
+  'Data Entry': ['সদস্য পরিচালনা','আমার সকল কালেকশন','লোন ট্রানজেকশন','ডিপোজিট ট্রানজেকশন']
+};
+
+function applyRoleAccess(role) {
+  if (role === 'Admin') return; // Admin sees everything
+
+  const allowed = rolePermissions[role] || rolePermissions['Field Officer'];
+  const allowedMenus = menuPermissions[role] || menuPermissions['Field Officer'];
+
+  // Hide restricted sidebar menus
+  document.querySelectorAll('.nav-section').forEach(section => {
+    const navItem = section.querySelector('.nav-item');
+    if (!navItem) return;
+    const text = navItem.textContent.trim();
+
+    // Always show dashboard
+    if (text.includes('ড্যাশবোর্ড')) return;
+
+    // Check if this menu is allowed
+    const isAllowed = allowedMenus.some(m => text.includes(m));
+    if (!isAllowed) {
+      section.style.display = 'none';
+    }
+  });
+
+  // Show role badge in header
+  const roleBadge = document.createElement('div');
+  roleBadge.style.cssText = 'background:rgba(255,255,255,.2);color:#fff;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;';
+  roleBadge.textContent = role;
+  const headerDate = document.getElementById('headerDate');
+  if (headerDate) headerDate.after(roleBadge);
 }
 
 function updateDate() {
@@ -3197,7 +3307,59 @@ window.processSalary = async function(userId, amount) {
 // ══════════════════════════════════════
 // ─── USER MANAGEMENT ───
 // ══════════════════════════════════════
-window.saveUser = async function() {
+// ══════════════════════════════════════
+// ─── CREATE STAFF USER (Firebase Auth) ───
+// ══════════════════════════════════════
+window.createStaffUser = async function() {
+  const name = document.getElementById('newUserName').value.trim();
+  const email = document.getElementById('newUserEmail').value.trim();
+  const password = document.getElementById('newUserPass').value.trim();
+  const role = document.getElementById('newUserRole').value;
+  const branch = document.getElementById('newUserBranch').value;
+  const mobile = document.getElementById('newUserMobile').value.trim();
+
+  if (!name||!email||!password) { toast('নাম, Email ও Password আবশ্যক!','error'); return; }
+  if (password.length < 6) { toast('Password কমপক্ষে ৬ অক্ষর হতে হবে!','error'); return; }
+
+  try {
+    // Save to Firestore users collection (Firebase Auth create needs admin SDK, so we save info)
+    await addDoc(collection(db,'users'), {
+      name, email, role, branch, mobile,
+      status: 'active',
+      createdBy: currentUser.uid,
+      createdAt: serverTimestamp()
+    });
+
+    toast(`✅ ${name} (${role}) যোগ করা হয়েছে!\n\nLogin: ${email}\nPassword: ${password}`);
+
+    // Show login info
+    const infoBox = document.createElement('div');
+    infoBox.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:12px;padding:20px;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);z-index:9999;';
+    infoBox.innerHTML = `
+      <h3 style="color:var(--primary);margin-bottom:12px;">✅ কর্মী তৈরি হয়েছে!</h3>
+      <div style="background:#f8f9fa;border-radius:8px;padding:12px;font-size:13px;">
+        <div style="margin-bottom:6px;"><b>নাম:</b> ${name}</div>
+        <div style="margin-bottom:6px;"><b>Role:</b> ${role}</div>
+        <div style="margin-bottom:6px;"><b>Email:</b> ${email}</div>
+        <div style="margin-bottom:6px;"><b>Password:</b> ${password}</div>
+      </div>
+      <p style="font-size:11px;color:var(--text-light);margin-top:8px;">⚠️ এই password টি কর্মীকে দিন। তারা Firebase এ গিয়ে account তৈরি করবেন অথবা Admin Firebase Console থেকে user তৈরি করবেন।</p>
+      <button onclick="this.parentElement.remove()" style="width:100%;margin-top:12px;padding:10px;background:var(--primary);color:#fff;border:none;border-radius:7px;font-size:14px;cursor:pointer;">বন্ধ করুন</button>
+    `;
+    document.body.appendChild(infoBox);
+
+    // Clear form
+    document.getElementById('newUserName').value='';
+    document.getElementById('newUserEmail').value='';
+    document.getElementById('newUserPass').value='';
+    document.getElementById('newUserMobile').value='';
+    loadUsers();
+  } catch(e) {
+    toast('সমস্যা: '+e.message,'error');
+  }
+}
+
+
   const page = document.getElementById('page-createUser');
   const inputs = page.querySelectorAll('input');
   const selects = page.querySelectorAll('select');
@@ -3222,25 +3384,49 @@ window.saveUser = async function() {
 async function loadUsers() {
   const tbody = document.getElementById('userTableBody');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">লোড হচ্ছে...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">লোড হচ্ছে...</td></tr>';
   try {
     const snap = await getDocs(query(collection(db,'users'), orderBy('createdAt','desc')));
-    if (snap.empty) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-light)">কোনো ইউজার নেই</td></tr>'; return; }
+    if (snap.empty) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light)">কোনো কর্মী নেই</td></tr>';
+      return;
+    }
+    const roleColor = {
+      'Admin':'badge-danger',
+      'Branch Manager':'badge-info',
+      'Field Officer':'badge-success',
+      'Data Entry':'badge-warning'
+    };
     let html = '';
     snap.forEach(d => {
       const u = d.data();
+      const rc = roleColor[u.role] || 'badge-secondary';
       html += `<tr>
-        <td>${u.name||'—'}</td><td>${u.username||'—'}</td>
-        <td><span class="badge badge-info">${u.role||'—'}</span></td>
+        <td><b>${u.name||'—'}</b></td>
+        <td style="font-size:11px;">${u.email||'—'}</td>
+        <td><span class="badge ${rc}">${u.role||'—'}</span></td>
         <td>${u.branch||'—'}</td>
+        <td>${u.mobile||'—'}</td>
         <td><span class="badge ${u.status==='active'?'badge-success':'badge-danger'}">${u.status==='active'?'সক্রিয়':'বন্ধ'}</span></td>
-        <td><button class="btn btn-danger btn-sm" onclick="deleteUser('${d.id}')">🗑️</button></td>
+        <td>
+          <button class="btn btn-warning btn-sm" onclick="toggleUserStatus('${d.id}','${u.status}')">
+            ${u.status==='active'?'🔒 বন্ধ':'✅ চালু'}
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="deleteUser('${d.id}')">🗑️</button>
+        </td>
       </tr>`;
     });
     tbody.innerHTML = html;
   } catch(e) {
-    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--danger);text-align:center">লোড ব্যর্থ</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--danger);text-align:center">লোড ব্যর্থ</td></tr>';
   }
+}
+
+window.toggleUserStatus = async function(id, currentStatus) {
+  const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+  await updateDoc(doc(db,'users',id), {status: newStatus});
+  toast(newStatus === 'active' ? '✅ কর্মী চালু হয়েছে!' : '🔒 কর্মী বন্ধ করা হয়েছে!');
+  loadUsers();
 }
 window.deleteUser = async function(id) {
   if (!confirm('মুছে ফেলবেন?')) return;
