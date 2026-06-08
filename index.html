@@ -2642,46 +2642,28 @@ function todayStr() { return new Date().toISOString().split('T')[0]; }
 // ─── INIT ───
 window.addEventListener('load', () => {
   setTimeout(() => {
-    const loader = document.getElementById('loader');
-    if (loader) {
-      loader.style.opacity = '0';
-      loader.style.transition = 'opacity 0.5s';
-      setTimeout(() => {
-        loader.style.display = 'none';
-        const app = document.getElementById('app');
-        const login = document.getElementById('loginScreen');
-        if (app && app.style.display === 'none' && login && login.style.display === 'none') {
-          login.style.display = 'flex';
+    document.getElementById('loader').style.opacity = '0';
+    setTimeout(() => {
+      document.getElementById('loader').style.display = 'none';
+      const saved = localStorage.getItem('grameenLogin');
+      if (saved) {
+        try {
+          currentUser = JSON.parse(saved);
+          startApp();
+        } catch(e) {
+          showLoginScreen();
         }
-      }, 500);
-    }
-  }, 4000);
-});
-
-// ─── AUTH STATE ───
-auth.onAuthStateChanged(async (user) => {
-  const loader = document.getElementById('loader');
-  if (loader) loader.style.display = 'none';
-
-  if (user) {
-    try {
-      const uSnap = await db.collection('users').where('email','==',user.email).get();
-      if (!uSnap.empty) {
-        currentUser = { uid: user.uid, email: user.email, ...uSnap.docs[0].data() };
       } else {
-        currentUser = { uid: user.uid, email: user.email, name: user.email.split('@')[0], role: 'Admin' };
+        showLoginScreen();
       }
-    } catch(e) {
-      currentUser = { uid: user.uid, email: user.email, name: user.email.split('@')[0], role: 'Admin' };
-    }
-    document.getElementById('loginScreen').style.display = 'none';
-    startApp();
-  } else {
-    currentUser = null;
-    document.getElementById('app').style.display = 'none';
-    document.getElementById('loginScreen').style.display = 'flex';
-  }
+    }, 500);
+  }, 2500);
 });
+
+function showLoginScreen() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
 
 // ─── LOGIN ───
 window.doLogin = async function() {
@@ -2689,15 +2671,35 @@ window.doLogin = async function() {
   const pass = document.getElementById('loginPass').value.trim();
   const errEl = document.getElementById('loginError');
   const btn = document.querySelector('.btn-login');
-  if (!email || !pass) { errEl.style.display='block'; errEl.textContent='Email ও Password দিন!'; return; }
+  if (!email || !pass) {
+    errEl.style.display='block';
+    errEl.textContent='Email ও Password দিন!';
+    return;
+  }
   btn.textContent = 'লগইন হচ্ছে...';
   btn.disabled = true;
+  errEl.style.display = 'none';
+
   try {
-    await auth.signInWithEmailAndPassword(email, pass);
-    errEl.style.display = 'none';
+    const result = await firebase.auth().signInWithEmailAndPassword(email, pass);
+    currentUser = {
+      uid: result.user.uid,
+      email: result.user.email,
+      name: email.split('@')[0],
+      role: 'Admin'
+    };
+    try {
+      const snap = await firebase.firestore().collection('users').where('email','==',email).get();
+      if (!snap.empty) {
+        currentUser = { ...currentUser, ...snap.docs[0].data() };
+      }
+    } catch(e) {}
+    localStorage.setItem('grameenLogin', JSON.stringify(currentUser));
+    document.getElementById('loginScreen').style.display = 'none';
+    startApp();
   } catch(e) {
     errEl.style.display = 'block';
-    errEl.textContent = 'Email বা Password ভুল!';
+    errEl.textContent = 'Email বা Password ভুল! Error: ' + (e.code||e.message);
     btn.textContent = 'লগইন করুন →';
     btn.disabled = false;
   }
@@ -2711,8 +2713,12 @@ document.addEventListener('keydown', e => {
 });
 
 // ─── LOGOUT ───
-window.doLogout = async function() {
-  await auth.signOut();
+window.doLogout = function() {
+  localStorage.removeItem('grameenLogin');
+  try { firebase.auth().signOut(); } catch(e) {}
+  currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  showLoginScreen();
 }
 
 // ─── APP START ───
