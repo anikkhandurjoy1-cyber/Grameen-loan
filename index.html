@@ -3814,28 +3814,6 @@ window.createStaffUser = async function() {
   }
 }
 
-
-  const page = document.getElementById('page-createUser');
-  const inputs = page.querySelectorAll('input');
-  const selects = page.querySelectorAll('select');
-  const name = inputs[0].value.trim();
-  const username = inputs[1].value.trim();
-  const password = inputs[2].value.trim();
-  const role = selects[0].value;
-  const branch = selects[1].value;
-  const mobile = inputs[3].value.trim();
-  if (!name||!username||!password) { toast('নাম, Username ও Password দিন!','error'); return; }
-  try {
-    await addDoc(collection(db,'users'), {
-      name, username, role, branch, mobile,
-      status:'active', createdBy: currentUser.uid, createdAt: serverTimestamp()
-    });
-    toast('✅ ইউজার তৈরি হয়েছে!');
-    inputs.forEach(i => i.value='');
-    loadUsers();
-  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
-}
-
 async function loadUsers() {
   const tbody = document.getElementById('userTableBody');
   if (!tbody) return;
