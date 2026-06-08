@@ -917,15 +917,17 @@ table tr:hover td{background:#f7fafd;}
   <div id="page-memberList" class="page" style="display:none;">
     <div class="page-title">👥 সদস্য তালিকা</div>
     <div class="card">
-      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-        <input type="text" placeholder="🔍 নাম / মোবাইল / আইডি" style="flex:1;min-width:160px;padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;">
-        <select style="padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;"><option>সব শাখা</option></select>
-        <button class="btn btn-primary btn-sm" onclick="showPage('memberAdd')">+ যোগ</button>
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">
+        <input type="text" id="memberSearchInput" placeholder="🔍 নাম / মোবাইল / আইডি"
+          oninput="searchMembers(this.value)"
+          style="flex:1;min-width:150px;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;outline:none;">
+        <button class="btn btn-primary btn-sm" onclick="showPage('memberAdd')">+ নতুন</button>
       </div>
+      <div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">মোট: <b id="memberCount">—</b> জন</div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>আইডি</th><th>নাম</th><th>মোবাইল</th><th>শাখা</th><th>সমিতি</th><th>অবস্থা</th><th>কাজ</th></tr></thead>
-          <tbody id="memberTableBody"><tr><td colspan="7" style="text-align:center;color:var(--text-light);">কোনো সদস্য নেই</td></tr></tbody>
+          <tbody id="memberTableBody"><tr><td colspan="7" style="text-align:center;color:var(--text-light);">লোড হচ্ছে...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -1510,7 +1512,7 @@ table tr:hover td{background:#f7fafd;}
         <div class="form-group"><label>ধরন</label><select><option>সব</option><option>ঋণ কিস্তি</option><option>সঞ্চয়</option><option>DPS</option></select></div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
-        <button class="btn btn-primary">🔍 লোড করুন</button>
+        <button class="btn btn-primary" onclick="loadCollectionSheet()">🔍 লোড করুন</button>
         <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
       </div>
     </div>
@@ -2880,6 +2882,23 @@ window.showPage = function(pageId) {
   if (pageId === 'loanProposalList') loadLoanProposals();
   if (pageId === 'branchManage') loadBranches();
   if (pageId === 'createUser') loadUsers();
+  if (pageId === 'loanInstallment') loadMembersIntoSelect('instMemberSelect');
+  if (pageId === 'depositReceive') loadMembersIntoSelect('depMemberSelect');
+  if (pageId === 'dpsDeposit') loadMembersIntoSelect('dpsMemberSelect');
+}
+
+// Load members into a select dropdown
+async function loadMembersIntoSelect(selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  try {
+    const snap = await firebase.firestore().collection('members').where('status','==','active').orderBy('name').get();
+    sel.innerHTML = '<option value="">— সদস্য বাছুন —</option>';
+    snap.forEach(d => {
+      const m = d.data();
+      sel.innerHTML += `<option value="${m.memberId}">${m.memberId} - ${m.name} (${m.mobile||''})</option>`;
+    });
+  } catch(e) {}
 }
 
 // ─── TABS ───
@@ -2951,42 +2970,172 @@ async function loadDashboard() {
 // ─── MEMBERS ───
 // ══════════════════════════════════════
 window.saveMember = async function() {
-  const form = document.getElementById('page-memberAdd');
-  const inputs = form.querySelectorAll('input[type="text"],input[type="tel"],input[type="date"],input[type="number"],input[type="email"]');
-  const name = inputs[0]?.value?.trim();
-  const mobile = inputs[1]?.value?.trim();
-  if (!name || !mobile) { toast('নাম ও মোবাইল আবশ্যক!','error'); return; }
+  const p = document.getElementById('page-memberAdd');
+  const get = id => document.getElementById(id)?.value?.trim()||'';
+  const getEl = (sel, idx) => { const els = p.querySelectorAll(sel); return els[idx]?.value?.trim()||''; }
+  const getSelect = (sel, idx) => { const els = p.querySelectorAll(sel); return els[idx]?.value||''; }
+
+  const name = getEl('input[type="text"]',0);
+  const mobile = getEl('input[type="tel"]',0);
+  if (!name||!mobile) { toast('নাম ও মোবাইল আবশ্যক!','error'); return; }
+
+  const inputs = p.querySelectorAll('input[type="text"],input[type="tel"],input[type="date"],input[type="number"],input[type="email"]');
+  const selects = p.querySelectorAll('select');
+  const textareas = p.querySelectorAll('textarea');
+
   try {
     const memberId = 'M-' + Date.now().toString().slice(-6);
-    await db.collection('members').add({
-      memberId, name, mobile, status:'active',
+    const data = {
+      memberId,
+      name: inputs[0]?.value?.trim()||'',
+      mobile: p.querySelector('input[type="tel"]')?.value?.trim()||'',
+      fatherName: inputs[2]?.value?.trim()||'',
+      motherName: inputs[3]?.value?.trim()||'',
+      spouseName: inputs[4]?.value?.trim()||'',
+      maritalStatus: selects[0]?.value||'',
+      nid: inputs[5]?.value?.trim()||'',
+      birthCertNo: inputs[6]?.value?.trim()||'',
+      dob: p.querySelector('input[type="date"]')?.value||'',
+      bloodGroup: selects[1]?.value||'',
+      gender: selects[2]?.value||'',
+      religion: selects[3]?.value||'',
+      email: p.querySelector('input[type="email"]')?.value?.trim()||'',
+      monthlyIncome: Number(p.querySelector('input[type="number"]')?.value)||0,
+      branch: selects[4]?.value||'',
+      samity: selects[5]?.value||'',
+      joinDate: p.querySelectorAll('input[type="date"]')[1]?.value||'',
+      shareAmount: Number(p.querySelectorAll('input[type="number"]')[1]?.value)||0,
+      occupation: p.querySelectorAll('input[type="text"]')[5]?.value?.trim()||'',
+      reference: p.querySelectorAll('input[type="text"]')[6]?.value?.trim()||'',
+      currentAddress: textareas[0]?.value?.trim()||'',
+      permanentAddress: textareas[1]?.value?.trim()||'',
+      admissionFee: Number(p.querySelectorAll('input[type="number"]')[2]?.value)||0,
+      passbookFee: Number(p.querySelectorAll('input[type="number"]')[3]?.value)||0,
+      memberType: selects[6]?.value||'সাধারণ',
+      // Nominee
+      nomineeName: p.querySelectorAll('input[type="text"]')[7]?.value?.trim()||'',
+      nomineeRelation: p.querySelectorAll('select')[7]?.value||'',
+      nomineeFather: p.querySelectorAll('input[type="text"]')[8]?.value?.trim()||'',
+      nomineeMother: p.querySelectorAll('input[type="text"]')[9]?.value?.trim()||'',
+      nomineeMobile: p.querySelectorAll('input[type="tel"]')[1]?.value?.trim()||'',
+      nomineeNid: p.querySelectorAll('input[type="text"]')[10]?.value?.trim()||'',
+      nomineeAddress: textareas[2]?.value?.trim()||'',
+      status: 'active',
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    };
+
+    await firebase.firestore().collection('members').add(data);
     toast('✅ সদস্য সংরক্ষণ হয়েছে! ID: ' + memberId);
+
+    // Clear form
+    p.querySelectorAll('input:not([type="file"])').forEach(i => { if(!i.readOnly) i.value=''; });
+    p.querySelectorAll('textarea').forEach(t => t.value='');
+
     window.showPage('memberList');
-  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+  } catch(e) {
+    toast('সমস্যা: ' + e.message, 'error');
+  }
 }
 
-async function loadMembers() {
+async function loadMembers(searchTerm='') {
   const tbody = document.getElementById('memberTableBody');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">লোড হচ্ছে...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;">লোড হচ্ছে... ⏳</td></tr>';
   try {
-    const snap = await db.collection('members').orderBy('createdAt','desc').get();
-    if (snap.empty) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light)">কোনো সদস্য নেই</td></tr>'; return; }
+    let query = firebase.firestore().collection('members').orderBy('createdAt','desc');
+    const snap = await query.get();
+    if (snap.empty) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light);padding:20px;">কোনো সদস্য নেই</td></tr>';
+      return;
+    }
     let html = '';
+    let count = 0;
     snap.forEach(d => {
       const m = d.data();
-      html += `<tr>
-        <td><b>${m.memberId||'—'}</b></td><td>${m.name||'—'}</td>
-        <td>${m.mobile||'—'}</td><td>${m.branch||'—'}</td><td>—</td>
+      // Filter by search
+      if (searchTerm && !m.name?.includes(searchTerm) && !m.mobile?.includes(searchTerm) && !m.memberId?.includes(searchTerm)) return;
+      count++;
+      html += `<tr onclick="showMemberProfile('${d.id}')" style="cursor:pointer;">
+        <td><b style="color:var(--primary)">${m.memberId||'—'}</b></td>
+        <td>${m.name||'—'}</td>
+        <td>${m.mobile||'—'}</td>
+        <td>${m.branch||'—'}</td>
+        <td>${m.samity||'—'}</td>
         <td><span class="badge ${m.status==='active'?'badge-success':'badge-danger'}">${m.status==='active'?'সক্রিয়':'নিষ্ক্রিয়'}</span></td>
-        <td><button class="btn btn-primary btn-sm">👁️</button></td>
+        <td>
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();showMemberProfile('${d.id}')">👁️</button>
+          <button class="btn btn-warning btn-sm" onclick="event.stopPropagation();editMember('${d.id}')">✏️</button>
+        </td>
       </tr>`;
     });
-    tbody.innerHTML = html;
-  } catch(e) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--danger)">লোড ব্যর্থ</td></tr>'; }
+    if (count === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light);padding:20px;">কোনো ফলাফল নেই</td></tr>';
+    } else {
+      tbody.innerHTML = html;
+    }
+    // Update count
+    const countEl = document.getElementById('memberCount');
+    if (countEl) countEl.textContent = count;
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:20px;">Error: ${e.message}</td></tr>`;
+  }
+}
+
+window.searchMembers = function(val) {
+  loadMembers(val);
+}
+
+window.showMemberProfile = async function(id) {
+  try {
+    const doc = await firebase.firestore().collection('members').doc(id).get();
+    if (!doc.exists) return;
+    const m = doc.data();
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:800;display:flex;align-items:center;justify-content:center;padding:16px;';
+    modal.innerHTML = `
+      <div style="background:#fff;border-radius:12px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;">
+        <div style="background:var(--primary);color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-radius:12px 12px 0 0;">
+          <span style="font-weight:700;font-size:15px;">👤 সদস্যের বিস্তারিত</span>
+          <button onclick="this.closest('div[style*=fixed]').remove()" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">×</button>
+        </div>
+        <div style="padding:16px;">
+          <div style="background:var(--primary);color:#fff;border-radius:8px;padding:12px;margin-bottom:12px;text-align:center;">
+            <div style="font-size:24px;font-weight:700;">${m.memberId||'—'}</div>
+            <div style="font-size:16px;font-weight:600;margin-top:4px;">${m.name||'—'}</div>
+            <div style="font-size:13px;opacity:.8;">${m.mobile||'—'}</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+            <div style="background:var(--bg);border-radius:7px;padding:8px;"><div style="font-size:11px;color:var(--text-light);">পিতার নাম</div><div style="font-size:13px;font-weight:600;">${m.fatherName||'—'}</div></div>
+            <div style="background:var(--bg);border-radius:7px;padding:8px;"><div style="font-size:11px;color:var(--text-light);">মাতার নাম</div><div style="font-size:13px;font-weight:600;">${m.motherName||'—'}</div></div>
+            <div style="background:var(--bg);border-radius:7px;padding:8px;"><div style="font-size:11px;color:var(--text-light);">স্বামী/স্ত্রী</div><div style="font-size:13px;font-weight:600;">${m.spouseName||'—'}</div></div>
+            <div style="background:var(--bg);border-radius:7px;padding:8px;"><div style="font-size:11px;color:var(--text-light);">NID</div><div style="font-size:13px;font-weight:600;">${m.nid||'—'}</div></div>
+            <div style="background:var(--bg);border-radius:7px;padding:8px;"><div style="font-size:11px;color:var(--text-light);">শাখা</div><div style="font-size:13px;font-weight:600;">${m.branch||'—'}</div></div>
+            <div style="background:var(--bg);border-radius:7px;padding:8px;"><div style="font-size:11px;color:var(--text-light);">সমিতি</div><div style="font-size:13px;font-weight:600;">${m.samity||'—'}</div></div>
+            <div style="background:var(--bg);border-radius:7px;padding:8px;"><div style="font-size:11px;color:var(--text-light);">যোগদান</div><div style="font-size:13px;font-weight:600;">${m.joinDate||'—'}</div></div>
+            <div style="background:var(--bg);border-radius:7px;padding:8px;"><div style="font-size:11px;color:var(--text-light);">পেশা</div><div style="font-size:13px;font-weight:600;">${m.occupation||'—'}</div></div>
+          </div>
+          ${m.nomineeName ? `
+          <div style="background:#f0faf4;border-radius:8px;padding:10px;margin-bottom:12px;">
+            <div style="font-weight:600;color:var(--success);margin-bottom:6px;font-size:13px;">👤 নমিনি</div>
+            <div style="font-size:13px;"><b>${m.nomineeName}</b> (${m.nomineeRelation||'—'})</div>
+            <div style="font-size:12px;color:var(--text-light);">${m.nomineeMobile||'—'}</div>
+          </div>` : ''}
+          <div style="display:flex;gap:8px;">
+            <button onclick="this.closest('div[style*=fixed]').remove()" style="flex:1;padding:10px;background:var(--border);border:none;border-radius:7px;cursor:pointer;font-family:inherit;">বন্ধ করুন</button>
+            <button onclick="openLoanForMember('${m.memberId}');this.closest('div[style*=fixed]').remove()" style="flex:1;padding:10px;background:var(--primary);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:inherit;">💰 ঋণ দেখুন</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+  } catch(e) { toast('Error: '+e.message,'error'); }
+}
+
+window.openLoanForMember = function(memberId) {
+  document.getElementById('page-loanInstallment').querySelector('select').value = memberId;
+  window.showPage('loanInstallment');
+  loadLoanForMember(memberId);
 }
 
 window.saveLoan = async function() {
@@ -3014,17 +3163,192 @@ window.saveLoan = async function() {
 
 window.saveInstallment = async function() {
   const page = document.getElementById('page-loanInstallment');
-  const inputs = page.querySelectorAll('input[type="number"],input[type="date"],input[type="text"]');
-  const amount = Number(inputs[0]?.value);
+  const memberSelect = page.querySelectorAll('select')[1];
+  const loanSelect = page.querySelectorAll('select')[2];
+  const amount = Number(page.querySelectorAll('input[type="number"]')[0]?.value);
+  const penalty = Number(page.querySelectorAll('input[type="number"]')[1]?.value)||0;
   const date = page.querySelector('input[type="date"]')?.value;
-  if (!amount||!date) { toast('পরিমাণ ও তারিখ দিন!','error'); return; }
+  const note = page.querySelectorAll('input[type="text"]')[0]?.value||'';
+
+  const memberId = memberSelect?.value;
+  const loanId = loanSelect?.value;
+
+  if (!memberId||!amount||!date) { toast('সদস্য, পরিমাণ ও তারিখ দিন!','error'); return; }
+
   try {
-    await db.collection('installments').add({
-      amount, date, type:'loan_installment',
+    // Save installment
+    await firebase.firestore().collection('installments').add({
+      memberId, loanId, amount, penalty, date, note,
+      type: 'loan_installment',
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    toast('✅ কিস্তি জমা হয়েছে!');
+
+    // Update loan balance
+    if (loanId && loanId !== '— বাছুন —') {
+      const loanDoc = await firebase.firestore().collection('loans').doc(loanId).get();
+      if (loanDoc.exists) {
+        const loan = loanDoc.data();
+        const newPaid = (loan.paidAmount||0) + amount;
+        const newDue = (loan.dueAmount||0) - amount;
+        await firebase.firestore().collection('loans').doc(loanId).update({
+          paidAmount: newPaid,
+          dueAmount: newDue < 0 ? 0 : newDue,
+          status: newDue <= 0 ? 'paid' : 'active'
+        });
+        toast(`✅ কিস্তি জমা! বাকি: ${tk(newDue < 0 ? 0 : newDue)}`);
+      }
+    } else {
+      toast('✅ কিস্তি জমা হয়েছে!');
+    }
+
+    // Clear amount fields
+    page.querySelectorAll('input[type="number"]').forEach(i => i.value='0');
+    // Reload loan info
+    if (memberId) loadLoanForMember(memberId);
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+// Load loan info when member selected
+window.loadLoanForMember = async function(memberId) {
+  if (!memberId) return;
+  const page = document.getElementById('page-loanInstallment');
+  const loanSelect = page.querySelectorAll('select')[2];
+  if (!loanSelect) return;
+
+  try {
+    const snap = await firebase.firestore().collection('loans')
+      .where('memberId','==',memberId)
+      .where('status','==','active')
+      .get();
+
+    loanSelect.innerHTML = '<option value="">— ঋণ বাছুন —</option>';
+    snap.forEach(d => {
+      const l = d.data();
+      loanSelect.innerHTML += `<option value="${d.id}">${l.loanAccId} - ${tk(l.amount)} (বাকি: ${tk(l.dueAmount||0)})</option>`;
+    });
+
+    if (!snap.empty) {
+      const loan = snap.docs[0].data();
+      // Update info fields
+      const infoFields = page.querySelectorAll('input[readonly]');
+      if (infoFields[0]) infoFields[0].value = tk(loan.dueAmount||0);
+      if (infoFields[2]) infoFields[2].value = tk(loan.paidAmount||0);
+      if (infoFields[3]) infoFields[3].value = tk(loan.dueAmount||0);
+    }
+  } catch(e) {}
+}
+
+// ── COLLECTION SHEET ──
+window.loadCollectionSheet = async function() {
+  const page = document.getElementById('page-collectionSheet');
+  const samitySelect = page.querySelectorAll('select')[1];
+  const dateInput = page.querySelector('input[type="date"]');
+  const typeSelect = page.querySelectorAll('select')[2];
+  const container = document.getElementById('collectionSheetData');
+  if (!container) return;
+
+  const samity = samitySelect?.value;
+  const date = dateInput?.value;
+
+  container.innerHTML = '<div style="text-align:center;padding:20px;">লোড হচ্ছে... ⏳</div>';
+
+  try {
+    // Load members of this samity
+    let memberQuery = firebase.firestore().collection('members').where('status','==','active');
+    if (samity && samity !== '— বাছুন —') {
+      memberQuery = memberQuery.where('samity','==',samity);
+    }
+    const memberSnap = await memberQuery.get();
+
+    if (memberSnap.empty) {
+      container.innerHTML = '<div style="text-align:center;color:var(--text-light);padding:20px;">কোনো সদস্য নেই</div>';
+      return;
+    }
+
+    // Load today's installments
+    const instSnap = await firebase.firestore().collection('installments').where('date','==',date).get();
+    const todayPayments = {};
+    instSnap.forEach(d => {
+      const inst = d.data();
+      if (!todayPayments[inst.memberId]) todayPayments[inst.memberId] = 0;
+      todayPayments[inst.memberId] += (inst.amount||0);
+    });
+
+    // Load loans
+    const loanSnap = await firebase.firestore().collection('loans').where('status','==','active').get();
+    const memberLoans = {};
+    loanSnap.forEach(d => {
+      const l = d.data();
+      memberLoans[l.memberId] = l;
+    });
+
+    let html = '';
+    let totalDue = 0, totalCollect = 0;
+
+    memberSnap.forEach(d => {
+      const m = d.data();
+      const loan = memberLoans[m.memberId];
+      const paid = todayPayments[m.memberId] || 0;
+      const due = loan ? (loan.emi || 0) : 0;
+      totalDue += due;
+      totalCollect += paid;
+
+      html += `
+        <div class="collect-member" style="border-left-color:${paid>0?'var(--success)':'var(--primary)'};">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div class="name">${m.name} <span style="font-size:11px;color:var(--text-light);">(${m.memberId})</span></div>
+              <div class="info">মোবাইল: ${m.mobile||'—'}</div>
+            </div>
+            ${paid>0?'<span class="badge badge-success">✅ পরিশোধ</span>':'<span class="badge badge-warning">⏳ বাকি</span>'}
+          </div>
+          <div class="amounts">
+            <div class="am"><div class="v" style="color:var(--danger)">${tk(due)}</div><div class="l">কিস্তি</div></div>
+            <div class="am"><div class="v" style="color:var(--success)">${tk(paid)}</div><div class="l">আদায়</div></div>
+            <div class="am"><div class="v" style="color:var(--warning)">${tk(due-paid)}</div><div class="l">বাকি</div></div>
+          </div>
+          <div style="margin-top:8px;display:flex;gap:6px;">
+            <input type="number" placeholder="পরিমাণ" id="coll_${m.memberId}" value="${due}"
+              style="flex:1;padding:6px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;outline:none;">
+            <button class="btn btn-success btn-sm" onclick="quickCollect('${m.memberId}','${date}')">✅ নিন</button>
+          </div>
+        </div>`;
+    });
+
+    // Summary
+    html = `<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <div style="flex:1;background:var(--primary);color:#fff;border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:16px;font-weight:700;">${tk(totalDue)}</div><div style="font-size:11px;opacity:.8;">মোট আদায়যোগ্য</div>
+      </div>
+      <div style="flex:1;background:var(--success);color:#fff;border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:16px;font-weight:700;">${tk(totalCollect)}</div><div style="font-size:11px;opacity:.8;">আদায় হয়েছে</div>
+      </div>
+      <div style="flex:1;background:var(--danger);color:#fff;border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:16px;font-weight:700;">${tk(totalDue-totalCollect)}</div><div style="font-size:11px;opacity:.8;">বাকি</div>
+      </div>
+    </div>` + html;
+
+    container.innerHTML = html;
+  } catch(e) {
+    container.innerHTML = `<div style="text-align:center;color:var(--danger);padding:20px;">Error: ${e.message}</div>`;
+  }
+}
+
+window.quickCollect = async function(memberId, date) {
+  const input = document.getElementById('coll_'+memberId);
+  const amount = Number(input?.value);
+  if (!amount) { toast('পরিমাণ দিন!','error'); return; }
+
+  try {
+    await firebase.firestore().collection('installments').add({
+      memberId, amount, date, type:'loan_installment',
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast(`✅ ${memberId} - ${tk(amount)} আদায় হয়েছে!`);
+    // Reload collection sheet
+    window.loadCollectionSheet();
   } catch(e) { toast('সমস্যা: '+e.message,'error'); }
 }
 
@@ -3438,7 +3762,7 @@ async function loadMembers() {
   if (!tbody) return;
   tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">লোড হচ্ছে...</td></tr>';
   try {
-    const snap = await getDocs(query(collection(db,'members'), orderBy('createdAt','desc')));
+    const snap = await firebase.firestore().collection('members').orderBy('createdAt','desc').get();
     if (snap.empty) {
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light)">কোনো সদস্য নেই</td></tr>';
       return;
@@ -3485,13 +3809,13 @@ window.saveLoan = async function() {
 
   try {
     // find member
-    const mSnap = await getDocs(query(collection(db,'members'), where('memberId','==',memberId)));
+    const mSnap = await firebase.firestore().collection('members').where('memberId','==',memberId).get();
     if (mSnap.empty) { toast('সদস্য পাওয়া যায়নি!','error'); return; }
 
     const emi = (amount * (1 + rate*tenure/1200) / tenure).toFixed(0);
     const loanAccId = 'L-' + Date.now().toString().slice(-6);
 
-    await addDoc(collection(db,'loans'), {
+    await firebase.firestore().collection('loans').add( {
       loanAccId, memberId, memberName: mSnap.docs[0].data().name,
       mobile: mSnap.docs[0].data().mobile,
       branch, loanType, amount, interestRate: rate,
@@ -3500,7 +3824,7 @@ window.saveLoan = async function() {
       dueAmount: amount * (1 + rate*tenure/1200),
       status: 'active',
       createdBy: currentUser.uid,
-      createdAt: serverTimestamp()
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     toast('✅ ঋণ একাউন্ট খোলা হয়েছে!');
     inputs.forEach(i => { if(!i.readOnly) i.value=''; });
@@ -3524,7 +3848,7 @@ window.saveInstallment = async function() {
 
   try {
     // find active loan
-    const lSnap = await getDocs(query(collection(db,'loans'), where('memberId','==',memberId), where('status','==','active')));
+    const lSnap = await firebase.firestore().collection('loans').where('memberId','==',memberId).where('status','==','active').get();
     if (lSnap.empty) { toast('সক্রিয় ঋণ পাওয়া যায়নি!','error'); return; }
     const loanDoc = lSnap.docs[0];
     const loan = loanDoc.data();
@@ -3532,16 +3856,16 @@ window.saveInstallment = async function() {
     const newPaid = (loan.paidAmount||0) + amount;
     const newDue = (loan.dueAmount||0) - amount;
 
-    await addDoc(collection(db,'installments'), {
+    await firebase.firestore().collection('installments').add( {
       loanId: loanDoc.id, loanAccId: loan.loanAccId,
       memberId, memberName: loan.memberName,
       amount, penalty, date, note,
       type: 'loan_installment',
       createdBy: currentUser.uid,
-      createdAt: serverTimestamp()
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    await updateDoc(doc(db,'loans',loanDoc.id), {
+    await firebase.firestore().collection('loans').doc(loanDoc.id).update( {
       paidAmount: newPaid,
       dueAmount: newDue < 0 ? 0 : newDue,
       status: newDue <= 0 ? 'paid' : 'active'
@@ -3571,17 +3895,17 @@ window.saveDepositReceive = async function() {
   if (!memberId||!amount||!date) { toast('সব তথ্য দিন!','error'); return; }
 
   try {
-    await addDoc(collection(db,'depositTransactions'), {
+    await firebase.firestore().collection('depositTransactions').add( {
       memberId, accType, amount, date, note,
       type: 'receive',
       createdBy: currentUser.uid,
-      createdAt: serverTimestamp()
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     // update deposit account balance
-    const accSnap = await getDocs(query(collection(db,'depositAccounts'), where('memberId','==',memberId), where('accType','==',accType)));
+    const accSnap = await firebase.firestore().collection('depositAccounts').where('memberId','==',memberId).where('accType','==',accType).get();
     if (!accSnap.empty) {
       const accDoc = accSnap.docs[0];
-      await updateDoc(doc(db,'depositAccounts',accDoc.id), {
+      await firebase.firestore().collection('depositAccounts').doc(accDoc.id).update( {
         balance: (accDoc.data().balance||0) + amount
       });
     }
@@ -3612,18 +3936,18 @@ window.saveDepositAccount = async function(type) {
   const accId = 'DA-' + Date.now().toString().slice(-6);
 
   try {
-    await addDoc(collection(db,'depositAccounts'), {
+    await firebase.firestore().collection('depositAccounts').add( {
       accId, memberId, accType: accTypeMap[type],
       openDate: date, balance: amount,
       status: 'open',
       createdBy: currentUser.uid,
-      createdAt: serverTimestamp()
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     if (amount > 0) {
-      await addDoc(collection(db,'depositTransactions'), {
+      await firebase.firestore().collection('depositTransactions').add( {
         memberId, accType: accTypeMap[type], amount, date,
         note: 'Opening balance', type:'receive',
-        createdBy: currentUser.uid, createdAt: serverTimestamp()
+        createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     }
     toast('✅ ডিপোজিট একাউন্ট খোলা হয়েছে! ID: ' + accId);
@@ -3649,11 +3973,11 @@ window.saveLoanProposal = async function() {
   if (!memberId||!amount) { toast('সব তথ্য দিন!','error'); return; }
 
   try {
-    await addDoc(collection(db,'loanProposals'), {
+    await firebase.firestore().collection('loanProposals').add( {
       memberId, amount, purpose, guarantor, guarantorMobile,
       status: 'pending',
       createdBy: currentUser.uid,
-      createdAt: serverTimestamp()
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     toast('✅ ঋণ প্রস্তাব দাখিল হয়েছে!');
     inputs.forEach(i => i.value='');
@@ -3668,7 +3992,7 @@ async function loadLoanProposals() {
   if (!tbody) return;
   tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">লোড হচ্ছে...</td></tr>';
   try {
-    const snap = await getDocs(query(collection(db,'loanProposals'), orderBy('createdAt','desc')));
+    const snap = await firebase.firestore().collection('loanProposals').orderBy('createdAt','desc').get();
     if (snap.empty) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light)">কোনো প্রস্তাব নেই</td></tr>'; return; }
     let html = '';
     snap.forEach((d,i) => {
@@ -3689,13 +4013,13 @@ async function loadLoanProposals() {
 }
 
 window.approveLoanProposal = async function(id) {
-  await updateDoc(doc(db,'loanProposals',id), {status:'approved'});
+  await firebase.firestore().collection('loanProposals').doc(id).update( {status:'approved'});
   toast('✅ প্রস্তাব অনুমোদিত হয়েছে!');
   loadLoanProposals();
 }
 window.deleteLoanProposal = async function(id) {
   if (!confirm('মুছে ফেলবেন?')) return;
-  await deleteDoc(doc(db,'loanProposals',id));
+  await firebase.firestore().collection('loanProposals').doc(id).delete();
   toast('🗑️ মুছে ফেলা হয়েছে!','info');
   loadLoanProposals();
 }
@@ -3712,9 +4036,9 @@ window.saveSharePayment = async function() {
   const date = inputs[3].value;
   if (!memberId||!qty||!amount) { toast('সব তথ্য দিন!','error'); return; }
   try {
-    await addDoc(collection(db,'shareTransactions'), {
+    await firebase.firestore().collection('shareTransactions').add( {
       memberId, quantity: qty, amount, date,
-      type:'payment', createdBy: currentUser.uid, createdAt: serverTimestamp()
+      type:'payment', createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     toast('✅ শেয়ার পেমেন্ট সংরক্ষণ হয়েছে!');
     inputs.forEach(i => i.value='');
@@ -3736,9 +4060,9 @@ window.saveInterBranch = async function() {
   const desc = page.querySelector('textarea').value;
   if (!amount||!date) { toast('সব তথ্য দিন!','error'); return; }
   try {
-    await addDoc(collection(db,'interBranchTransactions'), {
+    await firebase.firestore().collection('interBranchTransactions').add( {
       fromBranch, toBranch, amount, date, refNo:ref, description:desc,
-      status:'pending', createdBy: currentUser.uid, createdAt: serverTimestamp()
+      status:'pending', createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     toast('✅ আন্তঃ শাখা ট্রানজেকশন সম্পন্ন!');
     inputs.forEach(i => i.value='');
@@ -3750,10 +4074,10 @@ window.saveInterBranch = async function() {
 // ══════════════════════════════════════
 window.processSalary = async function(userId, amount) {
   try {
-    await addDoc(collection(db,'salaryPayments'), {
+    await firebase.firestore().collection('salaryPayments').add( {
       userId, amount, month: new Date().toISOString().slice(0,7),
       paidDate: todayStr(), status:'paid',
-      createdBy: currentUser.uid, createdAt: serverTimestamp()
+      createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     toast('✅ বেতন প্রদান করা হয়েছে!');
   } catch(e) { toast('সমস্যা: '+e.message,'error'); }
@@ -3778,11 +4102,11 @@ window.createStaffUser = async function() {
 
   try {
     // Save to Firestore users collection (Firebase Auth create needs admin SDK, so we save info)
-    await addDoc(collection(db,'users'), {
+    await firebase.firestore().collection('users').add( {
       name, email, role, branch, mobile,
       status: 'active',
       createdBy: currentUser.uid,
-      createdAt: serverTimestamp()
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
     toast(`✅ ${name} (${role}) যোগ করা হয়েছে!\n\nLogin: ${email}\nPassword: ${password}`);
@@ -3819,7 +4143,7 @@ async function loadUsers() {
   if (!tbody) return;
   tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">লোড হচ্ছে...</td></tr>';
   try {
-    const snap = await getDocs(query(collection(db,'users'), orderBy('createdAt','desc')));
+    const snap = await firebase.firestore().collection('users').orderBy('createdAt','desc').get();
     if (snap.empty) {
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light)">কোনো কর্মী নেই</td></tr>';
       return;
@@ -3857,13 +4181,13 @@ async function loadUsers() {
 
 window.toggleUserStatus = async function(id, currentStatus) {
   const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-  await updateDoc(doc(db,'users',id), {status: newStatus});
+  await firebase.firestore().collection('users').doc(id).update( {status: newStatus});
   toast(newStatus === 'active' ? '✅ কর্মী চালু হয়েছে!' : '🔒 কর্মী বন্ধ করা হয়েছে!');
   loadUsers();
 }
 window.deleteUser = async function(id) {
   if (!confirm('মুছে ফেলবেন?')) return;
-  await deleteDoc(doc(db,'users',id));
+  await firebase.firestore().collection('users').doc(id).delete();
   toast('🗑️ ইউজার মুছে ফেলা হয়েছে!','info');
   loadUsers();
 }
@@ -3881,9 +4205,9 @@ window.saveBranch = async function() {
   const address = page.querySelector('textarea').value;
   if (!name||!code) { toast('শাখার নাম ও কোড দিন!','error'); return; }
   try {
-    await addDoc(collection(db,'branches'), {
+    await firebase.firestore().collection('branches').add( {
       name, code, type, address, status:'active',
-      createdBy: currentUser.uid, createdAt: serverTimestamp()
+      createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     toast('✅ শাখা যোগ করা হয়েছে!');
     inputs.forEach(i => i.value='');
@@ -3896,7 +4220,7 @@ async function loadBranches() {
   if (!tbody) return;
   tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">লোড হচ্ছে...</td></tr>';
   try {
-    const snap = await getDocs(query(collection(db,'branches'), orderBy('createdAt','desc')));
+    const snap = await firebase.firestore().collection('branches').orderBy('createdAt','desc').get();
     if (snap.empty) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-light)">কোনো শাখা নেই</td></tr>'; return; }
     let html = '';
     snap.forEach((d,i) => {
@@ -3915,7 +4239,7 @@ async function loadBranches() {
 }
 window.deleteBranch = async function(id) {
   if (!confirm('মুছে ফেলবেন?')) return;
-  await deleteDoc(doc(db,'branches',id));
+  await firebase.firestore().collection('branches').doc(id).delete();
   toast('🗑️ শাখা মুছে ফেলা হয়েছে!','info');
   loadBranches();
 }
@@ -3934,9 +4258,9 @@ window.saveSamity = async function() {
   const address = page.querySelector('textarea').value;
   if (!name) { toast('সমিতির নাম দিন!','error'); return; }
   try {
-    await addDoc(collection(db,'samities'), {
+    await firebase.firestore().collection('samities').add( {
       name, code, meetingDay:day, startDate, address, status:'active',
-      createdBy: currentUser.uid, createdAt: serverTimestamp()
+      createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     toast('✅ সমিতি সংরক্ষণ হয়েছে!');
     inputs.forEach(i => i.value='');
@@ -3955,8 +4279,8 @@ window.saveHoliday = async function() {
   const type = selects[0].value;
   if (!name||!date) { toast('ছুটির নাম ও তারিখ দিন!','error'); return; }
   try {
-    await addDoc(collection(db,'holidays'), {
-      name, date, type, createdBy: currentUser.uid, createdAt: serverTimestamp()
+    await firebase.firestore().collection('holidays').add( {
+      name, date, type, createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     toast('✅ ছুটি যোগ করা হয়েছে!');
     inputs[0].value=''; inputs[1].value='';
@@ -3968,7 +4292,7 @@ async function loadHolidays() {
   const tbody = document.querySelector('#page-holidaySetup tbody');
   if (!tbody) return;
   try {
-    const snap = await getDocs(query(collection(db,'holidays'), orderBy('date','desc')));
+    const snap = await firebase.firestore().collection('holidays').orderBy('date','desc').get();
     if (snap.empty) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-light)">কোনো ছুটি নেই</td></tr>'; return; }
     let html = '';
     snap.forEach(d => {
@@ -3980,7 +4304,7 @@ async function loadHolidays() {
   } catch(e) {}
 }
 window.deleteHoliday = async function(id) {
-  await deleteDoc(doc(db,'holidays',id));
+  await firebase.firestore().collection('holidays').doc(id).delete();
   toast('🗑️ ছুটি মুছে ফেলা হয়েছে!','info');
   loadHolidays();
 }
@@ -3999,9 +4323,9 @@ window.saveDirector = async function() {
   const address = page.querySelector('textarea').value;
   if (!name) { toast('নাম দিন!','error'); return; }
   try {
-    await addDoc(collection(db,'directors'), {
+    await firebase.firestore().collection('directors').add( {
       name, post, mobile, electionDate:date, address,
-      createdBy: currentUser.uid, createdAt: serverTimestamp()
+      createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     toast('✅ পরিচালক যোগ করা হয়েছে!');
     inputs.forEach(i => i.value='');
@@ -4023,9 +4347,9 @@ window.saveEmployee = async function() {
   const nid = inputs[3].value;
   if (!name||!mobile) { toast('নাম ও মোবাইল দিন!','error'); return; }
   try {
-    await addDoc(collection(db,'employees'), {
+    await firebase.firestore().collection('employees').add( {
       name, post, mobile, branch, joinDate, nid, status:'active',
-      createdBy: currentUser.uid, createdAt: serverTimestamp()
+      createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     toast('✅ কর্মী নিবন্ধন হয়েছে!');
     inputs.forEach(i => i.value='');
@@ -4044,9 +4368,9 @@ window.saveNotice = async function() {
   const content = page.querySelector('textarea').value.trim();
   if (!title||!content) { toast('শিরোনাম ও বিষয়বস্তু দিন!','error'); return; }
   try {
-    await addDoc(collection(db,'notices'), {
+    await firebase.firestore().collection('notices').add( {
       title, fromDate, toDate, content, status:'active',
-      createdBy: currentUser.uid, createdAt: serverTimestamp()
+      createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     toast('✅ নোটিশ প্রকাশিত হয়েছে!');
     inputs.forEach(i => i.value='');
@@ -4069,9 +4393,9 @@ window.saveLoanWaiver = async function() {
   const reason = page.querySelector('textarea').value;
   if (!memberId||!amount||!reason) { toast('সব তথ্য দিন!','error'); return; }
   try {
-    await addDoc(collection(db,'loanWaivers'), {
+    await firebase.firestore().collection('loanWaivers').add( {
       memberId, amount, waiverType:type, date, approver, reason,
-      createdBy: currentUser.uid, createdAt: serverTimestamp()
+      createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     toast('✅ ঋণ মওকুফ সংরক্ষণ হয়েছে!');
     inputs.forEach(i => i.value='');
@@ -4092,14 +4416,14 @@ window.saveLoanReschedule = async function() {
   const reason = inputs[4].value;
   if (!memberId||!newTenure) { toast('সব তথ্য দিন!','error'); return; }
   try {
-    const lSnap = await getDocs(query(collection(db,'loans'), where('memberId','==',memberId), where('status','==','active')));
+    const lSnap = await firebase.firestore().collection('loans').where('memberId','==',memberId).where('status','==','active').get();
     if (lSnap.empty) { toast('সক্রিয় ঋণ পাওয়া যায়নি!','error'); return; }
     const loanDoc = lSnap.docs[0];
-    await addDoc(collection(db,'loanReschedules'), {
+    await firebase.firestore().collection('loanReschedules').add( {
       loanId: loanDoc.id, memberId, newTenure, newRate, date, reason,
-      createdBy: currentUser.uid, createdAt: serverTimestamp()
+      createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    await updateDoc(doc(db,'loans',loanDoc.id), {
+    await firebase.firestore().collection('loans').doc(loanDoc.id).update( {
       tenure: newTenure, interestRate: newRate||loanDoc.data().interestRate
     });
     toast('✅ ঋণ পুনঃতফসিল সম্পন্ন!');
@@ -4122,10 +4446,10 @@ window.saveStaffLoan = async function() {
   const purpose = inputs[4].value;
   if (!empName||!amount||!tenure) { toast('সব তথ্য দিন!','error'); return; }
   try {
-    await addDoc(collection(db,'staffLoans'), {
+    await firebase.firestore().collection('staffLoans').add( {
       empName, amount, interestRate:rate, tenure, startDate, purpose,
       paidAmount:0, status:'active',
-      createdBy: currentUser.uid, createdAt: serverTimestamp()
+      createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     toast('✅ কর্মী ঋণ খোলা হয়েছে!');
     inputs.forEach(i => i.value='');
@@ -4143,9 +4467,9 @@ window.saveDpsDeposit = async function() {
   const date = inputs[2].value;
   if (!memberId||!amount) { toast('সব তথ্য দিন!','error'); return; }
   try {
-    await addDoc(collection(db,'depositTransactions'), {
+    await firebase.firestore().collection('depositTransactions').add( {
       memberId, accType:'DPS', amount, date, type:'dps_installment',
-      createdBy: currentUser.uid, createdAt: serverTimestamp()
+      createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     toast('✅ DPS কিস্তি জমা হয়েছে!');
     inputs.forEach(i => i.value='');
@@ -4166,9 +4490,9 @@ window.saveEmiPenalty = async function() {
   const note = inputs[3].value;
   if (!memberId||!amount) { toast('সব তথ্য দিন!','error'); return; }
   try {
-    await addDoc(collection(db,'loanPenalties'), {
+    await firebase.firestore().collection('loanPenalties').add( {
       memberId, amount, reason, date, note,
-      createdBy: currentUser.uid, createdAt: serverTimestamp()
+      createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     toast('✅ জরিমানা যোগ করা হয়েছে!');
     inputs.forEach(i => i.value='');
@@ -4192,10 +4516,10 @@ window.saveSalarySetup = async function() {
   const total = basicSalary + houseRent + medical + transport + other;
   if (!empName||!basicSalary) { toast('কর্মী ও মূল বেতন দিন!','error'); return; }
   try {
-    await addDoc(collection(db,'salarySetups'), {
+    await firebase.firestore().collection('salarySetups').add( {
       empName, basicSalary, houseRent, medical, transport, other,
       totalSalary: total, effectiveDate,
-      createdBy: currentUser.uid, createdAt: serverTimestamp()
+      createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     toast('✅ বেতন সেটআপ সংরক্ষণ হয়েছে!');
     inputs.forEach(i => i.value='');
@@ -4218,10 +4542,10 @@ window.saveJournalVoucher = async function() {
   if (!desc||!debitAmt||!creditAmt) { toast('সব তথ্য দিন!','error'); return; }
   if (debitAmt !== creditAmt) { toast('ডেবিট ও ক্রেডিট সমান হতে হবে!','error'); return; }
   try {
-    await addDoc(collection(db,'journalVouchers'), {
+    await firebase.firestore().collection('journalVouchers').add( {
       date, description:desc, debitAccount:debitAcc, debitAmount:debitAmt,
       creditAccount:creditAcc, creditAmount:creditAmt,
-      createdBy: currentUser.uid, createdAt: serverTimestamp()
+      createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     toast('✅ ভাউচার পোস্ট হয়েছে!');
     inputs.forEach(i => { if(!i.readOnly) i.value=''; });
@@ -4292,7 +4616,7 @@ window.showBranchModal = async function() {
   const sel = document.getElementById('branchSelect');
   modal.style.display = 'flex';
   try {
-    const snap = await getDocs(collection(db,'branches'));
+    const snap = await firebase.firestore().collection('branches').get();
     sel.innerHTML = '<option value="">— সব শাখা —</option>';
     snap.forEach(d => {
       const b = d.data();
