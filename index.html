@@ -8,6 +8,21 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+// Initialize Firebase immediately
+const firebaseConfig = {
+  apiKey: "AIzaSyAHDYMgL9vHRTaer60qXRD8UuoVWn06Ip8",
+  authDomain: "grameen-52d86.firebaseapp.com",
+  databaseURL: "https://grameen-52d86-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "grameen-52d86",
+  storageBucket: "grameen-52d86.firebasestorage.app",
+  messagingSenderId: "1016084099405",
+  appId: "1:1016084099405:web:5b98a4673c6631d9ae0704"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -2605,22 +2620,9 @@ table tr:hover td{background:#f7fafd;}
 
 </div><!-- /app -->
 
-<!-- Firebase already loaded in head -->
+<!-- Firebase already initialized in head -->
 <script>
-// ─── FIREBASE CONFIG ───
-const firebaseConfig = {
-  apiKey: "AIzaSyAHDYMgL9vHRTaer60qXRD8UuoVWn06Ip8",
-  authDomain: "grameen-52d86.firebaseapp.com",
-  databaseURL: "https://grameen-52d86-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "grameen-52d86",
-  storageBucket: "grameen-52d86.firebasestorage.app",
-  messagingSenderId: "1016084099405",
-  appId: "1:1016084099405:web:5b98a4673c6631d9ae0704"
-};
-
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+// ─── STATE ───
 
 // ─── STATE ───
 let currentUser = null;
@@ -2917,19 +2919,19 @@ window.switchTab = function(btn, tabId) {
 async function loadDashboard() {
   try {
     const today = todayStr();
-    const instSnap = await db.collection('installments').where('date','==',today).get();
+    const instSnap = await firebase.firestore().collection('installments').where('date','==',today).get();
     let todayCollect = 0;
     instSnap.forEach(d => todayCollect += (d.data().amount||0));
 
-    const loanSnap = await db.collection('loans').where('status','==','active').get();
+    const loanSnap = await firebase.firestore().collection('loans').where('status','==','active').get();
     let totalDue = 0;
     loanSnap.forEach(d => totalDue += (d.data().dueAmount||0));
 
-    const depSnap = await db.collection('depositTransactions').where('date','==',today).where('type','==','receive').get();
+    const depSnap = await firebase.firestore().collection('depositTransactions').where('date','==',today).where('type','==','receive').get();
     let todayDeposit = 0;
     depSnap.forEach(d => todayDeposit += (d.data().amount||0));
 
-    const disbSnap = await db.collection('loans').where('startDate','==',today).get();
+    const disbSnap = await firebase.firestore().collection('loans').where('startDate','==',today).get();
     let todayDisb = 0;
     disbSnap.forEach(d => todayDisb += (d.data().amount||0));
 
@@ -2941,7 +2943,7 @@ async function loadDashboard() {
 
     const empEl = document.getElementById('employeeRecoveryList');
     if (empEl) {
-      const empSnap = await db.collection('users').where('role','==','Field Officer').get();
+      const empSnap = await firebase.firestore().collection('users').where('role','==','Field Officer').get();
       if (empSnap.empty) {
         empEl.innerHTML = '<p style="color:var(--text-light);font-size:13px;">কোনো Field Officer নেই</p>';
       } else {
@@ -2955,7 +2957,7 @@ async function loadDashboard() {
       }
     }
 
-    const loanStatsSnap = await db.collection('loans').get();
+    const loanStatsSnap = await firebase.firestore().collection('loans').get();
     let totalLoanAcc = 0, totalDisbursed = 0;
     loanStatsSnap.forEach(d => { totalLoanAcc++; totalDisbursed += (d.data().amount||0); });
     const el1 = document.getElementById('totalLoanAcc');
@@ -3149,7 +3151,7 @@ window.saveLoan = async function() {
   if (!memberId||!amount) { toast('সব তথ্য দিন!','error'); return; }
   try {
     const loanAccId = 'L-' + Date.now().toString().slice(-6);
-    await db.collection('loans').add({
+    await firebase.firestore().collection('loans').add({
       loanAccId, memberId, amount, interestRate:rate,
       tenure, startDate, paidAmount:0,
       dueAmount: amount*(1+rate*tenure/1200),
@@ -3359,7 +3361,7 @@ window.saveDepositReceive = async function() {
   const date = page.querySelector('input[type="date"]')?.value;
   if (!memberId||!amount) { toast('সব তথ্য দিন!','error'); return; }
   try {
-    await db.collection('depositTransactions').add({
+    await firebase.firestore().collection('depositTransactions').add({
       memberId, amount, date, type:'receive',
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3371,7 +3373,7 @@ window.saveDepositReceive = async function() {
 window.saveDepositAccount = async function(type) {
   const accId = 'DA-' + Date.now().toString().slice(-6);
   try {
-    await db.collection('depositAccounts').add({
+    await firebase.firestore().collection('depositAccounts').add({
       accId, accType:type, balance:0, status:'open',
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3387,7 +3389,7 @@ window.saveLoanProposal = async function() {
   const amount = Number(inputs[1]?.value);
   if (!memberId||!amount) { toast('সব তথ্য দিন!','error'); return; }
   try {
-    await db.collection('loanProposals').add({
+    await firebase.firestore().collection('loanProposals').add({
       memberId, amount, status:'pending',
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3401,7 +3403,7 @@ async function loadLoanProposals() {
   const tbody = document.querySelector('#page-loanProposalList tbody');
   if (!tbody) return;
   try {
-    const snap = await db.collection('loanProposals').orderBy('createdAt','desc').get();
+    const snap = await firebase.firestore().collection('loanProposals').orderBy('createdAt','desc').get();
     if (snap.empty) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light)">কোনো প্রস্তাব নেই</td></tr>'; return; }
     let html = '';
     snap.forEach((d,i) => {
@@ -3417,12 +3419,12 @@ async function loadLoanProposals() {
 }
 
 window.approveLoanProposal = async function(id) {
-  await db.collection('loanProposals').doc(id).update({status:'approved'});
+  await firebase.firestore().collection('loanProposals').doc(id).update({status:'approved'});
   toast('✅ প্রস্তাব অনুমোদিত!'); loadLoanProposals();
 }
 window.deleteLoanProposal = async function(id) {
   if (!confirm('মুছে ফেলবেন?')) return;
-  await db.collection('loanProposals').doc(id).delete();
+  await firebase.firestore().collection('loanProposals').doc(id).delete();
   toast('🗑️ মুছে ফেলা হয়েছে!','info'); loadLoanProposals();
 }
 
@@ -3436,7 +3438,7 @@ window.createStaffUser = async function() {
   if (!name||!email||!password) { toast('নাম, Email ও Password আবশ্যক!','error'); return; }
   if (password.length < 6) { toast('Password কমপক্ষে ৬ অক্ষর!','error'); return; }
   try {
-    await db.collection('users').add({
+    await firebase.firestore().collection('users').add({
       name, email, role, branch, mobile, status:'active',
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3464,7 +3466,7 @@ async function loadUsers() {
   if (!tbody) return;
   tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">লোড হচ্ছে...</td></tr>';
   try {
-    const snap = await db.collection('users').orderBy('createdAt','desc').get();
+    const snap = await firebase.firestore().collection('users').orderBy('createdAt','desc').get();
     if (snap.empty) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light)">কোনো কর্মী নেই</td></tr>'; return; }
     const roleColor = {'Admin':'badge-danger','Branch Manager':'badge-info','Field Officer':'badge-success','Data Entry':'badge-warning'};
     let html = '';
@@ -3484,12 +3486,12 @@ async function loadUsers() {
 
 window.toggleUserStatus = async function(id, currentStatus) {
   const newStatus = currentStatus==='active' ? 'inactive' : 'active';
-  await db.collection('users').doc(id).update({status:newStatus});
+  await firebase.firestore().collection('users').doc(id).update({status:newStatus});
   toast(newStatus==='active'?'✅ চালু!':'🔒 বন্ধ!'); loadUsers();
 }
 window.deleteUser = async function(id) {
   if (!confirm('মুছে ফেলবেন?')) return;
-  await db.collection('users').doc(id).delete();
+  await firebase.firestore().collection('users').doc(id).delete();
   toast('🗑️ মুছে ফেলা হয়েছে!','info'); loadUsers();
 }
 
@@ -3497,7 +3499,7 @@ async function loadBranches() {
   const tbody = document.getElementById('branchTableBody');
   if (!tbody) return;
   try {
-    const snap = await db.collection('branches').orderBy('createdAt','desc').get();
+    const snap = await firebase.firestore().collection('branches').orderBy('createdAt','desc').get();
     if (snap.empty) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-light)">কোনো শাখা নেই</td></tr>'; return; }
     let html = '';
     snap.forEach((d,i) => {
@@ -3517,7 +3519,7 @@ window.saveBranch = async function() {
   const code = inputs[1]?.value?.trim();
   if (!name||!code) { toast('নাম ও কোড দিন!','error'); return; }
   try {
-    await db.collection('branches').add({
+    await firebase.firestore().collection('branches').add({
       name, code, status:'active',
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3527,7 +3529,7 @@ window.saveBranch = async function() {
 }
 window.deleteBranch = async function(id) {
   if (!confirm('মুছে ফেলবেন?')) return;
-  await db.collection('branches').doc(id).delete();
+  await firebase.firestore().collection('branches').doc(id).delete();
   toast('🗑️ মুছে ফেলা হয়েছে!','info'); loadBranches();
 }
 
@@ -3537,7 +3539,7 @@ window.saveSamity = async function() {
   const name = inputs[0]?.value?.trim();
   if (!name) { toast('সমিতির নাম দিন!','error'); return; }
   try {
-    await db.collection('samities').add({
+    await firebase.firestore().collection('samities').add({
       name, status:'active',
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3553,7 +3555,7 @@ window.saveHoliday = async function() {
   const date = inputs[1]?.value;
   if (!name||!date) { toast('নাম ও তারিখ দিন!','error'); return; }
   try {
-    await db.collection('holidays').add({
+    await firebase.firestore().collection('holidays').add({
       name, date,
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3569,7 +3571,7 @@ window.saveSharePayment = async function() {
   const amount = Number(inputs[2]?.value);
   if (!memberId||!amount) { toast('সব তথ্য দিন!','error'); return; }
   try {
-    await db.collection('shareTransactions').add({
+    await firebase.firestore().collection('shareTransactions').add({
       memberId, amount, type:'payment',
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3583,7 +3585,7 @@ window.saveInterBranch = async function() {
   const amount = Number(page.querySelector('input[type="number"]')?.value);
   if (!amount) { toast('পরিমাণ দিন!','error'); return; }
   try {
-    await db.collection('interBranchTransactions').add({
+    await firebase.firestore().collection('interBranchTransactions').add({
       amount, status:'pending',
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3599,7 +3601,7 @@ window.saveLoanWaiver = async function() {
   const amount = Number(inputs[1]?.value);
   if (!memberId||!amount) { toast('সব তথ্য দিন!','error'); return; }
   try {
-    await db.collection('loanWaivers').add({
+    await firebase.firestore().collection('loanWaivers').add({
       memberId, amount,
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3614,7 +3616,7 @@ window.saveLoanReschedule = async function() {
   const totalLoan = Number(inputs[0]?.value);
   if (!totalLoan) { toast('ঋণের পরিমাণ দিন!','error'); return; }
   try {
-    await db.collection('loanReschedules').add({
+    await firebase.firestore().collection('loanReschedules').add({
       totalLoan,
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3628,7 +3630,7 @@ window.saveStaffLoan = async function() {
   const amount = Number(page.querySelector('input[type="number"]')?.value);
   if (!amount) { toast('পরিমাণ দিন!','error'); return; }
   try {
-    await db.collection('staffLoans').add({
+    await firebase.firestore().collection('staffLoans').add({
       amount, status:'active',
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3643,7 +3645,7 @@ window.saveDpsDeposit = async function() {
   const date = page.querySelector('input[type="date"]')?.value;
   if (!amount) { toast('পরিমাণ দিন!','error'); return; }
   try {
-    await db.collection('depositTransactions').add({
+    await firebase.firestore().collection('depositTransactions').add({
       amount, date, type:'dps_installment',
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3657,7 +3659,7 @@ window.saveEmiPenalty = async function() {
   const amount = Number(page.querySelector('input[type="number"]')?.value);
   if (!amount) { toast('পরিমাণ দিন!','error'); return; }
   try {
-    await db.collection('loanPenalties').add({
+    await firebase.firestore().collection('loanPenalties').add({
       amount,
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3671,7 +3673,7 @@ window.saveSalarySetup = async function() {
   const basicSalary = Number(page.querySelector('input[type="number"]')?.value);
   if (!basicSalary) { toast('মূল বেতন দিন!','error'); return; }
   try {
-    await db.collection('salarySetups').add({
+    await firebase.firestore().collection('salarySetups').add({
       basicSalary,
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3689,7 +3691,7 @@ window.saveJournalVoucher = async function() {
   if (!desc||!debitAmt) { toast('সব তথ্য দিন!','error'); return; }
   if (debitAmt !== creditAmt) { toast('ডেবিট ও ক্রেডিট সমান হতে হবে!','error'); return; }
   try {
-    await db.collection('journalVouchers').add({
+    await firebase.firestore().collection('journalVouchers').add({
       description:desc, debitAmount:debitAmt, creditAmount:creditAmt,
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3704,7 +3706,7 @@ window.saveNotice = async function() {
   const content = page.querySelector('textarea')?.value?.trim();
   if (!title||!content) { toast('শিরোনাম ও বিষয়বস্তু দিন!','error'); return; }
   try {
-    await db.collection('notices').add({
+    await firebase.firestore().collection('notices').add({
       title, content, status:'active',
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3718,7 +3720,7 @@ window.saveDirector = async function() {
   const name = page.querySelector('input[type="text"]')?.value?.trim();
   if (!name) { toast('নাম দিন!','error'); return; }
   try {
-    await db.collection('directors').add({
+    await firebase.firestore().collection('directors').add({
       name,
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3733,7 +3735,7 @@ window.saveEmployee = async function() {
   const mobile = page.querySelector('input[type="tel"]')?.value?.trim();
   if (!name||!mobile) { toast('নাম ও মোবাইল দিন!','error'); return; }
   try {
-    await db.collection('employees').add({
+    await firebase.firestore().collection('employees').add({
       name, mobile, status:'active',
       createdBy: currentUser.uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3748,7 +3750,7 @@ window.showBranchModal = async function() {
   const sel = document.getElementById('branchSelect');
   modal.style.display = 'flex';
   try {
-    const snap = await db.collection('branches').get();
+    const snap = await firebase.firestore().collection('branches').get();
     sel.innerHTML = '<option value="">— সব শাখা —</option>';
     snap.forEach(d => {
       const b = d.data();
