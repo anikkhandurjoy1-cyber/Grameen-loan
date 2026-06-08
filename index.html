@@ -2599,12 +2599,11 @@ table tr:hover td{background:#f7fafd;}
 
 </div><!-- /app -->
 
-<!-- Firebase SDKs -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc, query, where, orderBy, limit, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+<!-- Firebase SDKs - Compat version (works on all browsers) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
 // ─── FIREBASE CONFIG ───
 const firebaseConfig = {
   apiKey: "AIzaSyAHDYMgL9vHRTaer60qXRD8UuoVWn06Ip8",
@@ -2616,9 +2615,9 @@ const firebaseConfig = {
   appId: "1:1016084099405:web:5b98a4673c6631d9ae0704"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
 // ─── STATE ───
 let currentUser = null;
@@ -2661,14 +2660,13 @@ window.addEventListener('load', () => {
 });
 
 // ─── AUTH STATE ───
-onAuthStateChanged(auth, async (user) => {
-  // Make sure loader is hidden first
+auth.onAuthStateChanged(async (user) => {
   const loader = document.getElementById('loader');
   if (loader) loader.style.display = 'none';
 
   if (user) {
     try {
-      const uSnap = await getDocs(query(collection(db,'users'), where('email','==',user.email)));
+      const uSnap = await db.collection('users').where('email','==',user.email).get();
       if (!uSnap.empty) {
         currentUser = { uid: user.uid, email: user.email, ...uSnap.docs[0].data() };
       } else {
@@ -2696,7 +2694,7 @@ window.doLogin = async function() {
   btn.textContent = 'লগইন হচ্ছে...';
   btn.disabled = true;
   try {
-    await signInWithEmailAndPassword(auth, email, pass);
+    await auth.signInWithEmailAndPassword(email, pass);
     errEl.style.display = 'none';
   } catch(e) {
     errEl.style.display = 'block';
@@ -2715,7 +2713,7 @@ document.addEventListener('keydown', e => {
 
 // ─── LOGOUT ───
 window.doLogout = async function() {
-  await signOut(auth);
+  await auth.signOut();
 }
 
 // ─── APP START ───
@@ -2895,31 +2893,19 @@ window.switchTab = function(btn, tabId) {
 async function loadDashboard() {
   try {
     const today = todayStr();
-
-    // Total members
-    const memSnap = await getDocs(collection(db,'members'));
-    const totalMem = memSnap.size;
-
-    // Today's installments
-    const instSnap = await getDocs(query(collection(db,'installments'), where('date','==',today)));
+    const instSnap = await db.collection('installments').where('date','==',today).get();
     let todayCollect = 0;
     instSnap.forEach(d => todayCollect += (d.data().amount||0));
 
-    // Active loans
-    const loanSnap = await getDocs(query(collection(db,'loans'), where('status','==','active')));
-    let totalLoan = 0, totalDue = 0;
-    loanSnap.forEach(d => {
-      totalLoan += (d.data().amount||0);
-      totalDue += (d.data().dueAmount||0);
-    });
+    const loanSnap = await db.collection('loans').where('status','==','active').get();
+    let totalDue = 0;
+    loanSnap.forEach(d => totalDue += (d.data().dueAmount||0));
 
-    // Today's deposits
-    const depSnap = await getDocs(query(collection(db,'depositTransactions'), where('date','==',today), where('type','==','receive')));
+    const depSnap = await db.collection('depositTransactions').where('date','==',today).where('type','==','receive').get();
     let todayDeposit = 0;
     depSnap.forEach(d => todayDeposit += (d.data().amount||0));
 
-    // Today's disbursement
-    const disbSnap = await getDocs(query(collection(db,'loans'), where('startDate','==',today)));
+    const disbSnap = await db.collection('loans').where('startDate','==',today).get();
     let todayDisb = 0;
     disbSnap.forEach(d => todayDisb += (d.data().amount||0));
 
@@ -2929,10 +2915,9 @@ async function loadDashboard() {
     document.getElementById('ds-disbursment').textContent = tk(todayDisb);
     document.getElementById('ds-depositReceive').textContent = tk(todayDeposit);
 
-    // Employee recovery list
     const empEl = document.getElementById('employeeRecoveryList');
     if (empEl) {
-      const empSnap = await getDocs(query(collection(db,'users'), where('role','==','Field Officer')));
+      const empSnap = await db.collection('users').where('role','==','Field Officer').get();
       if (empSnap.empty) {
         empEl.innerHTML = '<p style="color:var(--text-light);font-size:13px;">কোনো Field Officer নেই</p>';
       } else {
@@ -2946,12 +2931,15 @@ async function loadDashboard() {
       }
     }
 
-    // Loan stats
-    document.getElementById('tot-gs').textContent = tk(0);
+    const loanStatsSnap = await db.collection('loans').get();
+    let totalLoanAcc = 0, totalDisbursed = 0;
+    loanStatsSnap.forEach(d => { totalLoanAcc++; totalDisbursed += (d.data().amount||0); });
+    const el1 = document.getElementById('totalLoanAcc');
+    const el2 = document.getElementById('totalDisbursed');
+    if(el1) el1.textContent = totalLoanAcc;
+    if(el2) el2.textContent = tk(totalDisbursed);
 
-  } catch(e) {
-    console.log('Dashboard load error:', e);
-  }
+  } catch(e) { console.log('Dashboard error:', e); }
 }
 
 // ══════════════════════════════════════
@@ -2959,37 +2947,485 @@ async function loadDashboard() {
 // ══════════════════════════════════════
 window.saveMember = async function() {
   const form = document.getElementById('page-memberAdd');
-  const inputs = form.querySelectorAll('input,select,textarea');
-  const name = inputs[0].value.trim();
-  const mobile = inputs[1].value.trim();
-  const father = inputs[2].value.trim();
-  const mother = inputs[3].value.trim();
-  const nid = inputs[4].value.trim();
-  const dob = inputs[5].value;
-  const branch = inputs[6].value;
-  const joinDate = inputs[7].value;
-  const shares = inputs[8].value||1;
-  const occupation = inputs[9].value.trim();
-  const address = form.querySelector('textarea').value.trim();
-
+  const inputs = form.querySelectorAll('input[type="text"],input[type="tel"],input[type="date"],input[type="number"],input[type="email"]');
+  const name = inputs[0]?.value?.trim();
+  const mobile = inputs[1]?.value?.trim();
   if (!name || !mobile) { toast('নাম ও মোবাইল আবশ্যক!','error'); return; }
-
   try {
     const memberId = 'M-' + Date.now().toString().slice(-6);
-    await addDoc(collection(db,'members'), {
-      memberId, name, mobile, fatherName:father, motherName:mother,
-      nid, dob, branch, joinDate, shares:Number(shares),
-      occupation, address, status:'active',
+    await db.collection('members').add({
+      memberId, name, mobile, status:'active',
       createdBy: currentUser.uid,
-      createdAt: serverTimestamp()
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    toast('✅ সদস্য সংরক্ষণ হয়েছে!');
-    // clear form
-    inputs.forEach(i => { if(i.tagName!=='SELECT') i.value=''; });
+    toast('✅ সদস্য সংরক্ষণ হয়েছে! ID: ' + memberId);
     window.showPage('memberList');
-  } catch(e) {
-    toast('সমস্যা হয়েছে: ' + e.message, 'error');
-  }
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+async function loadMembers() {
+  const tbody = document.getElementById('memberTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">লোড হচ্ছে...</td></tr>';
+  try {
+    const snap = await db.collection('members').orderBy('createdAt','desc').get();
+    if (snap.empty) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light)">কোনো সদস্য নেই</td></tr>'; return; }
+    let html = '';
+    snap.forEach(d => {
+      const m = d.data();
+      html += `<tr>
+        <td><b>${m.memberId||'—'}</b></td><td>${m.name||'—'}</td>
+        <td>${m.mobile||'—'}</td><td>${m.branch||'—'}</td><td>—</td>
+        <td><span class="badge ${m.status==='active'?'badge-success':'badge-danger'}">${m.status==='active'?'সক্রিয়':'নিষ্ক্রিয়'}</span></td>
+        <td><button class="btn btn-primary btn-sm">👁️</button></td>
+      </tr>`;
+    });
+    tbody.innerHTML = html;
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--danger)">লোড ব্যর্থ</td></tr>'; }
+}
+
+window.saveLoan = async function() {
+  const page = document.getElementById('page-loanAccountOpen');
+  const inputs = page.querySelectorAll('input');
+  const memberId = inputs[0]?.value?.trim();
+  const amount = Number(inputs[1]?.value);
+  const rate = Number(inputs[2]?.value);
+  const tenure = Number(inputs[3]?.value);
+  const startDate = inputs[4]?.value;
+  if (!memberId||!amount) { toast('সব তথ্য দিন!','error'); return; }
+  try {
+    const loanAccId = 'L-' + Date.now().toString().slice(-6);
+    await db.collection('loans').add({
+      loanAccId, memberId, amount, interestRate:rate,
+      tenure, startDate, paidAmount:0,
+      dueAmount: amount*(1+rate*tenure/1200),
+      status:'active',
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ ঋণ একাউন্ট খোলা হয়েছে! ID: '+loanAccId);
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveInstallment = async function() {
+  const page = document.getElementById('page-loanInstallment');
+  const inputs = page.querySelectorAll('input[type="number"],input[type="date"],input[type="text"]');
+  const amount = Number(inputs[0]?.value);
+  const date = page.querySelector('input[type="date"]')?.value;
+  if (!amount||!date) { toast('পরিমাণ ও তারিখ দিন!','error'); return; }
+  try {
+    await db.collection('installments').add({
+      amount, date, type:'loan_installment',
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ কিস্তি জমা হয়েছে!');
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveDepositReceive = async function() {
+  const page = document.getElementById('page-depositReceive');
+  const memberId = page.querySelector('input[type="text"]')?.value?.trim();
+  const amount = Number(page.querySelector('input[type="number"]')?.value);
+  const date = page.querySelector('input[type="date"]')?.value;
+  if (!memberId||!amount) { toast('সব তথ্য দিন!','error'); return; }
+  try {
+    await db.collection('depositTransactions').add({
+      memberId, amount, date, type:'receive',
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ সঞ্চয় জমা হয়েছে!');
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveDepositAccount = async function(type) {
+  const accId = 'DA-' + Date.now().toString().slice(-6);
+  try {
+    await db.collection('depositAccounts').add({
+      accId, accType:type, balance:0, status:'open',
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ ডিপোজিট একাউন্ট খোলা হয়েছে! ID: '+accId);
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveLoanProposal = async function() {
+  const page = document.getElementById('page-loanProposal');
+  const inputs = page.querySelectorAll('input');
+  const memberId = inputs[0]?.value?.trim();
+  const amount = Number(inputs[1]?.value);
+  if (!memberId||!amount) { toast('সব তথ্য দিন!','error'); return; }
+  try {
+    await db.collection('loanProposals').add({
+      memberId, amount, status:'pending',
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ ঋণ প্রস্তাব দাখিল হয়েছে!');
+    window.showPage('loanProposalList');
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+async function loadLoanProposals() {
+  const tbody = document.querySelector('#page-loanProposalList tbody');
+  if (!tbody) return;
+  try {
+    const snap = await db.collection('loanProposals').orderBy('createdAt','desc').get();
+    if (snap.empty) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light)">কোনো প্রস্তাব নেই</td></tr>'; return; }
+    let html = '';
+    snap.forEach((d,i) => {
+      const p = d.data();
+      html += `<tr><td>${i+1}</td><td>${p.memberId}</td><td>${tk(p.amount)}</td>
+        <td>${p.purpose||'—'}</td><td>—</td>
+        <td><span class="badge ${p.status==='pending'?'badge-warning':'badge-success'}">${p.status==='pending'?'অপেক্ষমান':'অনুমোদিত'}</span></td>
+        <td><button class="btn btn-success btn-sm" onclick="approveLoanProposal('${d.id}')">✅</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteLoanProposal('${d.id}')">🗑️</button></td></tr>`;
+    });
+    tbody.innerHTML = html;
+  } catch(e) {}
+}
+
+window.approveLoanProposal = async function(id) {
+  await db.collection('loanProposals').doc(id).update({status:'approved'});
+  toast('✅ প্রস্তাব অনুমোদিত!'); loadLoanProposals();
+}
+window.deleteLoanProposal = async function(id) {
+  if (!confirm('মুছে ফেলবেন?')) return;
+  await db.collection('loanProposals').doc(id).delete();
+  toast('🗑️ মুছে ফেলা হয়েছে!','info'); loadLoanProposals();
+}
+
+window.createStaffUser = async function() {
+  const name = document.getElementById('newUserName').value.trim();
+  const email = document.getElementById('newUserEmail').value.trim();
+  const password = document.getElementById('newUserPass').value.trim();
+  const role = document.getElementById('newUserRole').value;
+  const branch = document.getElementById('newUserBranch').value;
+  const mobile = document.getElementById('newUserMobile').value.trim();
+  if (!name||!email||!password) { toast('নাম, Email ও Password আবশ্যক!','error'); return; }
+  if (password.length < 6) { toast('Password কমপক্ষে ৬ অক্ষর!','error'); return; }
+  try {
+    await db.collection('users').add({
+      name, email, role, branch, mobile, status:'active',
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    const infoBox = document.createElement('div');
+    infoBox.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:12px;padding:20px;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);z-index:9999;';
+    infoBox.innerHTML = `<h3 style="color:var(--primary);margin-bottom:12px;">✅ কর্মী তৈরি হয়েছে!</h3>
+      <div style="background:#f8f9fa;border-radius:8px;padding:12px;font-size:13px;">
+        <div><b>নাম:</b> ${name}</div><div><b>Role:</b> ${role}</div>
+        <div><b>Email:</b> ${email}</div><div><b>Password:</b> ${password}</div>
+      </div>
+      <p style="font-size:11px;color:var(--danger);margin-top:8px;">⚠️ Firebase Console → Authentication → Add user এ এই email/password দিন!</p>
+      <button onclick="this.parentElement.remove()" style="width:100%;margin-top:12px;padding:10px;background:var(--primary);color:#fff;border:none;border-radius:7px;font-size:14px;cursor:pointer;">বন্ধ করুন</button>`;
+    document.body.appendChild(infoBox);
+    document.getElementById('newUserName').value='';
+    document.getElementById('newUserEmail').value='';
+    document.getElementById('newUserPass').value='';
+    document.getElementById('newUserMobile').value='';
+    loadUsers();
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+async function loadUsers() {
+  const tbody = document.getElementById('userTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">লোড হচ্ছে...</td></tr>';
+  try {
+    const snap = await db.collection('users').orderBy('createdAt','desc').get();
+    if (snap.empty) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light)">কোনো কর্মী নেই</td></tr>'; return; }
+    const roleColor = {'Admin':'badge-danger','Branch Manager':'badge-info','Field Officer':'badge-success','Data Entry':'badge-warning'};
+    let html = '';
+    snap.forEach(d => {
+      const u = d.data();
+      html += `<tr>
+        <td><b>${u.name||'—'}</b></td><td style="font-size:11px;">${u.email||'—'}</td>
+        <td><span class="badge ${roleColor[u.role]||'badge-secondary'}">${u.role||'—'}</span></td>
+        <td>${u.branch||'—'}</td><td>${u.mobile||'—'}</td>
+        <td><span class="badge ${u.status==='active'?'badge-success':'badge-danger'}">${u.status==='active'?'সক্রিয়':'বন্ধ'}</span></td>
+        <td><button class="btn btn-warning btn-sm" onclick="toggleUserStatus('${d.id}','${u.status}')">${u.status==='active'?'🔒':'✅'}</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteUser('${d.id}')">🗑️</button></td></tr>`;
+    });
+    tbody.innerHTML = html;
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="7" style="color:var(--danger);text-align:center">লোড ব্যর্থ</td></tr>'; }
+}
+
+window.toggleUserStatus = async function(id, currentStatus) {
+  const newStatus = currentStatus==='active' ? 'inactive' : 'active';
+  await db.collection('users').doc(id).update({status:newStatus});
+  toast(newStatus==='active'?'✅ চালু!':'🔒 বন্ধ!'); loadUsers();
+}
+window.deleteUser = async function(id) {
+  if (!confirm('মুছে ফেলবেন?')) return;
+  await db.collection('users').doc(id).delete();
+  toast('🗑️ মুছে ফেলা হয়েছে!','info'); loadUsers();
+}
+
+async function loadBranches() {
+  const tbody = document.getElementById('branchTableBody');
+  if (!tbody) return;
+  try {
+    const snap = await db.collection('branches').orderBy('createdAt','desc').get();
+    if (snap.empty) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-light)">কোনো শাখা নেই</td></tr>'; return; }
+    let html = '';
+    snap.forEach((d,i) => {
+      const b = d.data();
+      html += `<tr><td>${i+1}</td><td><b>${b.name}</b></td><td>${b.code}</td>
+        <td><span class="badge badge-info">${b.type||'—'}</span></td><td>${b.address||'—'}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteBranch('${d.id}')">🗑️</button></td></tr>`;
+    });
+    tbody.innerHTML = html;
+  } catch(e) {}
+}
+
+window.saveBranch = async function() {
+  const page = document.getElementById('page-branchManage');
+  const inputs = page.querySelectorAll('input');
+  const name = inputs[0]?.value?.trim();
+  const code = inputs[1]?.value?.trim();
+  if (!name||!code) { toast('নাম ও কোড দিন!','error'); return; }
+  try {
+    await db.collection('branches').add({
+      name, code, status:'active',
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ শাখা যোগ হয়েছে!'); loadBranches();
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+window.deleteBranch = async function(id) {
+  if (!confirm('মুছে ফেলবেন?')) return;
+  await db.collection('branches').doc(id).delete();
+  toast('🗑️ মুছে ফেলা হয়েছে!','info'); loadBranches();
+}
+
+window.saveSamity = async function() {
+  const page = document.getElementById('page-samitySetup');
+  const inputs = page.querySelectorAll('input');
+  const name = inputs[0]?.value?.trim();
+  if (!name) { toast('সমিতির নাম দিন!','error'); return; }
+  try {
+    await db.collection('samities').add({
+      name, status:'active',
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ সমিতি সংরক্ষণ হয়েছে!');
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveHoliday = async function() {
+  const page = document.getElementById('page-holidaySetup');
+  const inputs = page.querySelectorAll('input');
+  const name = inputs[0]?.value?.trim();
+  const date = inputs[1]?.value;
+  if (!name||!date) { toast('নাম ও তারিখ দিন!','error'); return; }
+  try {
+    await db.collection('holidays').add({
+      name, date,
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ ছুটি যোগ হয়েছে!');
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveSharePayment = async function() {
+  const page = document.getElementById('page-sharePayment');
+  const inputs = page.querySelectorAll('input');
+  const memberId = inputs[0]?.value?.trim();
+  const amount = Number(inputs[2]?.value);
+  if (!memberId||!amount) { toast('সব তথ্য দিন!','error'); return; }
+  try {
+    await db.collection('shareTransactions').add({
+      memberId, amount, type:'payment',
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ শেয়ার পেমেন্ট সংরক্ষণ হয়েছে!');
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveInterBranch = async function() {
+  const page = document.getElementById('page-interBranch');
+  const amount = Number(page.querySelector('input[type="number"]')?.value);
+  if (!amount) { toast('পরিমাণ দিন!','error'); return; }
+  try {
+    await db.collection('interBranchTransactions').add({
+      amount, status:'pending',
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ আন্তঃ শাখা ট্রানজেকশন সম্পন্ন!');
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveLoanWaiver = async function() {
+  const page = document.getElementById('page-loanWaiver');
+  const inputs = page.querySelectorAll('input');
+  const memberId = inputs[0]?.value?.trim();
+  const amount = Number(inputs[1]?.value);
+  if (!memberId||!amount) { toast('সব তথ্য দিন!','error'); return; }
+  try {
+    await db.collection('loanWaivers').add({
+      memberId, amount,
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ ঋণ মওকুফ সংরক্ষণ হয়েছে!');
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveLoanReschedule = async function() {
+  const page = document.getElementById('page-loanReschedule');
+  const inputs = page.querySelectorAll('input[type="number"]');
+  const totalLoan = Number(inputs[0]?.value);
+  if (!totalLoan) { toast('ঋণের পরিমাণ দিন!','error'); return; }
+  try {
+    await db.collection('loanReschedules').add({
+      totalLoan,
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ ঋণ পুনঃতফসিল সম্পন্ন!');
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveStaffLoan = async function() {
+  const page = document.getElementById('page-staffLoanOpen');
+  const amount = Number(page.querySelector('input[type="number"]')?.value);
+  if (!amount) { toast('পরিমাণ দিন!','error'); return; }
+  try {
+    await db.collection('staffLoans').add({
+      amount, status:'active',
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ কর্মী ঋণ খোলা হয়েছে!');
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveDpsDeposit = async function() {
+  const page = document.getElementById('page-dpsDeposit');
+  const amount = Number(page.querySelector('input[type="number"]')?.value);
+  const date = page.querySelector('input[type="date"]')?.value;
+  if (!amount) { toast('পরিমাণ দিন!','error'); return; }
+  try {
+    await db.collection('depositTransactions').add({
+      amount, date, type:'dps_installment',
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ DPS কিস্তি জমা হয়েছে!');
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveEmiPenalty = async function() {
+  const page = document.getElementById('page-loanEmiPenalty');
+  const amount = Number(page.querySelector('input[type="number"]')?.value);
+  if (!amount) { toast('পরিমাণ দিন!','error'); return; }
+  try {
+    await db.collection('loanPenalties').add({
+      amount,
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ জরিমানা যোগ হয়েছে!');
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveSalarySetup = async function() {
+  const page = document.getElementById('page-salarySetup');
+  const basicSalary = Number(page.querySelector('input[type="number"]')?.value);
+  if (!basicSalary) { toast('মূল বেতন দিন!','error'); return; }
+  try {
+    await db.collection('salarySetups').add({
+      basicSalary,
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ বেতন সেটআপ সংরক্ষণ হয়েছে!');
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveJournalVoucher = async function() {
+  const page = document.getElementById('page-journalVoucher');
+  const desc = page.querySelector('input[type="text"]')?.value?.trim();
+  const amounts = page.querySelectorAll('input[type="number"]');
+  const debitAmt = Number(amounts[0]?.value);
+  const creditAmt = Number(amounts[1]?.value);
+  if (!desc||!debitAmt) { toast('সব তথ্য দিন!','error'); return; }
+  if (debitAmt !== creditAmt) { toast('ডেবিট ও ক্রেডিট সমান হতে হবে!','error'); return; }
+  try {
+    await db.collection('journalVouchers').add({
+      description:desc, debitAmount:debitAmt, creditAmount:creditAmt,
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ ভাউচার পোস্ট হয়েছে!');
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveNotice = async function() {
+  const page = document.getElementById('page-noticeSetup');
+  const title = page.querySelector('input[type="text"]')?.value?.trim();
+  const content = page.querySelector('textarea')?.value?.trim();
+  if (!title||!content) { toast('শিরোনাম ও বিষয়বস্তু দিন!','error'); return; }
+  try {
+    await db.collection('notices').add({
+      title, content, status:'active',
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ নোটিশ প্রকাশিত হয়েছে!');
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveDirector = async function() {
+  const page = document.getElementById('page-directorRegister');
+  const name = page.querySelector('input[type="text"]')?.value?.trim();
+  if (!name) { toast('নাম দিন!','error'); return; }
+  try {
+    await db.collection('directors').add({
+      name,
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ পরিচালক যোগ হয়েছে!');
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveEmployee = async function() {
+  const page = document.getElementById('page-employeeRegister');
+  const name = page.querySelector('input[type="text"]')?.value?.trim();
+  const mobile = page.querySelector('input[type="tel"]')?.value?.trim();
+  if (!name||!mobile) { toast('নাম ও মোবাইল দিন!','error'); return; }
+  try {
+    await db.collection('employees').add({
+      name, mobile, status:'active',
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ কর্মী নিবন্ধন হয়েছে!');
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+// Branch modal
+window.showBranchModal = async function() {
+  const modal = document.getElementById('branchModal');
+  const sel = document.getElementById('branchSelect');
+  modal.style.display = 'flex';
+  try {
+    const snap = await db.collection('branches').get();
+    sel.innerHTML = '<option value="">— সব শাখা —</option>';
+    snap.forEach(d => {
+      const b = d.data();
+      sel.innerHTML += `<option value="${d.id}">${b.code||''} - ${b.name}</option>`;
+    });
+  } catch(e) {}
 }
 
 async function loadMembers() {
