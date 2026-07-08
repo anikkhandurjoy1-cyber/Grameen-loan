@@ -449,6 +449,18 @@ input,select,textarea{font-family:inherit;}
 .stat-card .val{font-size:18px;font-weight:700;color:var(--primary);}
 .stat-card .lbl{font-size:11px;color:var(--text-light);margin-top:2px;line-height:1.3;}
 
+/* ── DONUT CHART (ড্যাশবোর্ড সঞ্চয়/ঋণ/সদস্য স্ট্যাটাস) ── */
+.donut-wrap{display:flex;flex-wrap:wrap;gap:16px;align-items:center;}
+.donut-circle{width:140px;height:140px;border-radius:50%;flex-shrink:0;position:relative;display:flex;align-items:center;justify-content:center;}
+.donut-circle::after{content:'';position:absolute;width:78px;height:78px;background:var(--card);border-radius:50%;}
+.donut-center{position:relative;z-index:2;text-align:center;font-size:11px;color:var(--text-light);}
+.donut-center b{display:block;font-size:15px;color:var(--primary);font-weight:700;}
+.donut-legend{flex:1;min-width:140px;font-size:12px;}
+.donut-legend-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0;gap:8px;}
+.donut-legend-row .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-right:6px;}
+.donut-legend-label{display:flex;align-items:center;color:var(--text-light);}
+.donut-legend-val{font-weight:600;color:var(--text);}
+
 /* ── TABLE ── */
 .table-wrap{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
@@ -1081,6 +1093,35 @@ table tr:hover td{background:#f7fafd;}
     <div class="card">
       <div class="card-title">👔 কর্মচারীর ঋণ আদায়ের হার</div>
       <div id="employeeRecoveryList" style="font-size:13px;color:var(--text-light);">লোড হচ্ছে...</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🏦 সঞ্চয় স্থিতি</div>
+      <div class="donut-wrap">
+        <div class="donut-circle" id="savingsDonut"><div class="donut-center">মোট সঞ্চয়<b id="savingsDonutTotal">০</b></div></div>
+        <div class="donut-legend" id="savingsDonutLegend"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">💳 ঋণ স্থিতি</div>
+      <div class="donut-wrap">
+        <div class="donut-circle" id="loanDonut"><div class="donut-center">মোট ঋণের স্থিতি<b id="loanDonutTotal">০</b></div></div>
+        <div class="donut-legend" id="loanDonutLegend"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">👥 সদস্য তথ্য</div>
+      <div class="donut-wrap">
+        <div style="position:relative;width:140px;height:74px;overflow:hidden;flex-shrink:0;">
+          <div id="memberDonut" style="position:absolute;top:0;left:0;width:140px;height:140px;border-radius:50%;background:var(--border);"></div>
+          <div style="position:absolute;top:40px;left:0;right:0;text-align:center;font-size:10px;color:var(--text-light);">
+            Total Member<b id="memberDonutTotal" style="display:block;font-size:15px;color:var(--primary);font-weight:700;">০</b>
+          </div>
+        </div>
+        <div class="donut-legend" id="memberDonutLegend"></div>
+      </div>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
@@ -2634,8 +2675,8 @@ table tr:hover td{background:#f7fafd;}
     <div class="card">
       <div class="table-wrap">
         <table>
-          <thead><tr><th>নাম</th><th>Email</th><th>Role</th><th>শাখা</th><th>মোবাইল</th><th>অবস্থা</th></tr></thead>
-          <tbody id="ulTableBody"><tr><td colspan="6" style="text-align:center;color:var(--text-light)">লোড হচ্ছে...</td></tr></tbody>
+          <thead><tr><th>নাম</th><th>Email</th><th>Role</th><th>শাখা</th><th>মোবাইল</th><th>অবস্থা</th><th>কাজ</th></tr></thead>
+          <tbody id="ulTableBody"><tr><td colspan="7" style="text-align:center;color:var(--text-light)">লোড হচ্ছে...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -10969,19 +11010,66 @@ window.fillUserFromEmployee = async function(empDocId) {
 window.loadUserListPage = async function() {
   const tbody = document.getElementById('ulTableBody');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:14px;">লোড হচ্ছে... ⏳</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:14px;">লোড হচ্ছে... ⏳</td></tr>';
   try {
     const snap = await db.collection('users').orderBy('createdAt','desc').get();
     let html = '';
     snap.forEach(d => {
       const u = d.data();
       const st = u.status === 'inactive' ? '<span style="color:var(--danger);">নিষ্ক্রিয়</span>' : '<span style="color:var(--success);">সক্রিয়</span>';
-      html += `<tr><td>${u.name||'—'}</td><td>${u.email||'—'}</td><td>${u.role||'—'}</td><td>${u.branch||'—'}</td><td>${u.mobile||'—'}</td><td>${st}</td></tr>`;
+      html += `<tr><td>${u.name||'—'}</td><td>${u.email||'—'}</td><td>${u.role||'—'}</td><td>${u.branch||'—'}</td><td>${u.mobile||'—'}</td><td>${st}</td>
+        <td><button class="btn btn-warning btn-sm" onclick="resetUserPassword('${d.id}','${(u.email||'').replace(/'/g,"\\'")}','${(u.name||'').replace(/'/g,"\\'")}')">🔑 Reset</button></td></tr>`;
     });
-    tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:var(--text-light);padding:14px;">কোনো ইউজার নেই</td></tr>';
+    tbody.innerHTML = html || '<tr><td colspan="7" style="text-align:center;color:var(--text-light);padding:14px;">কোনো ইউজার নেই</td></tr>';
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--danger);">Error: ${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--danger);">Error: ${e.message}</td></tr>`;
   }
+}
+
+// ── ইউজার পাসওয়ার্ড রিসেট (Auto Password Generate) ──
+function generateAutoPassword() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  let pass = '';
+  for (let i = 0; i < 10; i++) pass += chars[Math.floor(Math.random() * chars.length)];
+  return pass;
+}
+window.resetUserPassword = async function(userId, email, name) {
+  if (!email) { toast('এই ইউজারের ইমেইল পাওয়া যায়নি!','error'); return; }
+  if (!confirm(`${name || email} এর পাসওয়ার্ড রিসেট করে নতুন Auto Password জেনারেট করবেন?`)) return;
+  const autoPass = generateAutoPassword();
+  try {
+    await db.collection('users').doc(userId).update({
+      lastPasswordReset: firebase.firestore.FieldValue.serverTimestamp(),
+      lastPasswordResetBy: currentUser ? currentUser.uid : ''
+    });
+  } catch(e) {}
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:20px;max-width:340px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+      <h3 style="color:var(--primary);margin-bottom:12px;">🔑 নতুন Auto Password তৈরি হয়েছে</h3>
+      <div style="background:#f8f9fa;border-radius:8px;padding:12px;font-size:13px;">
+        <div><b>ইউজার:</b> ${name || '—'}</div>
+        <div><b>Email:</b> ${email}</div>
+        <div style="margin-top:8px;"><b>নতুন Password:</b>
+          <div style="font-family:monospace;font-size:18px;font-weight:700;color:var(--primary);background:#fff;border:1.5px dashed var(--primary);border-radius:6px;padding:8px;margin-top:4px;text-align:center;letter-spacing:1px;">${autoPass}</div>
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--danger);margin-top:10px;line-height:1.5;">
+        ⚠️ এই পাসওয়ার্ডটি এখনই কপি করে <b>Firebase Console → Authentication</b> এ গিয়ে
+        <b>${email}</b> ইউজারের জন্য "Reset password" করে এই মান বসিয়ে সেভ করুন। সেভ করার পর
+        পুরনো পাসওয়ার্ড দিয়ে আর লগইন করা যাবে না — শুধু এই নতুন Auto Password দিয়েই ঢুকতে হবে।
+      </p>
+      <button id="rupCopyBtn" style="width:100%;margin-top:10px;padding:10px;background:var(--secondary);color:#fff;border:none;border-radius:7px;font-size:14px;cursor:pointer;">📋 Password কপি করুন</button>
+      <button id="rupCloseBtn" style="width:100%;margin-top:8px;padding:10px;background:var(--primary);color:#fff;border:none;border-radius:7px;font-size:14px;cursor:pointer;">বন্ধ করুন</button>
+    </div>`;
+  document.body.appendChild(modal);
+  document.getElementById('rupCopyBtn').onclick = () => {
+    if (navigator.clipboard) navigator.clipboard.writeText(autoPass);
+    toast('📋 কপি হয়েছে!');
+  };
+  document.getElementById('rupCloseBtn').onclick = () => modal.remove();
 }
 
 // ══════════════════════════════════════
@@ -11180,55 +11268,188 @@ window.switchTab = function(btn, tabId) {
 // ══════════════════════════════════════
 // ─── DASHBOARD ───
 // ══════════════════════════════════════
+function renderDonutChart(circleId, legendId, totalId, segments) {
+  const circle = document.getElementById(circleId);
+  const legendEl = document.getElementById(legendId);
+  const totalEl = document.getElementById(totalId);
+  if (!circle || !legendEl) return;
+  const total = segments.reduce((s,x) => s + (Number(x.value)||0), 0);
+  if (totalEl) totalEl.textContent = tk(total);
+  if (total <= 0) {
+    circle.style.background = 'var(--border)';
+    legendEl.innerHTML = '<div style="color:var(--text-light);padding:8px 0;">কোনো তথ্য নেই</div>';
+    return;
+  }
+  let acc = 0, stops = [];
+  segments.forEach(seg => {
+    if (!seg.value || seg.value <= 0) return;
+    const start = (acc / total) * 360;
+    acc += seg.value;
+    const end = (acc / total) * 360;
+    stops.push(`${seg.color} ${start}deg ${end}deg`);
+  });
+  circle.style.background = `conic-gradient(${stops.join(',')})`;
+  legendEl.innerHTML = segments.map(seg => {
+    const pct = ((Number(seg.value)||0)/total*100).toFixed(1);
+    return `<div class="donut-legend-row"><span class="donut-legend-label"><span class="dot" style="background:${seg.color}"></span>${seg.label}</span><span class="donut-legend-val">${pct}% · ${tk(seg.value)}</span></div>`;
+  }).join('');
+}
+
+function renderHalfPie(circleId, legendId, totalId, segments) {
+  const circle = document.getElementById(circleId);
+  const legendEl = document.getElementById(legendId);
+  const totalEl = document.getElementById(totalId);
+  if (!circle || !legendEl) return;
+  const total = segments.reduce((s,x) => s + (Number(x.value)||0), 0);
+  if (totalEl) totalEl.textContent = total;
+  if (total <= 0) {
+    circle.style.background = 'var(--border)';
+    legendEl.innerHTML = '<div style="color:var(--text-light);padding:8px 0;">কোনো তথ্য নেই</div>';
+    return;
+  }
+  let acc = 0, stops = [];
+  segments.forEach(seg => {
+    if (!seg.value || seg.value <= 0) return;
+    const start = -90 + (acc / total) * 180;
+    acc += seg.value;
+    const end = -90 + (acc / total) * 180;
+    stops.push(`${seg.color} ${start}deg ${end}deg`);
+  });
+  stops.push(`transparent 90deg 360deg`);
+  circle.style.background = `conic-gradient(${stops.join(',')})`;
+  legendEl.innerHTML = segments.map(seg => {
+    const pct = ((Number(seg.value)||0)/total*100).toFixed(1);
+    return `<div class="donut-legend-row"><span class="donut-legend-label"><span class="dot" style="background:${seg.color}"></span>${seg.label}</span><span class="donut-legend-val">${seg.value} (${pct}%)</span></div>`;
+  }).join('');
+}
+
 async function loadDashboard() {
   try {
     const today = todayStr();
-    const instSnap = await firebase.firestore().collection('installments').where('date','==',today).get();
+
+    const [accSnap, loanSnap, memberSnap, samitySnap, employeeSnap] = await Promise.all([
+      db.collection('depositAccounts').get(),
+      db.collection('loans').get(),
+      getCachedRef('members_all', () => db.collection('members').get()),
+      getCachedRef('samities_all', () => db.collection('samities').get()),
+      getCachedRef('employees_all', () => db.collection('employees').get())
+    ]);
+
+    // ── সঞ্চয় স্থিতি ──
+    let dep = { general:0, security:0, fdr:0, dps:0 };
+    accSnap.forEach(d => {
+      const a = d.data();
+      const bucket = depositBucket(a.accType);
+      const bal = Number(a.balance) || 0;
+      if (bucket === 'general') dep.general += bal;
+      else if (bucket === 'security') dep.security += bal;
+      else if (bucket === 'fdr') dep.fdr += bal;
+      else if (bucket === 'dps') dep.dps += bal;
+    });
+    renderDonutChart('savingsDonut', 'savingsDonutLegend', 'savingsDonutTotal', [
+      { label: 'সাধারণ সঞ্চয়', value: dep.general, color: '#8e44ad' },
+      { label: 'বিশেষ সঞ্চয়', value: dep.security, color: '#2ecc71' },
+      { label: 'স্থায়ী আমানত (FDR)', value: dep.fdr, color: '#3498db' },
+      { label: 'মেয়াদী আমানত (DPS)', value: dep.dps, color: '#f39c12' }
+    ]);
+    document.getElementById('d-gs').textContent = tk(dep.general);
+    document.getElementById('d-ss').textContent = tk(dep.security);
+    document.getElementById('d-fdr').textContent = tk(dep.fdr);
+    document.getElementById('d-dps').textContent = tk(dep.dps);
+
+    // ── ঋণ স্থিতি ──
+    let loanStatus = { regular:0, overdue:0, expired:0 };
+    let totalLoanAcc = 0, totalDisbursed = 0, expiredCount = 0, totalDue = 0, totalPrincipal = 0, totalProfit = 0, totalPaid = 0;
+    loanSnap.forEach(d => {
+      const l = d.data();
+      totalLoanAcc++;
+      totalDisbursed += Number(l.amount) || 0;
+      totalPrincipal += Number(l.amount) || 0;
+      totalProfit += Number(l.profitAmount) || 0;
+      totalPaid += Number(l.paidAmount) || 0;
+      if (l.status === 'closed') return;
+      const due = Number(l.dueAmount) || 0;
+      totalDue += due;
+      const isExpired = !!(l.expiryDate && l.expiryDate < today);
+      const overdue = loanOverdueInfo(l, today);
+      if (isExpired) { loanStatus.expired += due; expiredCount++; }
+      else if (overdue.amount > 0) loanStatus.overdue += overdue.amount;
+      else loanStatus.regular += due;
+    });
+    renderDonutChart('loanDonut', 'loanDonutLegend', 'loanDonutTotal', [
+      { label: 'Regular Term Loan', value: loanStatus.regular, color: '#2ecc71' },
+      { label: 'Total Loan Overdue', value: loanStatus.overdue, color: '#f39c12' },
+      { label: 'Total Expire Amount', value: loanStatus.expired, color: '#e74c3c' }
+    ]);
+    document.getElementById('totalLoanAcc').textContent = totalLoanAcc;
+    document.getElementById('expiredLoan').textContent = expiredCount;
+    document.getElementById('totalDisbursed').textContent = tk(totalDisbursed);
+    document.getElementById('totalPrincipal').textContent = tk(totalPrincipal);
+    document.getElementById('totalInterest').textContent = tk(totalProfit);
+
+    // ── সদস্য তথ্য ──
+    let activeCount = 0, inactiveCount = 0;
+    memberSnap.forEach(d => {
+      const m = d.data();
+      if ((m.status || 'active') === 'active') activeCount++; else inactiveCount++;
+    });
+    renderHalfPie('memberDonut', 'memberDonutLegend', 'memberDonutTotal', [
+      { label: 'Active', value: activeCount, color: '#2ecc71' },
+      { label: 'Inactive', value: inactiveCount, color: '#e74c3c' }
+    ]);
+
+    // ── আজকের কালেকশন/বিতরণ (টার্গেট ব্যানার + stat কার্ড) ──
+    const [instSnap, depTxSnap] = await Promise.all([
+      db.collection('loanInstallments').where('instDate','==',today).get(),
+      db.collection('depositTransactions').where('date','==',today).get()
+    ]);
     let todayCollect = 0;
-    instSnap.forEach(d => todayCollect += (d.data().amount||0));
-
-    const loanSnap = await firebase.firestore().collection('loans').where('status','==','active').get();
-    let totalDue = 0;
-    loanSnap.forEach(d => totalDue += (d.data().dueAmount||0));
-
-    const depSnap = await firebase.firestore().collection('depositTransactions').where('date','==',today).where('type','==','receive').get();
-    let todayDeposit = 0;
-    depSnap.forEach(d => todayDeposit += (d.data().amount||0));
-
-    const disbSnap = await firebase.firestore().collection('loans').where('startDate','==',today).get();
+    instSnap.forEach(d => todayCollect += (Number(d.data().amount)||0));
+    let todayDeposit = 0, todayDepositPayment = 0;
+    depTxSnap.forEach(d => {
+      const t = d.data();
+      const amt = Number(t.amount)||0;
+      if (t.type === 'credit') todayDeposit += amt; else if (t.type === 'debit') todayDepositPayment += amt;
+    });
     let todayDisb = 0;
-    disbSnap.forEach(d => todayDisb += (d.data().amount||0));
+    loanSnap.forEach(d => { const l = d.data(); if (l.startDate === today) todayDisb += (Number(l.amount)||0); });
 
     document.getElementById('ds-loanTarget').textContent = tk(totalDue);
     document.getElementById('ds-loanCollect').textContent = tk(todayCollect);
-    document.getElementById('ds-loanDue').textContent = tk(totalDue - todayCollect);
+    document.getElementById('ds-loanDue').textContent = tk(Math.max(0, totalDue - todayCollect));
     document.getElementById('ds-disbursment').textContent = tk(todayDisb);
     document.getElementById('ds-depositReceive').textContent = tk(todayDeposit);
+    document.getElementById('ds-depositPayment').textContent = tk(todayDepositPayment);
+    const targetPct = totalDue > 0 ? Math.min(100, Math.round(todayCollect/totalDue*100)) : 0;
+    const tpEl = document.getElementById('targetPercent'); if (tpEl) tpEl.textContent = targetPct + '%';
 
+    // ── কর্মচারীর ঋণ আদায়ের হার ──
     const empEl = document.getElementById('employeeRecoveryList');
     if (empEl) {
-      const empSnap = await firebase.firestore().collection('users').where('role','==','Field Officer').get();
-      if (empSnap.empty) {
-        empEl.innerHTML = '<p style="color:var(--text-light);font-size:13px;">কোনো Field Officer নেই</p>';
+      const samityFieldOfficer = {};
+      samitySnap.forEach(d => samityFieldOfficer[d.id] = d.data().fieldOfficerId||'');
+      let dueByEmp = {};
+      loanSnap.forEach(d => {
+        const l = d.data();
+        if (l.status === 'closed') return;
+        const fo = samityFieldOfficer[l.samity];
+        if (!fo) return;
+        dueByEmp[fo] = (dueByEmp[fo]||0) + (Number(l.dueAmount)||0);
+      });
+      if (employeeSnap.empty) {
+        empEl.innerHTML = '<p style="color:var(--text-light);font-size:13px;">কোনো কর্মী নেই</p>';
       } else {
         let html = '';
-        empSnap.forEach(d => {
+        employeeSnap.forEach(d => {
           const emp = d.data();
+          if (emp.status && emp.status !== 'active') return;
+          const due = dueByEmp[d.id] || 0;
           html += `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
-            <span>👤 ${emp.name||emp.email}</span><span style="color:var(--text-light)">0.00%</span></div>`;
+            <span>👤 ${emp.name||'—'}</span><span style="color:${due>0?'var(--danger)':'var(--text-light)'}">${due>0?tk(due)+' বকেয়া':'বকেয়া নেই'}</span></div>`;
         });
-        empEl.innerHTML = html;
+        empEl.innerHTML = html || '<p style="color:var(--text-light);font-size:13px;">কোনো সক্রিয় কর্মী নেই</p>';
       }
     }
-
-    const loanStatsSnap = await firebase.firestore().collection('loans').get();
-    let totalLoanAcc = 0, totalDisbursed = 0;
-    loanStatsSnap.forEach(d => { totalLoanAcc++; totalDisbursed += (d.data().amount||0); });
-    const el1 = document.getElementById('totalLoanAcc');
-    const el2 = document.getElementById('totalDisbursed');
-    if(el1) el1.textContent = totalLoanAcc;
-    if(el2) el2.textContent = tk(totalDisbursed);
-
   } catch(e) { console.log('Dashboard error:', e); }
 }
 
@@ -11764,6 +11985,7 @@ async function loadUsers() {
         <td>${u.branch||'—'}</td><td>${u.mobile||'—'}</td>
         <td><span class="badge ${u.status==='active'?'badge-success':'badge-danger'}">${u.status==='active'?'সক্রিয়':'বন্ধ'}</span></td>
         <td><button class="btn btn-warning btn-sm" onclick="toggleUserStatus('${d.id}','${u.status}')">${u.status==='active'?'🔒':'✅'}</button>
+            <button class="btn btn-info btn-sm" onclick="resetUserPassword('${d.id}','${(u.email||'').replace(/'/g,"\\'")}','${(u.name||'').replace(/'/g,"\\'")}')">🔑</button>
             <button class="btn btn-danger btn-sm" onclick="deleteUser('${d.id}')">🗑️</button></td></tr>`;
     });
     tbody.innerHTML = html;
