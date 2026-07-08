@@ -11033,22 +11033,37 @@ function generateAutoPassword() {
   for (let i = 0; i < 10; i++) pass += chars[Math.floor(Math.random() * chars.length)];
   return pass;
 }
+const USER_ADMIN_API = 'https://grameen-user-admin.vercel.app/api/manageUser';
+
 window.resetUserPassword = async function(userId, email, name) {
   if (!email) { toast('এই ইউজারের ইমেইল পাওয়া যায়নি!','error'); return; }
   if (!confirm(`${name || email} এর পাসওয়ার্ড রিসেট করে নতুন Auto Password জেনারেট করবেন?`)) return;
   const autoPass = generateAutoPassword();
+
   try {
+    const idToken = await firebase.auth().currentUser.getIdToken();
+    const resp = await fetch(USER_ADMIN_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
+      body: JSON.stringify({ action: 'resetPassword', email, password: autoPass })
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.success) { toast('পাসওয়ার্ড রিসেট ব্যর্থ: ' + (data.error||'অজানা সমস্যা'), 'error'); return; }
+
     await db.collection('users').doc(userId).update({
       lastPasswordReset: firebase.firestore.FieldValue.serverTimestamp(),
       lastPasswordResetBy: currentUser ? currentUser.uid : ''
-    });
-  } catch(e) {}
+    }).catch(()=>{});
+  } catch(e) {
+    toast('পাসওয়ার্ড রিসেট ব্যর্থ: ' + e.message, 'error');
+    return;
+  }
 
   const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
   modal.innerHTML = `
     <div style="background:#fff;border-radius:12px;padding:20px;max-width:340px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-      <h3 style="color:var(--primary);margin-bottom:12px;">🔑 নতুন Auto Password তৈরি হয়েছে</h3>
+      <h3 style="color:var(--success);margin-bottom:12px;">✅ পাসওয়ার্ড রিসেট সফল হয়েছে</h3>
       <div style="background:#f8f9fa;border-radius:8px;padding:12px;font-size:13px;">
         <div><b>ইউজার:</b> ${name || '—'}</div>
         <div><b>Email:</b> ${email}</div>
@@ -11056,10 +11071,9 @@ window.resetUserPassword = async function(userId, email, name) {
           <div style="font-family:monospace;font-size:18px;font-weight:700;color:var(--primary);background:#fff;border:1.5px dashed var(--primary);border-radius:6px;padding:8px;margin-top:4px;text-align:center;letter-spacing:1px;">${autoPass}</div>
         </div>
       </div>
-      <p style="font-size:11px;color:var(--danger);margin-top:10px;line-height:1.5;">
-        ⚠️ এই পাসওয়ার্ডটি এখনই কপি করে <b>Firebase Console → Authentication</b> এ গিয়ে
-        <b>${email}</b> ইউজারের জন্য "Reset password" করে এই মান বসিয়ে সেভ করুন। সেভ করার পর
-        পুরনো পাসওয়ার্ড দিয়ে আর লগইন করা যাবে না — শুধু এই নতুন Auto Password দিয়েই ঢুকতে হবে।
+      <p style="font-size:11px;color:var(--text-light);margin-top:10px;line-height:1.5;">
+        পাসওয়ার্ড ইতিমধ্যে বদলে গেছে — পুরনো পাসওয়ার্ড দিয়ে আর লগইন করা যাবে না। এই নতুন Auto Password
+        ইউজারকে জানিয়ে দিন।
       </p>
       <button id="rupCopyBtn" style="width:100%;margin-top:10px;padding:10px;background:var(--secondary);color:#fff;border:none;border-radius:7px;font-size:14px;cursor:pointer;">📋 Password কপি করুন</button>
       <button id="rupCloseBtn" style="width:100%;margin-top:8px;padding:10px;background:var(--primary);color:#fff;border:none;border-radius:7px;font-size:14px;cursor:pointer;">বন্ধ করুন</button>
@@ -11929,6 +11943,16 @@ window.createStaffUser = async function() {
   if (!email||!password) { toast('User ID (Email) ও Password আবশ্যক!','error'); return; }
   if (password.length < 6) { toast('Password কমপক্ষে ৬ অক্ষর!','error'); return; }
   try {
+    // ── প্রথমে Firebase Auth-এ সত্যিকারের একাউন্ট তৈরি করা (Vercel API দিয়ে) ──
+    const idToken = await firebase.auth().currentUser.getIdToken();
+    const resp = await fetch(USER_ADMIN_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
+      body: JSON.stringify({ action: 'createUser', email, password, name })
+    });
+    const apiData = await resp.json();
+    if (!resp.ok || !apiData.success) { toast('একাউন্ট তৈরি ব্যর্থ: ' + (apiData.error||'অজানা সমস্যা'), 'error'); return; }
+
     // resolve default page permissions from role
     const def = DEFAULT_ROLE_PERMS[role];
     let pages = [];
@@ -11938,6 +11962,7 @@ window.createStaffUser = async function() {
 
     await db.collection('users').add({
       name, email, role, branch, mobile, empDocId,
+      authUid: apiData.uid,
       depositLimit: Number(document.getElementById('cuDepositLimit')?.value)||0,
       withdrawLimit: Number(document.getElementById('cuWithdrawLimit')?.value)||0,
       voucherReceiveLimit: Number(document.getElementById('cuVReceiveLimit')?.value)||0,
@@ -11953,12 +11978,12 @@ window.createStaffUser = async function() {
     });
     const infoBox = document.createElement('div');
     infoBox.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:12px;padding:20px;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);z-index:9999;';
-    infoBox.innerHTML = `<h3 style="color:var(--primary);margin-bottom:12px;">✅ ইউজার তৈরি হয়েছে!</h3>
+    infoBox.innerHTML = `<h3 style="color:var(--success);margin-bottom:12px;">✅ ইউজার সম্পূর্ণভাবে তৈরি হয়েছে!</h3>
       <div style="background:#f8f9fa;border-radius:8px;padding:12px;font-size:13px;">
         <div><b>নাম:</b> ${name}</div><div><b>Role:</b> ${role}</div>
         <div><b>User ID:</b> ${email}</div><div><b>Password:</b> ${password}</div>
       </div>
-      <p style="font-size:11px;color:var(--danger);margin-top:8px;">⚠️ Firebase Console → Authentication → Add user এ এই email/password দিন!</p>
+      <p style="font-size:11px;color:var(--text-light);margin-top:8px;">এই ইউজার এখনই এই email/password দিয়ে সরাসরি লগইন করতে পারবে — কোনো অতিরিক্ত ধাপ লাগবে না।</p>
       <button onclick="this.parentElement.remove()" style="width:100%;margin-top:12px;padding:10px;background:var(--primary);color:#fff;border:none;border-radius:7px;font-size:14px;cursor:pointer;">বন্ধ করুন</button>`;
     document.body.appendChild(infoBox);
     document.getElementById('newUserEmail').value='';
