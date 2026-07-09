@@ -70,13 +70,13 @@ const SUB_ITEM_TRANSLATIONS = {
   'DPS টার্গেট বনাম সংগ্রহ': 'DPS Target vs Collection',
   'DPS রেজিস্টার': 'DPS Register',
   'FDR রেজিস্টার': 'FDR Register',
-  'General Ledger (COA)': 'General Ledger (COA)',
+  'সাধারণ খতিয়ান (COA)': 'General Ledger (COA)',
   'Income & Expenses': 'Income & Expenses',
   'Ledger Statement': 'Ledger Statement',
   'Profit & Loss': 'Profit & Loss',
   'Receipt & Payment': 'Receipt & Payment',
   'Transaction Cancel List': 'Transaction Cancel List',
-  'Trial Balance': 'Trial Balance',
+  'রেওয়ামিল (Trial Balance)': 'Trial Balance',
   'Written Off রেজিস্টার': 'Written Off Register',
   'অতিরিক্ত জরিমানা': 'Extra Penalty',
   'অ্যাকাউন্টস লেনদেন': 'Accounts Transaction',
@@ -816,7 +816,7 @@ table tr:hover td{background:#f7fafd;}
       <span class="arrow">›</span>
     </div>
     <div class="submenu">
-      <div class="sub-item" onclick="showPage('glManage')">General Ledger (COA)</div>
+      <div class="sub-item" onclick="showPage('glManage')">সাধারণ খতিয়ান (COA)</div>
       <div class="sub-item" onclick="showPage('accountTransaction')">অ্যাকাউন্টস লেনদেন</div>
       <div class="sub-item" onclick="showPage('contraVoucher')">বিনিময় লেনদেন (Contra)</div>
       <div class="sub-item" onclick="showPage('journalVoucher')">জার্নাল ভাউচার</div>
@@ -909,7 +909,7 @@ table tr:hover td{background:#f7fafd;}
       <div class="sub-item" onclick="showPage('backDateTransaction')">Back Date Transaction</div>
       <div class="sub-item" onclick="showPage('transactionCancelList')">Transaction Cancel List</div>
       <div class="sub-item" onclick="showPage('balanceSheet')">Balance Sheet</div>
-      <div class="sub-item" onclick="showPage('trialBalance')">Trial Balance</div>
+      <div class="sub-item" onclick="showPage('trialBalance')">রেওয়ামিল (Trial Balance)</div>
       <div class="sub-item" onclick="showPage('profitLoss')">Profit & Loss</div>
       <div class="sub-item" onclick="showPage('incomeExpense')">Income & Expenses</div>
       <div class="sub-item" onclick="showPage('ledgerStatement')">Ledger Statement</div>
@@ -2131,44 +2131,6 @@ table tr:hover td{background:#f7fafd;}
     </div>
   </div>
 
-  <!-- ════ DEPOSIT TRANSFER ════ -->
-  <div id="page-depositTransfer" class="page" style="display:none;">
-    <div class="page-title">🔀 ডিপোজিট হিসাব স্থানান্তর/ক্লোজিং</div>
-    <div class="card">
-      <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab(this,'tab-transfer')">হিসাব স্থানান্তর</button>
-        <button class="tab-btn" onclick="switchTab(this,'tab-closing')">হিসাব ক্লোজিং</button>
-      </div>
-      <div id="tab-transfer" class="tab-content active">
-        <div class="form-row col2">
-          <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
-          <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
-        </div>
-        <div class="form-row col2">
-          <div class="form-group"><label>উৎস একাউন্ট *</label><select><option>— বাছুন —</option></select></div>
-          <div class="form-group"><label>গন্তব্য একাউন্ট *</label><select><option>— বাছুন —</option></select></div>
-        </div>
-        <div class="form-row col2">
-          <div class="form-group"><label>পরিমাণ (৳) *</label><input type="number"></div>
-          <div class="form-group"><label>তারিখ *</label><input type="date"></div>
-        </div>
-        <button class="btn btn-primary btn-block" style="margin-top:8px;">🔀 স্থানান্তর করুন</button>
-      </div>
-      <div id="tab-closing" class="tab-content">
-        <div class="form-row col2">
-          <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
-          <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
-        </div>
-        <div class="form-group" style="margin-bottom:12px;"><label>একাউন্ট *</label><select><option>— বাছুন —</option></select></div>
-        <div class="form-row col2">
-          <div class="form-group"><label>ক্লোজিংয়ের তারিখ *</label><input type="date"></div>
-          <div class="form-group"><label>কারণ</label><input type="text"></div>
-        </div>
-        <button class="btn btn-danger btn-block" style="margin-top:8px;">❌ একাউন্ট বন্ধ করুন</button>
-      </div>
-    </div>
-  </div>
-
   <!-- ════ SHARE PAYMENT ════ -->
   <div id="page-sharePayment" class="page" style="display:none;">
     <div class="page-title">📈 শেয়ার পেমেন্ট (Share Payment)</div>
@@ -2496,7 +2458,7 @@ table tr:hover td{background:#f7fafd;}
     <div class="page-title">💵 কর্মচারী বেতন সেটআপ (Salary Setup)</div>
     <div class="card">
       <div class="form-row col2">
-        <div class="form-group"><label>শাখা নাম</label><select id="ssBranch"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>শাখা নাম</label><select id="salSetupBranch"><option value="">— বাছুন —</option></select></div>
         <div class="form-group"><label>Employee Name *</label><select id="ssEmployee"><option value="">— কর্মী বাছুন —</option></select></div>
       </div>
       <div class="form-group" style="margin-bottom:12px;"><label>Effective Date *</label><input type="date" id="ssDate"></div>
@@ -2859,14 +2821,14 @@ table tr:hover td{background:#f7fafd;}
       </div>
       <div class="form-row col2">
         <div class="form-group"><label>দেশ</label><select id="bmCountry"><option>— বাছুন —</option><option>Bangladesh</option></select></div>
-        <div class="form-group"><label>বিভাগ</label><select id="bmDivision"><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>বিভাগ</label><select id="bmDivision" onchange="populateBmDistricts()"><option value="">— বাছুন —</option></select></div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label>জেলা</label><select id="bmDistrict"><option>— বাছুন —</option></select></div>
-        <div class="form-group"><label>উপজেলা</label><select id="bmUpazila"><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>জেলা</label><select id="bmDistrict"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>উপজেলা</label><input type="text" id="bmUpazila" placeholder="উপজেলার নাম লিখুন"></div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label>ইউনিয়ন/সিটি কর্পোরেশন</label><select id="bmUnion"><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>ইউনিয়ন/সিটি কর্পোরেশন</label><input type="text" id="bmUnion" placeholder="ইউনিয়ন/সিটি কর্পোরেশনের নাম লিখুন"></div>
         <div class="form-group"><label>ম্যানেজার ফোন</label><input type="text" id="bmManagerPhone"></div>
       </div>
       <div class="form-row col2">
@@ -2898,7 +2860,7 @@ table tr:hover td{background:#f7fafd;}
       <div class="card-title" id="drFormTitle">Director Register</div>
       <input type="hidden" id="drEditId">
       <div class="form-row col2">
-        <div class="form-group"><label>শাখা</label><select id="drBranch"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>শাখা</label><select id="dirBranch"><option value="">— বাছুন —</option></select></div>
         <div class="form-group"><label>পরিচালকের নাম *</label><input type="text" id="drName"></div>
       </div>
       <div class="form-row col2">
@@ -3293,34 +3255,34 @@ table tr:hover td{background:#f7fafd;}
 
   <!-- Balance Sheet -->
   <div id="page-balanceSheet" class="page" style="display:none;">
-    <div class="page-title">📊 Balance Sheet (Asset & Liabilities)</div>
+    <div class="page-title">📊 ব্যালেন্স শীট (সম্পদ ও দায়)</div>
     <div class="card">
       <div class="form-row col3">
         <div class="form-group"><label>শাখা</label><select id="bsBranch"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>Branch Type</label>
+        <div class="form-group"><label>শাখার ধরন</label>
           <select id="bsBranchType">
-            <option value="onlyMe">Only Me</option>
-            <option value="allBranch">All Branch</option>
-            <option value="allOthers">All Others Branch</option>
+            <option value="onlyMe">শুধু আমার শাখা</option>
+            <option value="allBranch">সকল শাখা</option>
+            <option value="allOthers">অন্য সকল শাখা</option>
           </select>
         </div>
         <div class="form-group"><label>রিপোর্টের তারিখ</label><input type="date" id="bsReportDate"></div>
       </div>
-      <button class="btn btn-primary" onclick="loadBalanceSheetReport()">🖨️ Print Report</button>
+      <button class="btn btn-primary" onclick="loadBalanceSheetReport()">🖨️ রিপোর্ট প্রিন্ট করুন</button>
     </div>
     <div class="card">
       <div class="form-row col2">
         <div class="table-wrap">
           <div class="card-title">সম্পদ (Asset)</div>
           <table>
-            <thead><tr><th>Particular</th><th style="text-align:right;">আজকের তারিখ</th><th style="text-align:right;">পূর্বের মাস</th><th style="text-align:right;">পূর্বের বছর</th></tr></thead>
+            <thead><tr><th>বিবরণ</th><th style="text-align:right;">আজকের তারিখ</th><th style="text-align:right;">পূর্বের মাস</th><th style="text-align:right;">পূর্বের বছর</th></tr></thead>
             <tbody id="bsAssetBody"><tr><td colspan="4" style="text-align:center;color:var(--text-light)">ফিল্টার দিয়ে রিপোর্ট দেখুন</td></tr></tbody>
           </table>
         </div>
         <div class="table-wrap">
           <div class="card-title">দায় ও ইক্যুইটি (Liabilities & Equity)</div>
           <table>
-            <thead><tr><th>Particular</th><th style="text-align:right;">আজকের তারিখ</th><th style="text-align:right;">পূর্বের মাস</th><th style="text-align:right;">পূর্বের বছর</th></tr></thead>
+            <thead><tr><th>বিবরণ</th><th style="text-align:right;">আজকের তারিখ</th><th style="text-align:right;">পূর্বের মাস</th><th style="text-align:right;">পূর্বের বছর</th></tr></thead>
             <tbody id="bsLiabilityBody"><tr><td colspan="4" style="text-align:center;color:var(--text-light)">ফিল্টার দিয়ে রিপোর্ট দেখুন</td></tr></tbody>
           </table>
         </div>
@@ -3330,23 +3292,23 @@ table tr:hover td{background:#f7fafd;}
 
   <!-- Trial Balance -->
   <div id="page-trialBalance" class="page" style="display:none;">
-    <div class="page-title">⚖️ Trial Balance</div>
+    <div class="page-title">⚖️ রেওয়ামিল (Trial Balance)</div>
     <div class="card">
       <div class="form-row col3">
         <div class="form-group"><label>শাখা</label><select id="tbBranch"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>Branch Type</label>
+        <div class="form-group"><label>শাখার ধরন</label>
           <select id="tbBranchType">
-            <option value="onlyMe">Only Me</option>
-            <option value="allBranch">All Branch</option>
-            <option value="allOthers">All Others Branch</option>
+            <option value="onlyMe">শুধু আমার শাখা</option>
+            <option value="allBranch">সকল শাখা</option>
+            <option value="allOthers">অন্য সকল শাখা</option>
           </select>
         </div>
-        <div class="form-group"><label>From Date</label><input type="date" id="tbFromDate"></div>
+        <div class="form-group"><label>শুরুর তারিখ</label><input type="date" id="tbFromDate"></div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label>Upto Date</label><input type="date" id="tbToDate"></div>
+        <div class="form-group"><label>শেষ তারিখ</label><input type="date" id="tbToDate"></div>
         <div class="form-group" style="display:flex;align-items:flex-end;">
-          <button class="btn btn-primary" onclick="loadTrialBalanceReport()">🖨️ Print Report</button>
+          <button class="btn btn-primary" onclick="loadTrialBalanceReport()">🖨️ রিপোর্ট প্রিন্ট করুন</button>
         </div>
       </div>
     </div>
@@ -3355,15 +3317,15 @@ table tr:hover td{background:#f7fafd;}
         <table>
           <thead>
             <tr>
-              <th rowspan="2">Particular</th>
-              <th colspan="2" style="text-align:center;">Balance at the beginning</th>
-              <th colspan="2" style="text-align:center;">During this period</th>
-              <th colspan="2" style="text-align:center;">Closing Balance (Cumulative)</th>
+              <th rowspan="2">বিবরণ</th>
+              <th colspan="2" style="text-align:center;">শুরুর স্থিতি</th>
+              <th colspan="2" style="text-align:center;">এই সময়ের লেনদেন</th>
+              <th colspan="2" style="text-align:center;">সমাপনী স্থিতি (সমষ্টি)</th>
             </tr>
             <tr>
-              <th style="text-align:right;">Debit</th><th style="text-align:right;">Credit</th>
-              <th style="text-align:right;">Debit</th><th style="text-align:right;">Credit</th>
-              <th style="text-align:right;">Debit</th><th style="text-align:right;">Credit</th>
+              <th style="text-align:right;">ডেবিট</th><th style="text-align:right;">ক্রেডিট</th>
+              <th style="text-align:right;">ডেবিট</th><th style="text-align:right;">ক্রেডিট</th>
+              <th style="text-align:right;">ডেবিট</th><th style="text-align:right;">ক্রেডিট</th>
             </tr>
           </thead>
           <tbody id="tbTableBody"><tr><td colspan="7" style="text-align:center;color:var(--text-light)">ফিল্টার দিয়ে রিপোর্ট দেখুন</td></tr></tbody>
@@ -3376,24 +3338,24 @@ table tr:hover td{background:#f7fafd;}
 
   <!-- All remaining report pages with standard filter -->
   <div id="page-profitLoss" class="page" style="display:none;">
-    <div class="page-title">💹 Profit and Loss Report</div>
+    <div class="page-title">💹 লাভ-ক্ষতি হিসাব</div>
     <div class="card">
       <div class="form-row col3">
         <div class="form-group"><label>শাখা</label><select id="plBranch"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>Branch Type</label>
+        <div class="form-group"><label>শাখার ধরন</label>
           <select id="plBranchType">
-            <option value="onlyMe">Only Me</option>
-            <option value="allBranch">All Branch</option>
-            <option value="allOthers">All Others Branch</option>
+            <option value="onlyMe">শুধু আমার শাখা</option>
+            <option value="allBranch">সকল শাখা</option>
+            <option value="allOthers">অন্য সকল শাখা</option>
           </select>
         </div>
         <div class="form-group"><label>রিপোর্টের তারিখ</label><input type="date" id="plReportDate"></div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="loadProfitLossReport()">📊 Print Profit & Loss</button>
-        <button class="btn btn-warning" onclick="loadProfitLossReport()">📊 Print All Branch</button>
-        <button class="btn btn-success" onclick="loadProfitLossReport('income')">📈 Print Income Statement</button>
-        <button class="btn btn-danger" onclick="loadProfitLossReport('expense')">📉 Print Expense Statement</button>
+        <button class="btn btn-primary" onclick="loadProfitLossReport()">📊 লাভ-ক্ষতি প্রিন্ট করুন</button>
+        <button class="btn btn-warning" onclick="loadProfitLossReport()">📊 সকল শাখা প্রিন্ট করুন</button>
+        <button class="btn btn-success" onclick="loadProfitLossReport('income')">📈 আয় বিবরণী প্রিন্ট করুন</button>
+        <button class="btn btn-danger" onclick="loadProfitLossReport('expense')">📉 ব্যয় বিবরণী প্রিন্ট করুন</button>
       </div>
     </div>
     <div class="card">
@@ -3401,8 +3363,8 @@ table tr:hover td{background:#f7fafd;}
         <table>
           <thead>
             <tr>
-              <th>INCOME</th><th style="text-align:right;">This Date</th><th style="text-align:right;">This Month</th><th style="text-align:right;">Last Month</th><th style="text-align:right;">Last Year</th>
-              <th>EXPENSES</th><th style="text-align:right;">This Date</th><th style="text-align:right;">This Month</th><th style="text-align:right;">Last Month</th><th style="text-align:right;">Last Year</th>
+              <th>আয়</th><th style="text-align:right;">আজকের তারিখ</th><th style="text-align:right;">এই মাস</th><th style="text-align:right;">গত মাস</th><th style="text-align:right;">গত বছর</th>
+              <th>ব্যয়</th><th style="text-align:right;">আজকের তারিখ</th><th style="text-align:right;">এই মাস</th><th style="text-align:right;">গত মাস</th><th style="text-align:right;">গত বছর</th>
             </tr>
           </thead>
           <tbody id="plTableBody"><tr><td colspan="10" style="text-align:center;color:var(--text-light)">ফিল্টার দিয়ে রিপোর্ট দেখুন</td></tr></tbody>
@@ -4362,8 +4324,6 @@ table tr:hover td{background:#f7fafd;}
 
   <div id="page-collectionReceive" class="page" style="display:none;"><div class="page-title">✅ কালেকশন গ্রহণ (Collection Receive)</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>সমিতি *</label><select><option>— বাছুন —</option></select></div></div><div class="form-row col2"><div class="form-group"><label>তারিখ *</label><input type="date"></div><div class="form-group"><label>কালেকশনের ধরন</label><select><option>সব</option><option>ঋণ</option><option>সঞ্চয়</option></select></div></div><button class="btn btn-success btn-block" style="margin-top:8px;">✅ কালেকশন গ্রহণ করুন</button></div></div>
 
-  <div id="page-memberInstallment" class="page" style="display:none;"><div class="page-title">💳 সদস্য কিস্তি কালেকশন</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div></div><button class="btn btn-primary" style="margin-top:4px;">🔍 লোড করুন</button></div></div>
-
   <div id="page-samityInstallment" class="page" style="display:none;"><div class="page-title">🏛️ সমিতি কিস্তি কালেকশন</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>সমিতি *</label><select><option>— বাছুন —</option></select></div></div><div class="form-row col2"><div class="form-group"><label>তারিখ *</label><input type="date"></div><div class="form-group"><label>কালেকশনের ধরন</label><select><option>সব</option><option>ঋণ</option><option>সঞ্চয়</option></select></div></div><button class="btn btn-primary btn-block" style="margin-top:8px;">🔍 সমিতি লোড করুন</button></div></div>
 
   <div id="page-cashBankReport" class="page" style="display:none;">
@@ -4371,32 +4331,32 @@ table tr:hover td{background:#f7fafd;}
     <div class="card">
       <div class="form-row col3">
         <div class="form-group"><label>শাখা</label><select id="cbrBranch"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>Branch Type</label>
+        <div class="form-group"><label>শাখার ধরন</label>
           <select id="cbrBranchType">
-            <option value="onlyMe">Only Me</option>
-            <option value="allBranch">All Branch</option>
-            <option value="allOthers">All Others Branch</option>
+            <option value="onlyMe">শুধু আমার শাখা</option>
+            <option value="allBranch">সকল শাখা</option>
+            <option value="allOthers">অন্য সকল শাখা</option>
           </select>
         </div>
-        <div class="form-group"><label>Group With</label>
+        <div class="form-group"><label>যেভাবে গ্রুপ করবেন</label>
           <select id="cbrGroupWith">
-            <option value="ledger">Ledger</option>
-            <option value="combined">Combined (Cash+Bank)</option>
+            <option value="ledger">খতিয়ান অনুযায়ী</option>
+            <option value="combined">সম্মিলিত (নগদ+ব্যাংক)</option>
           </select>
         </div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label>From Date</label><input type="date" id="cbrFromDate"></div>
-        <div class="form-group"><label>Upto Date</label><input type="date" id="cbrToDate"></div>
+        <div class="form-group"><label>শুরুর তারিখ</label><input type="date" id="cbrFromDate"></div>
+        <div class="form-group"><label>শেষ তারিখ</label><input type="date" id="cbrToDate"></div>
       </div>
-      <button class="btn btn-primary" onclick="loadCashBankBookReport()">🏦 Print Report / Cash & Bank Statement</button>
+      <button class="btn btn-primary" onclick="loadCashBankBookReport()">🏦 রিপোর্ট প্রিন্ট / ক্যাশ ও ব্যাংক বিবরণী</button>
     </div>
     <div class="card">
       <div id="cbrSummary" style="display:flex;gap:24px;flex-wrap:wrap;padding:8px 0;font-weight:600;"></div>
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>Ledger</th><th>তারিখ</th><th>বিবরণ</th>
+            <th>খতিয়ান</th><th>তারিখ</th><th>বিবরণ</th>
             <th style="text-align:right;">গ্রহণ (Receipt)</th><th style="text-align:right;">প্রদান (Payment)</th><th style="text-align:right;">ব্যালেন্স</th>
           </tr></thead>
           <tbody id="cbrTableBody"><tr><td colspan="6" style="text-align:center;color:var(--text-light)">ফিল্টার দিয়ে রিপোর্ট দেখুন</td></tr></tbody>
@@ -4407,23 +4367,23 @@ table tr:hover td{background:#f7fafd;}
 
   <!-- Back Date Transaction List -->
   <div id="page-backDateTransaction" class="page" style="display:none;">
-    <div class="page-title">🕓 Back Date Transaction List</div>
+    <div class="page-title">🕓 ব্যাক ডেট লেনদেন তালিকা</div>
     <div class="card">
       <div class="form-row col2">
-        <div class="form-group"><label>Branch Name</label><select id="bdtBranch"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>Samity Name</label><select id="bdtSamity"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>শাখার নাম</label><select id="bdtBranch"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>সমিতির নাম</label><select id="bdtSamity"><option value="">— বাছুন —</option></select></div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label>From Date</label><input type="date" id="bdtFromDate"></div>
-        <div class="form-group"><label>Upto Date</label><input type="date" id="bdtToDate"></div>
+        <div class="form-group"><label>শুরুর তারিখ</label><input type="date" id="bdtFromDate"></div>
+        <div class="form-group"><label>শেষ তারিখ</label><input type="date" id="bdtToDate"></div>
       </div>
-      <div class="form-group"><label>User Name</label><select id="bdtUser"><option value="">— বাছুন —</option></select></div>
-      <button class="btn btn-primary" onclick="loadBackDateTransactionReport()">🖨️ Print Report</button>
+      <div class="form-group"><label>ইউজারের নাম</label><select id="bdtUser"><option value="">— বাছুন —</option></select></div>
+      <button class="btn btn-primary" onclick="loadBackDateTransactionReport()">🖨️ রিপোর্ট প্রিন্ট করুন</button>
     </div>
     <div class="card">
       <div class="table-wrap">
         <table>
-          <thead><tr><th>ক্রমিক নং</th><th>এন্ট্রি তারিখ (Entered On)</th><th>লেনদেনের তারিখ</th><th>সদস্য</th><th>ধরন</th><th style="text-align:right;">পরিমাণ</th><th>ইউজার</th></tr></thead>
+          <thead><tr><th>ক্রমিক নং</th><th>এন্ট্রি তারিখ</th><th>লেনদেনের তারিখ</th><th>সদস্য</th><th>ধরন</th><th style="text-align:right;">পরিমাণ</th><th>ইউজার</th></tr></thead>
           <tbody id="bdtTableBody"><tr><td colspan="7" style="text-align:center;color:var(--text-light)">ফিল্টার দিয়ে রিপোর্ট দেখুন</td></tr></tbody>
         </table>
       </div>
@@ -4432,17 +4392,17 @@ table tr:hover td{background:#f7fafd;}
 
   <!-- Transaction Cancel List -->
   <div id="page-transactionCancelList" class="page" style="display:none;">
-    <div class="page-title">❌ Transaction Cancel List</div>
+    <div class="page-title">❌ লেনদেন বাতিল তালিকা</div>
     <div class="card">
       <div class="form-row col2">
-        <div class="form-group"><label>Branch Name</label><select id="tclBranch"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>Samity Name</label><select id="tclSamity"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>শাখার নাম</label><select id="tclBranch"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>সমিতির নাম</label><select id="tclSamity"><option value="">— বাছুন —</option></select></div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label>From Date</label><input type="date" id="tclFromDate"></div>
-        <div class="form-group"><label>Upto Date</label><input type="date" id="tclToDate"></div>
+        <div class="form-group"><label>শুরুর তারিখ</label><input type="date" id="tclFromDate"></div>
+        <div class="form-group"><label>শেষ তারিখ</label><input type="date" id="tclToDate"></div>
       </div>
-      <button class="btn btn-primary" onclick="loadTransactionCancelListReport()">🖨️ Print Report</button>
+      <button class="btn btn-primary" onclick="loadTransactionCancelListReport()">🖨️ রিপোর্ট প্রিন্ট করুন</button>
     </div>
     <div class="card">
       <div class="table-wrap">
@@ -4455,45 +4415,45 @@ table tr:hover td{background:#f7fafd;}
   </div>
 
   <div id="page-accountTransaction" class="page" style="display:none;">
-    <div class="page-title">🔄 অ্যাকাউন্টস লেনদেন (Receipt / Payment)</div>
+    <div class="page-title">🔄 অ্যাকাউন্টস লেনদেন (আদান-প্রদান)</div>
     <div class="card">
       <div class="form-row col2">
         <div class="form-group"><label>শাখা নাম</label><select id="atBranch"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>Transaction Type *</label>
+        <div class="form-group"><label>লেনদেনের ধরন *</label>
           <select id="atType" onchange="atToggleDirection()">
             <option value="">— বাছুন —</option>
-            <option value="receive|Income Entry">Income Entry (আয়)</option>
-            <option value="receive|Director Deposit Receive">Director Deposit Receive</option>
-            <option value="receive|Bank Withdrawal">Bank Withdrawal (ব্যাংক উত্তোলন)</option>
-            <option value="payment|Expense Entry">Expense Entry (খরচ)</option>
-            <option value="payment|Employee Salary Payment">Employee Salary Payment</option>
-            <option value="payment|Supplier Bill Payment">Supplier Bill Payment</option>
-            <option value="payment|Director Deposit Payment">Director Deposit Payment</option>
-            <option value="payment|Bank Deposit">Bank Deposit (ব্যাংকে জমা)</option>
+            <option value="receive|Income Entry">আয় এন্ট্রি</option>
+            <option value="receive|পরিচালকের জমা গ্রহণ">পরিচালকের জমা গ্রহণ</option>
+            <option value="receive|Bank Withdrawal">ব্যাংক উত্তোলন</option>
+            <option value="payment|Expense Entry">খরচ এন্ট্রি</option>
+            <option value="payment|কর্মচারীর বেতন প্রদান">কর্মচারীর বেতন প্রদান</option>
+            <option value="payment|সাপ্লায়ার বিল প্রদান">সাপ্লায়ার বিল প্রদান</option>
+            <option value="payment|পরিচালকের জমা প্রদান">পরিচালকের জমা প্রদান</option>
+            <option value="payment|Bank Deposit">ব্যাংকে জমা</option>
           </select>
         </div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label>Receipt/Payment Method (নগদ/ব্যাংক) *</label><select id="atMethod"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>Transaction Ledger (আয়/খরচ খাত) *</label><select id="atLedger"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>গ্রহণ/প্রদানের মাধ্যম (নগদ/ব্যাংক) *</label><select id="atMethod"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>লেনদেনের খতিয়ান (আয়/খরচ খাত) *</label><select id="atLedger"><option value="">— বাছুন —</option></select></div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label>Transaction Amount *</label><input type="number" id="atAmount" value="0"></div>
-        <div class="form-group"><label>Transaction Date *</label><input type="date" id="atDate"></div>
+        <div class="form-group"><label>লেনদেনের পরিমাণ *</label><input type="number" id="atAmount" value="0"></div>
+        <div class="form-group"><label>লেনদেনের তারিখ *</label><input type="date" id="atDate"></div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label>Document Number (Bank Cheque)</label><input type="text" id="atDocNo"></div>
-        <div class="form-group"><label>Receiver/Payer Name</label><input type="text" id="atPayerName"></div>
+        <div class="form-group"><label>ডকুমেন্ট নম্বর (ব্যাংক চেক)</label><input type="text" id="atDocNo"></div>
+        <div class="form-group"><label>গ্রহীতা/প্রদানকারীর নাম</label><input type="text" id="atPayerName"></div>
       </div>
-      <div class="form-group" style="margin-bottom:12px;"><label>Comments</label><input type="text" id="atComment"></div>
+      <div class="form-group" style="margin-bottom:12px;"><label>মন্তব্য</label><input type="text" id="atComment"></div>
       <div id="atDirectionHint" style="font-size:12px;color:var(--text-light);margin-bottom:10px;"></div>
-      <button class="btn btn-primary" onclick="postAccountTransaction()">➕ Post Transaction</button>
+      <button class="btn btn-primary" onclick="postAccountTransaction()">➕ লেনদেন পোস্ট করুন</button>
     </div>
     <div class="card" style="margin-top:14px;">
       <div class="card-title">সাম্প্রতিক লেনদেন</div>
       <div style="overflow-x:auto;">
         <table class="data-table" style="width:100%;font-size:12px;">
-          <thead><tr><th>তারিখ</th><th>ধরন</th><th>খাত</th><th>Method</th><th>Amount</th></tr></thead>
+          <thead><tr><th>তারিখ</th><th>ধরন</th><th>খাত</th><th>মাধ্যম</th><th>পরিমাণ</th></tr></thead>
           <tbody id="atHistoryBody"><tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:14px;">লোড হচ্ছে...</td></tr></tbody>
         </table>
       </div>
@@ -4506,22 +4466,22 @@ table tr:hover td{background:#f7fafd;}
     <div class="card">
       <div class="form-row col2">
         <div class="form-group"><label>শাখা নাম</label><select id="cvBranch"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>Transaction Date</label><input type="date" id="cvDate"></div>
+        <div class="form-group"><label>লেনদেনের তারিখ</label><input type="date" id="cvDate"></div>
       </div>
-      <div class="form-group" style="margin-bottom:12px;"><label>Journal Comments</label><input type="text" id="cvComment"></div>
-      <div style="font-weight:700;color:var(--primary);margin:10px 0;font-size:13px;">Add Voucher Item</div>
+      <div class="form-group" style="margin-bottom:12px;"><label>জার্নাল মন্তব্য</label><input type="text" id="cvComment"></div>
+      <div style="font-weight:700;color:var(--primary);margin:10px 0;font-size:13px;">ভাউচার আইটেম যোগ করুন</div>
       <div class="form-row col2">
-        <div class="form-group"><label>Debit Ledger *</label><select id="cvDebit"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>Credit Ledger *</label><select id="cvCredit"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>ডেবিট খতিয়ান *</label><select id="cvDebit"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>ক্রেডিট খতিয়ান *</label><select id="cvCredit"><option value="">— বাছুন —</option></select></div>
       </div>
-      <div class="form-group" style="margin-bottom:12px;"><label>Transaction Amount *</label><input type="number" id="cvAmount" value="0"></div>
-      <button class="btn btn-success" onclick="submitContraVoucher()">✅ Submit Voucher</button>
+      <div class="form-group" style="margin-bottom:12px;"><label>লেনদেনের পরিমাণ *</label><input type="number" id="cvAmount" value="0"></div>
+      <button class="btn btn-success" onclick="submitContraVoucher()">✅ ভাউচার জমা দিন</button>
     </div>
     <div class="card" style="margin-top:14px;">
-      <div class="card-title">সাম্প্রতিক Contra Voucher</div>
+      <div class="card-title">সাম্প্রতিক বিনিময় ভাউচার</div>
       <div style="overflow-x:auto;">
         <table class="data-table" style="width:100%;font-size:12px;">
-          <thead><tr><th>তারিখ</th><th>Debit</th><th>Credit</th><th>Amount</th></tr></thead>
+          <thead><tr><th>তারিখ</th><th>ডেবিট</th><th>ক্রেডিট</th><th>পরিমাণ</th></tr></thead>
           <tbody id="cvHistoryBody"><tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:14px;">লোড হচ্ছে...</td></tr></tbody>
         </table>
       </div>
@@ -4530,28 +4490,28 @@ table tr:hover td{background:#f7fafd;}
 
   <!-- ════ GENERAL LEDGER MANAGE (COA) ════ -->
   <div id="page-glManage" class="page" style="display:none;">
-    <div class="page-title">📚 General Ledger (Chart of Accounts)</div>
+    <div class="page-title">📚 সাধারণ খতিয়ান (হিসাবের তালিকা)</div>
     <div class="card">
       <div class="form-row col2">
-        <div class="form-group"><label>Ledger Name *</label><input type="text" id="glName"></div>
-        <div class="form-group"><label>Group Ledger (Parent) *</label><select id="glGroup"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>খতিয়ানের নাম *</label><input type="text" id="glName"></div>
+        <div class="form-group"><label>গ্রুপ খতিয়ান (প্যারেন্ট) *</label><select id="glGroup"><option value="">— বাছুন —</option></select></div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label>Ledger Code</label><input type="text" id="glCode" placeholder="অটো হলে খালি রাখুন"></div>
+        <div class="form-group"><label>খতিয়ান কোড</label><input type="text" id="glCode" placeholder="অটো হলে খালি রাখুন"></div>
         <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-top:22px;">
-          <input type="checkbox" id="glIsGroup" style="width:18px;height:18px;"><label for="glIsGroup" style="font-size:13px;">Group Ledger (হেডিং)</label>
+          <input type="checkbox" id="glIsGroup" style="width:18px;height:18px;"><label for="glIsGroup" style="font-size:13px;">গ্রুপ খতিয়ান (হেডিং)</label>
         </div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
-        <button class="btn btn-primary" onclick="createLedger()">➕ Create New Ledger</button>
+        <button class="btn btn-primary" onclick="createLedger()">➕ নতুন খতিয়ান তৈরি করুন</button>
         <button class="btn btn-outline" onclick="seedDefaultCOA()">🌱 ডিফল্ট COA তৈরি করুন</button>
       </div>
     </div>
     <div class="card" style="margin-top:14px;">
-      <div class="card-title">Ledger তালিকা</div>
+      <div class="card-title">খতিয়ান তালিকা</div>
       <div style="overflow-x:auto;">
         <table class="data-table" style="width:100%;font-size:12px;">
-          <thead><tr><th>Code</th><th>Ledger Name</th><th>Parent</th><th>Type</th><th>Balance</th></tr></thead>
+          <thead><tr><th>কোড</th><th>খতিয়ানের নাম</th><th>প্যারেন্ট</th><th>ধরন</th><th>ব্যালেন্স</th></tr></thead>
           <tbody id="glListBody"><tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:14px;">লোড হচ্ছে...</td></tr></tbody>
         </table>
       </div>
@@ -4563,24 +4523,24 @@ table tr:hover td{background:#f7fafd;}
     <div class="page-title">📊 লেজার রিপোর্ট (Ledger Statement)</div>
     <div class="card no-print">
       <div class="form-row col2">
-        <div class="form-group"><label>Select Ledger *</label><select id="grLedger"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>খতিয়ান বাছুন *</label><select id="grLedger"><option value="">— বাছুন —</option></select></div>
         <div class="form-group"><label>শাখা</label><select id="grBranch"><option value="">সকল</option></select></div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label>From Date</label><input type="date" id="grFrom"></div>
-        <div class="form-group"><label>Upto Date</label><input type="date" id="grTo"></div>
+        <div class="form-group"><label>শুরুর তারিখ</label><input type="date" id="grFrom"></div>
+        <div class="form-group"><label>শেষ তারিখ</label><input type="date" id="grTo"></div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="loadLedgerReport()">🔍 Search</button>
+        <button class="btn btn-primary" onclick="loadLedgerReport()">🔍 খুঁজুন</button>
         <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
       </div>
     </div>
     <div class="card" style="margin-top:14px;">
-      <div style="text-align:center;font-weight:700;margin-bottom:10px;" id="grTitle">Ledger Statement</div>
+      <div style="text-align:center;font-weight:700;margin-bottom:10px;" id="grTitle">খতিয়ান বিবরণী</div>
       <div style="overflow-x:auto;">
         <table style="width:100%;border-collapse:collapse;font-size:12px;" border="1">
-          <thead style="background:#f5f5f5;"><tr><th style="padding:6px;">তারিখ</th><th style="padding:6px;">বিবরণ</th><th style="padding:6px;">Debit</th><th style="padding:6px;">Credit</th><th style="padding:6px;">Balance</th></tr></thead>
-          <tbody id="grBody"><tr><td colspan="5" style="text-align:center;padding:14px;color:var(--text-light);">Ledger বাছুন ও Search করুন</td></tr></tbody>
+          <thead style="background:#f5f5f5;"><tr><th style="padding:6px;">তারিখ</th><th style="padding:6px;">বিবরণ</th><th style="padding:6px;">ডেবিট</th><th style="padding:6px;">ক্রেডিট</th><th style="padding:6px;">ব্যালেন্স</th></tr></thead>
+          <tbody id="grBody"><tr><td colspan="5" style="text-align:center;padding:14px;color:var(--text-light);">খতিয়ান বাছুন ও খুঁজুন</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -4591,23 +4551,23 @@ table tr:hover td{background:#f7fafd;}
     <div class="page-title">🧾 ভাউচার তালিকা (Voucher List)</div>
     <div class="card">
       <div class="form-row col2">
-        <div class="form-group"><label>From Date</label><input type="date" id="vlFrom"></div>
-        <div class="form-group"><label>Upto Date</label><input type="date" id="vlTo"></div>
+        <div class="form-group"><label>শুরুর তারিখ</label><input type="date" id="vlFrom"></div>
+        <div class="form-group"><label>শেষ তারিখ</label><input type="date" id="vlTo"></div>
       </div>
-      <button class="btn btn-primary" onclick="loadVoucherList()">🔍 Search Transaction</button>
+      <button class="btn btn-primary" onclick="loadVoucherList()">🔍 লেনদেন খুঁজুন</button>
     </div>
     <div class="card" style="margin-top:14px;">
-      <div class="card-title">Voucher List</div>
+      <div class="card-title">ভাউচার তালিকা</div>
       <div style="overflow-x:auto;">
         <table class="data-table" style="width:100%;font-size:12px;">
-          <thead><tr><th>তারিখ</th><th>ধরন</th><th>Debit Ledger</th><th>Credit Ledger</th><th>Amount</th><th>মন্তব্য</th></tr></thead>
-          <tbody id="vlBody"><tr><td colspan="6" style="text-align:center;color:var(--text-light);padding:14px;">তারিখ দিয়ে Search করুন</td></tr></tbody>
+          <thead><tr><th>তারিখ</th><th>ধরন</th><th>ডেবিট খতিয়ান</th><th>ক্রেডিট খতিয়ান</th><th>পরিমাণ</th><th>মন্তব্য</th></tr></thead>
+          <tbody id="vlBody"><tr><td colspan="6" style="text-align:center;color:var(--text-light);padding:14px;">তারিখ দিয়ে খুঁজুন</td></tr></tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <div id="page-ledgerTransaction" class="page" style="display:none;"><div class="page-title">📒 Ledger Transaction</div><div class="card"><p style="color:var(--text-light);">এই পেজটি এখন "লেজার রিপোর্ট" এ স্থানান্তরিত হয়েছে।</p></div></div>
+  <div id="page-ledgerTransaction" class="page" style="display:none;"><div class="page-title">📒 খতিয়ান লেনদেন (Ledger Transaction)</div><div class="card"><p style="color:var(--text-light);">এই পেজটি এখন "লেজার রিপোর্ট" এ স্থানান্তরিত হয়েছে।</p></div></div>
 
   <div id="page-fundTransferReq" class="page" style="display:none;">
     <div class="page-title">💸 তহবিল স্থানান্তর অনুরোধ (Fund Transfer Request)</div>
@@ -4750,24 +4710,24 @@ table tr:hover td{background:#f7fafd;}
     <div class="card">
       <div class="form-row col3">
         <div class="form-group"><label>শাখা</label><select id="ieBranch"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>Branch Type</label>
+        <div class="form-group"><label>শাখার ধরন</label>
           <select id="ieBranchType">
-            <option value="onlyMe">Only Me</option>
-            <option value="allBranch">All Branch</option>
-            <option value="allOthers">All Others Branch</option>
+            <option value="onlyMe">শুধু আমার শাখা</option>
+            <option value="allBranch">সকল শাখা</option>
+            <option value="allOthers">অন্য সকল শাখা</option>
           </select>
         </div>
         <div class="form-group"><label>রিপোর্টের তারিখ</label><input type="date" id="ieReportDate"></div>
       </div>
-      <button class="btn btn-primary" onclick="loadIncomeExpenseReport()">🖨️ Print Report</button>
+      <button class="btn btn-primary" onclick="loadIncomeExpenseReport()">🖨️ রিপোর্ট প্রিন্ট করুন</button>
     </div>
     <div class="card">
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>INCOME</th><th style="text-align:right;">This Date</th><th style="text-align:right;">This Month</th><th style="text-align:right;">Last Month</th><th style="text-align:right;">Last Year</th>
-              <th>EXPENSES</th><th style="text-align:right;">This Date</th><th style="text-align:right;">This Month</th><th style="text-align:right;">Last Month</th><th style="text-align:right;">Last Year</th>
+              <th>আয়</th><th style="text-align:right;">আজকের তারিখ</th><th style="text-align:right;">এই মাস</th><th style="text-align:right;">গত মাস</th><th style="text-align:right;">গত বছর</th>
+              <th>ব্যয়</th><th style="text-align:right;">আজকের তারিখ</th><th style="text-align:right;">এই মাস</th><th style="text-align:right;">গত মাস</th><th style="text-align:right;">গত বছর</th>
             </tr>
           </thead>
           <tbody id="ieTableBody"><tr><td colspan="10" style="text-align:center;color:var(--text-light)">ফিল্টার দিয়ে রিপোর্ট দেখুন</td></tr></tbody>
@@ -4777,41 +4737,41 @@ table tr:hover td{background:#f7fafd;}
   </div>
 
   <div id="page-ledgerStatement" class="page" style="display:none;">
-    <div class="page-title">📋 Ledger Statement</div>
+    <div class="page-title">📋 খতিয়ান বিবরণী (Ledger Statement)</div>
     <div class="card">
       <div class="form-row col3">
         <div class="form-group"><label>শাখা</label><select id="lsBranch"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>Branch Type</label>
+        <div class="form-group"><label>শাখার ধরন</label>
           <select id="lsBranchType">
-            <option value="onlyMe">Only Me</option>
-            <option value="allBranch">All Branch</option>
-            <option value="allOthers">All Others Branch</option>
+            <option value="onlyMe">শুধু আমার শাখা</option>
+            <option value="allBranch">সকল শাখা</option>
+            <option value="allOthers">অন্য সকল শাখা</option>
           </select>
         </div>
-        <div class="form-group"><label>Ledger Name *</label><select id="lsLedger"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>খতিয়ানের নাম *</label><select id="lsLedger"><option value="">— বাছুন —</option></select></div>
       </div>
       <div class="form-row col3">
-        <div class="form-group"><label>Upto Date</label><input type="date" id="lsToDate"></div>
-        <div class="form-group"><label>Report Type</label>
+        <div class="form-group"><label>শেষ তারিখ</label><input type="date" id="lsToDate"></div>
+        <div class="form-group"><label>রিপোর্টের ধরন</label>
           <select id="lsReportType">
-            <option value="summary">Summary</option>
-            <option value="details">Details</option>
+            <option value="summary">সারাংশ</option>
+            <option value="details">বিস্তারিত</option>
           </select>
         </div>
-        <div class="form-group"><label>From Date</label><input type="date" id="lsFromDate"></div>
+        <div class="form-group"><label>শুরুর তারিখ</label><input type="date" id="lsFromDate"></div>
       </div>
-      <button class="btn btn-primary" onclick="loadLedgerStatementReport()">🖨️ Print Report</button>
+      <button class="btn btn-primary" onclick="loadLedgerStatementReport()">🖨️ রিপোর্ট প্রিন্ট করুন</button>
     </div>
     <div class="card">
       <div class="table-wrap" id="lsSummaryWrap">
         <table>
           <thead><tr><th>বিবরণ</th><th style="text-align:right;">পরিমাণ</th></tr></thead>
-          <tbody id="lsSummaryBody"><tr><td colspan="2" style="text-align:center;color:var(--text-light)">Ledger বাছাই করে রিপোর্ট দেখুন</td></tr></tbody>
+          <tbody id="lsSummaryBody"><tr><td colspan="2" style="text-align:center;color:var(--text-light)">খতিয়ান বাছাই করে রিপোর্ট দেখুন</td></tr></tbody>
         </table>
       </div>
       <div class="table-wrap" id="lsDetailsWrap" style="display:none;">
         <table>
-          <thead><tr><th>তারিখ</th><th>বিবরণ</th><th style="text-align:right;">Debit</th><th style="text-align:right;">Credit</th><th style="text-align:right;">Balance</th></tr></thead>
+          <thead><tr><th>তারিখ</th><th>বিবরণ</th><th style="text-align:right;">ডেবিট</th><th style="text-align:right;">ক্রেডিট</th><th style="text-align:right;">ব্যালেন্স</th></tr></thead>
           <tbody id="lsDetailsBody"></tbody>
         </table>
       </div>
@@ -4823,25 +4783,25 @@ table tr:hover td{background:#f7fafd;}
     <div class="card">
       <div class="form-row col3">
         <div class="form-group"><label>শাখা</label><select id="rpBranch"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>Branch Type</label>
+        <div class="form-group"><label>শাখার ধরন</label>
           <select id="rpBranchType">
-            <option value="onlyMe">Only Me</option>
-            <option value="allBranch">All Branch</option>
-            <option value="allOthers">All Others Branch</option>
+            <option value="onlyMe">শুধু আমার শাখা</option>
+            <option value="allBranch">সকল শাখা</option>
+            <option value="allOthers">অন্য সকল শাখা</option>
           </select>
         </div>
-        <div class="form-group"><label>Report Date</label><input type="date" id="rpReportDate"></div>
+        <div class="form-group"><label>রিপোর্টের তারিখ</label><input type="date" id="rpReportDate"></div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label>Reporting Type</label>
+        <div class="form-group"><label>রিপোর্টের ধরন</label>
           <select id="rpReportingType">
-            <option value="cashBank">Cash & Bank</option>
-            <option value="cash">Cash Only</option>
-            <option value="bank">Bank Only</option>
+            <option value="cashBank">নগদ ও ব্যাংক</option>
+            <option value="cash">শুধু নগদ</option>
+            <option value="bank">শুধু ব্যাংক</option>
           </select>
         </div>
         <div class="form-group" style="display:flex;align-items:flex-end;">
-          <button class="btn btn-primary" onclick="loadReceiptPaymentReport()">🖨️ Print Report</button>
+          <button class="btn btn-primary" onclick="loadReceiptPaymentReport()">🖨️ রিপোর্ট প্রিন্ট করুন</button>
         </div>
       </div>
     </div>
@@ -4849,11 +4809,11 @@ table tr:hover td{background:#f7fafd;}
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>Ledger</th><th style="text-align:right;">Opening</th>
-            <th style="text-align:right;">This Date Receipt</th><th style="text-align:right;">This Date Payment</th>
-            <th style="text-align:right;">This Month Receipt</th><th style="text-align:right;">This Month Payment</th>
-            <th style="text-align:right;">This Year Receipt</th><th style="text-align:right;">This Year Payment</th>
-            <th style="text-align:right;">Closing</th>
+            <th>খতিয়ান</th><th style="text-align:right;">শুরুর স্থিতি</th>
+            <th style="text-align:right;">আজকের গ্রহণ</th><th style="text-align:right;">আজকের প্রদান</th>
+            <th style="text-align:right;">এই মাসের গ্রহণ</th><th style="text-align:right;">এই মাসের প্রদান</th>
+            <th style="text-align:right;">এই বছরের গ্রহণ</th><th style="text-align:right;">এই বছরের প্রদান</th>
+            <th style="text-align:right;">সমাপনী স্থিতি</th>
           </tr></thead>
           <tbody id="rpTableBody"><tr><td colspan="9" style="text-align:center;color:var(--text-light)">ফিল্টার দিয়ে রিপোর্ট দেখুন</td></tr></tbody>
         </table>
@@ -4928,7 +4888,7 @@ table tr:hover td{background:#f7fafd;}
       <div class="form-row col3">
         <div class="form-group"><label>কর্মী</label><select id="mlbEmployee"><option value="">— বাছুন —</option></select></div>
         <div class="form-group"><label>Member ID</label><select id="mlbMember"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>Upto Date</label><input type="date" id="mlbUptoDate"></div>
+        <div class="form-group"><label>শেষ তারিখ</label><input type="date" id="mlbUptoDate"></div>
       </div>
       <div class="form-row col3">
         <div class="form-group"><label>Loan Type</label>
@@ -5188,7 +5148,7 @@ table tr:hover td{background:#f7fafd;}
         <div class="form-group"><label>তারিখ হতে</label><input type="date" id="srFromDate"></div>
         <div class="form-group"><label>তারিখ পর্যন্ত</label><input type="date" id="srUptoDate"></div>
       </div>
-      <button class="btn btn-primary" onclick="loadDepositPaymentRegister('sr', false)">🖨️ Print Report</button>
+      <button class="btn btn-primary" onclick="loadDepositPaymentRegister('sr', false)">🖨️ রিপোর্ট প্রিন্ট করুন</button>
     </div>
     <div class="card">
       <div class="table-wrap">
@@ -5567,7 +5527,7 @@ window.showPage = function(pageId) {
   }
   if (pageId === 'directorRegister') {
     resetDirectorForm();
-    loadBranchesIntoSelect('drBranch');
+    loadBranchesIntoSelect('dirBranch');
     loadDirectorList();
   }
   if (pageId === 'samitySetup') {
@@ -6071,7 +6031,7 @@ window.showPage = function(pageId) {
   }
   // ─── Salary module ───
   if (pageId === 'salarySetup') {
-    loadBranchesIntoSelect('ssBranch'); loadEmployeesIntoSelect('ssEmployee');
+    loadBranchesIntoSelect('salSetupBranch'); loadEmployeesIntoSelect('ssEmployee');
     const el = document.getElementById('ssDate'); if (el && !el.value) el.value = depTxToday;
     loadSalarySetupList();
   }
@@ -6432,10 +6392,12 @@ window.searchLoanInstallmentHistory = async function(loanDocId) {
   if (!loanDocId) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr>'; return; }
   tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:14px;">লোড হচ্ছে... ⏳</td></tr>';
   try {
-    const snap = await db.collection('loanInstallments').where('loanDocId','==',loanDocId).orderBy('createdAt','desc').get();
+    const snap = await db.collection('loanInstallments').where('loanDocId','==',loanDocId).get();
+    const rows = [];
+    snap.forEach(d => rows.push(d.data()));
+    rows.sort((a,b) => (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
     let html = '';
-    snap.forEach(d => {
-      const r = d.data();
+    rows.forEach(r => {
       html += `<tr><td>${r.instDate||'—'}</td><td>${tk(r.amount)}</td><td>${tk(r.penalty||0)}</td><td>${r.comment||'—'}</td></tr>`;
     });
     tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:14px;">কোনো কিস্তি জমা নেই</td></tr>';
@@ -6567,10 +6529,12 @@ window.searchDepositHistory = async function(prefix, accDocId) {
   if (!accDocId) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr>'; return; }
   tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:14px;">লোড হচ্ছে... ⏳</td></tr>';
   try {
-    const snap = await db.collection('depositTransactions').where('accDocId','==',accDocId).orderBy('createdAt','desc').get();
+    const snap = await db.collection('depositTransactions').where('accDocId','==',accDocId).get();
+    const rows = [];
+    snap.forEach(d => rows.push(d.data()));
+    rows.sort((a,b) => (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
     let html = '';
-    snap.forEach(d => {
-      const r = d.data();
+    rows.forEach(r => {
       const credit = r.type === 'credit' ? tk(r.amount) : '—';
       const debit = r.type === 'debit' ? tk(r.amount) : '—';
       html += `<tr><td>${r.date||'—'}</td><td style="color:var(--success);">${credit}</td><td style="color:var(--danger);">${debit}</td><td>${r.comment||'—'}</td></tr>`;
@@ -6721,12 +6685,14 @@ window.loadMemberPassbook = async function() {
     document.getElementById('pbiSamity').textContent = mSamity;
     document.getElementById('pbiBalance').textContent = tk(a.balance||0);
 
-    const snap = await db.collection('depositTransactions').where('accDocId','==',accDocId).orderBy('createdAt','asc').get();
+    const snap = await db.collection('depositTransactions').where('accDocId','==',accDocId).get();
+    const txRows = [];
+    snap.forEach(d => txRows.push(d.data()));
+    txRows.sort((a,b) => (a.createdAt?.toMillis?.()||0) - (b.createdAt?.toMillis?.()||0));
     let running = 0, html = '', i = 1;
     // opening row
     html += `<tr><td style="padding:5px;text-align:center;">${i++}</td><td style="padding:5px;">${a.openDate||'—'}</td><td style="padding:5px;">Opening Balance</td><td style="padding:5px;text-align:right;">0.00</td><td style="padding:5px;text-align:right;">0.00</td><td style="padding:5px;text-align:right;">0.00</td></tr>`;
-    snap.forEach(d => {
-      const r = d.data();
+    txRows.forEach(r => {
       const credit = r.type === 'credit' ? r.amount : 0;
       const debit = r.type === 'debit' ? r.amount : 0;
       running += credit - debit;
@@ -6764,11 +6730,14 @@ window.loadPassbookIssueHistory = async function(memberId) {
   const tbody = document.getElementById('piHistoryBody');
   if (!tbody || !memberId) return;
   try {
-    const snap = await db.collection('passbookIssues').where('memberId','==',memberId).orderBy('createdAt','desc').get();
+    const snap = await db.collection('passbookIssues').where('memberId','==',memberId).get();
+    const rows = [];
+    snap.forEach(d => rows.push(d.data()));
+    rows.sort((a,b) => (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
     let html = '';
-    snap.forEach(d => { const r = d.data(); html += `<tr><td>${r.memberId}</td><td>${r.issueDate||'—'}</td><td>${r.bookNo}</td><td>${tk(r.fee||0)}</td></tr>`; });
+    rows.forEach(r => { html += `<tr><td>${r.memberId}</td><td>${r.issueDate||'—'}</td><td>${r.bookNo}</td><td>${tk(r.fee||0)}</td></tr>`; });
     tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:14px;">কোনো বই ইস্যু নেই</td></tr>';
-  } catch(e) {}
+  } catch(e) { console.error('loadPassbookIssueHistory error:', e); }
 }
 
 // ─── Member Installment Collection (unified) ───
@@ -7534,7 +7503,7 @@ window.loadLedgerStatementReport = async function() {
   summaryBody.innerHTML = '<tr><td colspan="2" style="text-align:center">লোড হচ্ছে...</td></tr>';
 
   try {
-    const snap = await db.collection('ledgerEntries').where('ledgerId','==',ledgerId).orderBy('date','asc').get();
+    const snap = await db.collection('ledgerEntries').where('ledgerId','==',ledgerId).get();
     function branchMatches(entryBranch) {
       if (branchType === 'allBranch') return true;
       if (!branchId) return true;
@@ -7548,6 +7517,7 @@ window.loadLedgerStatementReport = async function() {
       if (!branchMatches(e.branch||'')) return;
       entries.push(e);
     });
+    entries.sort((a,b) => String(a.date||'').localeCompare(String(b.date||'')));
 
     let openingBalance = 0;
     let totalDebit = 0, totalCredit = 0;
@@ -10494,9 +10464,13 @@ window.loadContraHistory = async function() {
   const tbody = document.getElementById('cvHistoryBody');
   if (!tbody) return;
   try {
-    const snap = await db.collection('vouchers').where('type','==','Contra').orderBy('createdAt','desc').limit(15).get();
+    const snap = await db.collection('vouchers').where('type','==','Contra').get();
+    const rows = [];
+    snap.forEach(d => rows.push(d.data()));
+    rows.sort((a,b) => (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
+    const top15 = rows.slice(0, 15);
     let html = '';
-    snap.forEach(d => { const v = d.data(); html += `<tr><td>${v.date||'—'}</td><td>${v.debitLedgerName||'—'}</td><td>${v.creditLedgerName||'—'}</td><td style="text-align:right;">${tk(v.amount)}</td></tr>`; });
+    top15.forEach(v => { html += `<tr><td>${v.date||'—'}</td><td>${v.debitLedgerName||'—'}</td><td>${v.creditLedgerName||'—'}</td><td style="text-align:right;">${tk(v.amount)}</td></tr>`; });
     tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:14px;">কোনো Contra Voucher নেই</td></tr>';
   } catch(e) {
     tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--danger);">Error: ${e.message}</td></tr>`;
@@ -10513,10 +10487,12 @@ window.loadLedgerReport = async function() {
   try {
     const lDoc = await db.collection('ledgers').doc(ledgerId).get();
     document.getElementById('grTitle').textContent = 'Ledger Statement — ' + (lDoc.exists ? lDoc.data().code+' '+lDoc.data().name : '');
-    const snap = await db.collection('ledgerEntries').where('ledgerId','==',ledgerId).orderBy('date','asc').get();
+    const snap = await db.collection('ledgerEntries').where('ledgerId','==',ledgerId).get();
+    const entryRows = [];
+    snap.forEach(d => entryRows.push(d.data()));
+    entryRows.sort((a,b) => String(a.date||'').localeCompare(String(b.date||'')));
     let running = 0, html = '';
-    snap.forEach(d => {
-      const e = d.data();
+    entryRows.forEach(e => {
       if (from && e.date < from) { running += (e.drcr==='debit'? e.amount : -e.amount); return; }
       if (to && e.date > to) return;
       const debit = e.drcr === 'debit' ? e.amount : 0;
@@ -10672,14 +10648,17 @@ window.loadInterBranchReport = async function() {
   tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:14px;">লোড হচ্ছে... ⏳</td></tr>';
   try {
     const bmap = await branchNameMap();
-    const snap = await db.collection('interBranchTransfers').where('status','==','Approve Completed').orderBy('date','desc').limit(100).get();
-    let html = '', totRec = 0, totPay = 0;
-    snap.forEach(d => {
-      const t = d.data();
+    const snap = await db.collection('interBranchTransfers').where('status','==','Approve Completed').get();
+    const allRows = [];
+    snap.forEach(d => allRows.push(d.data()));
+    allRows.sort((a,b) => String(b.date||'').localeCompare(String(a.date||'')));
+    let html = '', totRec = 0, totPay = 0, matchCount = 0;
+    allRows.forEach(t => {
       if (from && t.date < from) return;
       if (to && t.date > to) return;
       if (branch && t.senderBranch !== branch && t.receiverBranch !== branch) return;
       if (other && t.senderBranch !== other && t.receiverBranch !== other) return;
+      matchCount++;
       // from selected branch's perspective: if it's receiver → receive; if sender → payment
       let rec = 0, pay = 0;
       if (branch) { if (t.receiverBranch === branch) rec = t.amount; if (t.senderBranch === branch) pay = t.amount; }
@@ -10688,7 +10667,7 @@ window.loadInterBranchReport = async function() {
       html += `<tr><td>${t.date||'—'}</td><td>${bmap[t.senderBranch]||t.senderBranch}</td><td>${bmap[t.receiverBranch]||t.receiverBranch}</td><td style="text-align:right;">${rec?tk(rec):'—'}</td><td style="text-align:right;">${pay?tk(pay):'—'}</td></tr>`;
     });
     html += `<tr style="font-weight:700;background:#faf8f0;"><td colspan="3" style="text-align:right;padding:6px;">Total:</td><td style="text-align:right;">${tk(totRec)}</td><td style="text-align:right;">${tk(totPay)}</td></tr>`;
-    tbody.innerHTML = html.includes('<td colspan="3"') && snap.empty ? '<tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:14px;">কোনো লেনদেন নেই</td></tr>' : html;
+    tbody.innerHTML = matchCount === 0 ? '<tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:14px;">কোনো লেনদেন নেই</td></tr>' : html;
   } catch(e) {
     tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--danger);">Error: ${e.message}</td></tr>`;
   }
@@ -10720,7 +10699,7 @@ window.saveSalarySetup = async function() {
     // one setup per employee — overwrite by empDocId
     await db.collection('salarySetups').doc(empDocId).set({
       empDocId, empName: emp.name||'', designation: emp.post||'',
-      branch: document.getElementById('ssBranch')?.value||'',
+      branch: document.getElementById('salSetupBranch')?.value||'',
       basic, house:g('ssHouse'), medical:g('ssMedical'), transport:g('ssTransport'),
       intensive:g('ssIntensive'), festival:g('ssFestival'), provident:g('ssProvident'),
       earnings, deduction, net: earnings-deduction,
@@ -10876,7 +10855,7 @@ const PERMISSION_MODULES = {
   'ডিপোজিট ট্রানজেকশন': { depositReceive:'সঞ্চয় জমা', dpsDeposit:'ডিপিএস জমা', depositPayment:'সঞ্চয় ফেরত', depositTransfer:'ডিপোজিট হিসাব স্থানান্তর', depositClosing:'ডিপোজিট হিসাব ক্লোজিং', depositBlock:'সঞ্চয় লেনদেন ব্লক', depositProfitPayment:'মুনাফা প্রদান', depositProfitDistribution:'মুনাফা বিতরণ' },
   'শেয়ার লেনদেন': { shareDeposit:'শেয়ার জমা', shareReturn:'শেয়ার ফেরত' },
   'আমার সকল কালেকশন': { memberInstallment:'সদস্য ভিত্তিক কালেকশন', memberPassbook:'সদস্য পাসবুক', passbookIssue:'নতুন পাসবুক বিক্রয়', collectionSheet:'কালেকশন শীট', collectionReceive:'কালেকশন গ্রহণ' },
-  'একাউন্টস (AIS)': { glManage:'General Ledger (COA)', accountTransaction:'অ্যাকাউন্টস লেনদেন', contraVoucher:'বিনিময় লেনদেন', journalVoucher:'জার্নাল ভাউচার', glReport:'লেজার রিপোর্ট', voucherList:'ভাউচার তালিকা' },
+  'একাউন্টস (AIS)': { glManage:'সাধারণ খতিয়ান (COA)', accountTransaction:'অ্যাকাউন্টস লেনদেন', contraVoucher:'বিনিময় লেনদেন', journalVoucher:'জার্নাল ভাউচার', glReport:'লেজার রিপোর্ট', voucherList:'ভাউচার তালিকা' },
   'আন্তঃ শাখা লেনদেন': { fundTransferReq:'তহবিল স্থানান্তর অনুরোধ', transferReqList:'স্থানান্তর অনুরোধের তালিকা', interBranch:'শাখা অনুযায়ী প্রাপ্তি প্রদান', interBranchReport:'শাখা অনুযায়ী লেনদেন ডিটেলস' },
   'বেতন': { salarySetup:'কর্মচারী বেতন সেটআপ', salaryProcess:'বেতন অনুমোদন/বিতরন', salaryDisburseList:'বেতন বিতরণ তালিকা', myPayslip:'আমার পে-স্লিপ' },
   'ইউজার সেটিং': { createUser:'নতুন ইউজার তৈরি', userListPage:'ইউজার তালিকা', groupPermission:'পদ ভিত্তিক পারমিশন', userPermissions:'ইউজার ভিত্তিক পারমিশন' }
@@ -11153,13 +11132,17 @@ async function loadMembersIntoSelect(selectId) {
   const sel = document.getElementById(selectId);
   if (!sel) return;
   try {
-    const snap = await db.collection('members').where('status','==','active').orderBy('name').get();
+    // NOTE: শুধু where('status') ব্যবহার করা হয়েছে (orderBy বাদ) যাতে Firestore
+    // composite index না লাগে; সর্টিং জাভাস্ক্রিপ্টেই করা হয়েছে।
+    const snap = await db.collection('members').where('status','==','active').get();
+    const rows = [];
+    snap.forEach(d => rows.push(d.data()));
+    rows.sort((a,b) => (a.name||'').localeCompare(b.name||'', 'bn'));
     sel.innerHTML = '<option value="">— সদস্য বাছুন —</option>';
-    snap.forEach(d => {
-      const m = d.data();
+    rows.forEach(m => {
       sel.innerHTML += `<option value="${m.memberId}">${m.memberId} - ${m.name} (${m.mobile||''})</option>`;
     });
-  } catch(e) {}
+  } catch(e) { console.error('loadMembersIntoSelect error:', e); }
 }
 
 // Load branches into any select
@@ -11208,14 +11191,15 @@ window.loadMembersForTransfer = async function() {
   const sel = document.getElementById('transferMember');
   if (!sel) return;
   try {
-    let query = db.collection('members').where('status','==','active');
-    const snap = await query.orderBy('name').get();
+    const snap = await db.collection('members').where('status','==','active').get();
+    const rows = [];
+    snap.forEach(d => rows.push({ id: d.id, m: d.data() }));
+    rows.sort((a,b) => (a.m.name||'').localeCompare(b.m.name||'', 'bn'));
     sel.innerHTML = '<option value="">— সদস্য বাছুন —</option>';
-    snap.forEach(d => {
-      const m = d.data();
-      sel.innerHTML += `<option value="${d.id}" data-samity="${m.samity||''}">${m.memberId} - ${m.name}</option>`;
+    rows.forEach(({id, m}) => {
+      sel.innerHTML += `<option value="${id}" data-samity="${m.samity||''}">${m.memberId} - ${m.name}</option>`;
     });
-  } catch(e) {}
+  } catch(e) { console.error('loadMembersForTransfer error:', e); }
 }
 
 // Show current samity when member selected
@@ -12535,6 +12519,39 @@ window.deleteUser = async function(id) {
 // ══════════════════════════════════════
 // ─── BRANCH MANAGE ───
 // ══════════════════════════════════════
+
+// বাংলাদেশের বিভাগ ও জেলার তালিকা (৮টি বিভাগ, ৬৪টি জেলা)
+const BD_DIVISION_DISTRICTS = {
+  'ঢাকা': ['ঢাকা','গাজীপুর','নারায়ণগঞ্জ','নরসিংদী','মানিকগঞ্জ','মুন্সিগঞ্জ','ফরিদপুর','গোপালগঞ্জ','মাদারীপুর','রাজবাড়ী','শরীয়তপুর','টাঙ্গাইল','কিশোরগঞ্জ'],
+  'চট্টগ্রাম': ['চট্টগ্রাম','কক্সবাজার','রাঙ্গামাটি','বান্দরবান','খাগড়াছড়ি','ফেনী','নোয়াখালী','লক্ষ্মীপুর','কুমিল্লা','ব্রাহ্মণবাড়িয়া','চাঁদপুর'],
+  'রাজশাহী': ['রাজশাহী','নাটোর','নওগাঁ','চাঁপাইনবাবগঞ্জ','পাবনা','সিরাজগঞ্জ','বগুড়া','জয়পুরহাট'],
+  'খুলনা': ['খুলনা','বাগেরহাট','সাতক্ষীরা','যশোর','ঝিনাইদহ','মাগুরা','নড়াইল','কুষ্টিয়া','চুয়াডাঙ্গা','মেহেরপুর'],
+  'বরিশাল': ['বরিশাল','পটুয়াখালী','ভোলা','পিরোজপুর','বরগুনা','ঝালকাঠি'],
+  'সিলেট': ['সিলেট','মৌলভীবাজার','হবিগঞ্জ','সুনামগঞ্জ'],
+  'রংপুর': ['রংপুর','দিনাজপুর','গাইবান্ধা','কুড়িগ্রাম','লালমনিরহাট','নীলফামারী','ঠাকুরগাঁও','পঞ্চগড়'],
+  'ময়মনসিংহ': ['ময়মনসিংহ','জামালপুর','নেত্রকোণা','শেরপুর']
+};
+
+// বিভাগ ড্রপডাউন পূরণ করা (পেজ লোড হওয়ার সময় একবার কল হবে)
+window.populateBmDivisions = function() {
+  const sel = document.getElementById('bmDivision');
+  if (!sel || sel.dataset.filled === '1') return;
+  sel.innerHTML = '<option value="">— বাছুন —</option>' +
+    Object.keys(BD_DIVISION_DISTRICTS).map(d => `<option value="${d}">${d}</option>`).join('');
+  sel.dataset.filled = '1';
+}
+
+// বিভাগ বাছাই করলে সেই বিভাগের জেলাগুলো জেলা ড্রপডাউনে বসানো
+window.populateBmDistricts = function() {
+  const divSel = document.getElementById('bmDivision');
+  const distSel = document.getElementById('bmDistrict');
+  if (!divSel || !distSel) return;
+  const division = divSel.value;
+  const districts = BD_DIVISION_DISTRICTS[division] || [];
+  distSel.innerHTML = '<option value="">— বাছুন —</option>' +
+    districts.map(d => `<option value="${d}">${d}</option>`).join('');
+}
+
 window.saveBranch = async function() {
   const name = document.getElementById('bmName')?.value?.trim();
   const code = document.getElementById('bmCode')?.value?.trim();
@@ -12578,9 +12595,11 @@ window.saveBranch = async function() {
 
 window.resetBranchForm = function() {
   document.getElementById('bmEditId').value = '';
-  ['bmCode','bmName','bmManager','bmManagerPhone'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['bmCode','bmName','bmManager','bmManagerPhone','bmUpazila','bmUnion'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   const addr = document.getElementById('bmAddress'); if (addr) addr.value = '';
-  ['bmType','bmParent','bmCountry','bmDivision','bmDistrict','bmUpazila','bmUnion','bmStatus'].forEach(id => { const el=document.getElementById(id); if(el) el.selectedIndex = 0; });
+  populateBmDivisions();
+  ['bmType','bmParent','bmCountry','bmDivision','bmStatus'].forEach(id => { const el=document.getElementById(id); if(el) el.selectedIndex = 0; });
+  const distSel = document.getElementById('bmDistrict'); if (distSel) distSel.innerHTML = '<option value="">— বাছুন —</option>';
   const dt = document.getElementById('bmOpenDate'); if (dt) dt.value = new Date().toISOString().split('T')[0];
   document.getElementById('bmFormTitle').textContent = 'নতুন শাখা যোগ করুন';
   document.getElementById('bmSaveBtn').textContent = '+ Create New Branch';
@@ -12601,6 +12620,15 @@ window.editBranch = async function(id) {
     document.getElementById('bmManagerPhone').value = b.managerPhone || '';
     document.getElementById('bmAddress').value = b.address || '';
     if (b.status) document.getElementById('bmStatus').value = b.status;
+    if (b.country) document.getElementById('bmCountry').value = b.country;
+    populateBmDivisions();
+    if (b.division) {
+      document.getElementById('bmDivision').value = b.division;
+      populateBmDistricts();
+      if (b.district) document.getElementById('bmDistrict').value = b.district;
+    }
+    document.getElementById('bmUpazila').value = b.upazila || '';
+    document.getElementById('bmUnion').value = b.unionCity || '';
     await loadBranchesIntoSelect('bmParent');
     if (b.parentBranchId) document.getElementById('bmParent').value = b.parentBranchId;
     document.getElementById('bmFormTitle').textContent = 'শাখা সম্পাদনা করুন';
@@ -12890,7 +12918,7 @@ window.saveDirector = async function() {
   if (!mobile) { toast('মোবাইল নম্বর দিন!','error'); return; }
 
   const data = {
-    branchId: document.getElementById('drBranch')?.value || '',
+    branchId: document.getElementById('dirBranch')?.value || '',
     name,
     fatherName: document.getElementById('drFather')?.value?.trim() || '',
     motherName: document.getElementById('drMother')?.value?.trim() || '',
@@ -12943,9 +12971,9 @@ window.editDirector = async function(id) {
     const doc = await db.collection('directors').doc(id).get();
     if (!doc.exists) { toast('পরিচালক পাওয়া যায়নি!','error'); return; }
     const dt = doc.data();
-    await loadBranchesIntoSelect('drBranch');
+    await loadBranchesIntoSelect('dirBranch');
     document.getElementById('drEditId').value = id;
-    document.getElementById('drBranch').value = dt.branchId || '';
+    document.getElementById('dirBranch').value = dt.branchId || '';
     document.getElementById('drName').value = dt.name || '';
     document.getElementById('drFather').value = dt.fatherName || '';
     document.getElementById('drMother').value = dt.motherName || '';
@@ -13593,10 +13621,12 @@ window.searchStaffInstallmentHistory = async function(loanDocId) {
   if (!loanDocId) { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr>'; return; }
   tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:14px;">লোড হচ্ছে... ⏳</td></tr>';
   try {
-    const snap = await db.collection('staffLoanInstallments').where('loanDocId','==',loanDocId).orderBy('createdAt','desc').get();
+    const snap = await db.collection('staffLoanInstallments').where('loanDocId','==',loanDocId).get();
+    const rows = [];
+    snap.forEach(d => rows.push(d.data()));
+    rows.sort((a,b) => (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
     let html = '';
-    snap.forEach(d => {
-      const r = d.data();
+    rows.forEach(r => {
       html += `<tr><td>${r.instDate||'—'}</td><td>${tk(r.amount)}</td><td>${r.comment||'—'}</td></tr>`;
     });
     tbody.innerHTML = html || '<tr><td colspan="3" style="text-align:center;color:var(--text-light);padding:14px;">কোনো কিস্তি জমা নেই</td></tr>';
@@ -13628,12 +13658,14 @@ window.searchStaffCancelInstallments = async function() {
   if (!loanDocId) { toast('একাউন্ট নির্বাচন করুন!','error'); return; }
   tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:14px;">লোড হচ্ছে... ⏳</td></tr>';
   try {
-    const snap = await db.collection('staffLoanInstallments').where('loanDocId','==',loanDocId).orderBy('createdAt','desc').get();
+    const snap = await db.collection('staffLoanInstallments').where('loanDocId','==',loanDocId).get();
+    const rows = [];
+    snap.forEach(d => rows.push({ id: d.id, r: d.data() }));
+    rows.sort((a,b) => (b.r.createdAt?.toMillis?.()||0) - (a.r.createdAt?.toMillis?.()||0));
     let html = '';
-    snap.forEach(d => {
-      const r = d.data();
+    rows.forEach(({id, r}) => {
       html += `<tr><td>${r.instDate||'—'}</td><td>${tk(r.amount)}</td><td>${r.comment||'—'}</td>
-        <td><button class="btn btn-danger" style="padding:4px 10px;font-size:11px;" onclick="cancelStaffInstallment('${d.id}','${loanDocId}',${r.amount})">❌ বাতিল</button></td></tr>`;
+        <td><button class="btn btn-danger" style="padding:4px 10px;font-size:11px;" onclick="cancelStaffInstallment('${id}','${loanDocId}',${r.amount})">❌ বাতিল</button></td></tr>`;
     });
     tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:14px;">কোনো কিস্তি নেই</td></tr>';
   } catch(e) {
@@ -13840,8 +13872,8 @@ const allModules = [
   {name:'বেতন সেটআপ',page:'salarySetup',icon:'💵'},
   {name:'ইউজার তৈরি',page:'createUser',icon:'👑'},
   {name:'সমিতি সেটআপ',page:'samitySetup',icon:'⚙️'},
-  {name:'Balance Sheet',page:'balanceSheet',icon:'📊'},
-  {name:'Trial Balance',page:'trialBalance',icon:'⚖️'},
+  {name:'ব্যালেন্স শীট',page:'balanceSheet',icon:'📊'},
+  {name:'রেওয়ামিল',page:'trialBalance',icon:'⚖️'},
   {name:'FDR রেজিস্টার',page:'rptFdrRegister',icon:'🏦'},
   {name:'DPS রেজিস্টার',page:'rptDpsRegister',icon:'📅'},
   {name:'ঋণ মওকুফ রিপোর্ট',page:'rptLoanWaiver',icon:'✂️'},
