@@ -1191,8 +1191,8 @@ table tr:hover td{background:#f7fafd;}
         <div class="form-group"><label>মাসিক আয় (৳)</label><input type="number" value="0.0"></div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
-        <div class="form-group"><label>সমিতি</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>শাখা *</label><select id="maBranch" onchange="loadSamitiesIntoSelect('maSamity','maBranch')"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>সমিতি</label><select id="maSamity"><option value="">— বাছুন —</option></select></div>
       </div>
       <div class="form-row col2">
         <div class="form-group"><label>ভর্তির তারিখ *</label><input type="date"></div>
@@ -1770,79 +1770,79 @@ table tr:hover td{background:#f7fafd;}
 
   <!-- ════ LOAN RESCHEDULE ════ -->
   <div id="page-loanReschedule" class="page" style="display:none;">
-    <div class="page-title">🔄 Loan Reschedule</div>
+    <div class="page-title">🔄 ঋণ পুনঃতফসিল (Loan Reschedule)</div>
     <div class="card">
       <!-- Current Loan Details -->
       <div style="background:#e8f4fd;border-radius:8px;padding:12px;margin-bottom:14px;">
-        <div style="font-weight:700;color:var(--primary);margin-bottom:10px;">Current Loan Details</div>
+        <div style="font-weight:700;color:var(--primary);margin-bottom:10px;">বর্তমান ঋণের বিবরণ (Current Loan Details)</div>
         <div class="form-row col2">
-          <div class="form-group"><label>Branch Name</label><select><option>— বাছুন —</option></select></div>
-          <div class="form-group"><label>Member Name *</label><select><option>— বাছুন —</option></select></div>
+          <div class="form-group"><label>শাখা (Branch Name)</label><select id="lrsBranch" onchange="loadMembersIntoSelect('lrsMember')"><option value="">— বাছুন —</option></select></div>
+          <div class="form-group"><label>সদস্য (Member Name) *</label><select id="lrsMember" onchange="loadLoanAccountsForReschedule()"><option value="">— বাছুন —</option></select></div>
         </div>
         <div class="form-row col2">
-          <div class="form-group"><label>Loan Account *</label><select><option>— বাছুন —</option></select></div>
-          <div class="form-group"><label>Loan Disburse Amount</label><input type="text" readonly value="0.0" style="background:#f5f5f5;"></div>
+          <div class="form-group"><label>ঋণ একাউন্ট (Loan Account) *</label><select id="lrsLoanAccount" onchange="loadLoanDetailsForReschedule(this.value)"><option value="">— বাছুন —</option></select></div>
+          <div class="form-group"><label>বিতরণকৃত পরিমাণ (Loan Disburse Amount)</label><input type="text" id="lrsDisburseAmount" readonly value="0.0" style="background:#f5f5f5;"></div>
         </div>
         <div class="form-row col2">
-          <div class="form-group"><label>Loan Disburse Profit</label><input type="text" readonly value="0.0" style="background:#f5f5f5;"></div>
-          <div class="form-group"><label>Disburse Date</label><input type="date" readonly style="background:#f5f5f5;"></div>
+          <div class="form-group"><label>বিতরণ সুদ (Loan Disburse Profit)</label><input type="text" id="lrsDisburseProfit" readonly value="0.0" style="background:#f5f5f5;"></div>
+          <div class="form-group"><label>বিতরণের তারিখ (Disburse Date)</label><input type="date" id="lrsDisburseDate" readonly style="background:#f5f5f5;"></div>
         </div>
         <div class="form-row col2">
-          <div class="form-group"><label>Previous Installment Amount</label><input type="text" readonly style="background:#f5f5f5;"></div>
-          <div class="form-group"><label>Total Installment</label><input type="text" readonly style="background:#f5f5f5;"></div>
+          <div class="form-group"><label>পূর্বের কিস্তির পরিমাণ</label><input type="text" id="lrsPrevInstAmount" readonly style="background:#f5f5f5;"></div>
+          <div class="form-group"><label>মোট কিস্তি সংখ্যা</label><input type="text" id="lrsTotalInst" readonly style="background:#f5f5f5;"></div>
         </div>
         <div class="form-row col2">
-          <div class="form-group"><label>Total Installment Paid</label><input type="text" readonly style="background:#f0faf4;"></div>
-          <div class="form-group"><label>Total Loan Amount</label><input type="text" readonly style="background:#f5f5f5;"></div>
+          <div class="form-group"><label>মোট প্রদত্ত কিস্তি</label><input type="text" id="lrsPaidInst" readonly style="background:#f0faf4;"></div>
+          <div class="form-group"><label>মোট ঋণের পরিমাণ</label><input type="text" id="lrsTotalLoanAmt" readonly style="background:#f5f5f5;"></div>
         </div>
         <div class="form-row col2">
-          <div class="form-group"><label>Total Loan Paid</label><input type="text" readonly style="background:#f0faf4;color:var(--success);font-weight:700;"></div>
-          <div class="form-group"><label>Total Loan Due</label><input type="text" readonly style="background:#fff0f0;color:var(--danger);font-weight:700;"></div>
+          <div class="form-group"><label>মোট পরিশোধিত</label><input type="text" id="lrsTotalPaid" readonly style="background:#f0faf4;color:var(--success);font-weight:700;"></div>
+          <div class="form-group"><label>মোট বকেয়া</label><input type="text" id="lrsTotalDue" readonly style="background:#fff0f0;color:var(--danger);font-weight:700;"></div>
         </div>
         <div class="form-row col2">
-          <div class="form-group"><label>Total Due Principal</label><input type="number" value="0.0"></div>
-          <div class="form-group"><label>Total Due Profit</label><input type="number" value="0.0"></div>
+          <div class="form-group"><label>বকেয়া আসল (Total Due Principal)</label><input type="number" id="lrsDuePrincipal" value="0.0" readonly style="background:#f5f5f5;"></div>
+          <div class="form-group"><label>বকেয়া সুদ (Total Due Profit)</label><input type="number" id="lrsDueProfit" value="0.0" readonly style="background:#f5f5f5;"></div>
         </div>
-        <div class="form-group"><label>Expired Date</label><input type="date" readonly style="background:#f5f5f5;"></div>
+        <div class="form-group"><label>মেয়াদ শেষের তারিখ (Expired Date)</label><input type="date" id="lrsExpiredDate" readonly style="background:#f5f5f5;"></div>
       </div>
 
       <!-- New Loan Reschedule Details -->
       <div style="background:#f0faf4;border-radius:8px;padding:12px;margin-bottom:14px;">
-        <div style="font-weight:700;color:var(--success);margin-bottom:10px;">New Loan Reschedule Details</div>
+        <div style="font-weight:700;color:var(--success);margin-bottom:10px;">নতুন পুনঃতফসিলের বিবরণ (New Loan Reschedule Details)</div>
         <div class="form-row col2">
-          <div class="form-group"><label>Installment Frequency *</label><select><option>Select</option><option>সাপ্তাহিক</option><option>পাক্ষিক</option><option>মাসিক</option></select></div>
-          <div class="form-group"><label>Additional Profit Amount *</label><input type="number" value="0.0"></div>
+          <div class="form-group"><label>কিস্তির ফ্রিকোয়েন্সি *</label><select id="lrsFrequency"><option value="">নির্বাচন করুন</option><option value="সাপ্তাহিক">সাপ্তাহিক</option><option value="পাক্ষিক">পাক্ষিক</option><option value="মাসিক">মাসিক</option></select></div>
+          <div class="form-group"><label>অতিরিক্ত সুদের পরিমাণ *</label><input type="number" id="lrsAdditionalProfit" value="0.0"></div>
         </div>
         <div class="form-row col2">
-          <div class="form-group"><label>Loan Profit Amount</label><input type="number" value="0.0"></div>
-          <div class="form-group"><label>Reschedule Date *</label><input type="date"></div>
+          <div class="form-group"><label>ঋণের সুদের পরিমাণ</label><input type="number" id="lrsLoanProfitAmount" value="0.0"></div>
+          <div class="form-group"><label>পুনঃতফসিলের তারিখ *</label><input type="date" id="lrsRescheduleDate"></div>
         </div>
         <div class="form-row col2">
-          <div class="form-group"><label>Total Loan Amount *</label><input type="number" value="0.0"></div>
-          <div class="form-group"><label>Installment Amount *</label><input type="number" value="0.0"></div>
+          <div class="form-group"><label>মোট ঋণের পরিমাণ *</label><input type="number" id="lrsNewTotalAmount" value="0.0"></div>
+          <div class="form-group"><label>কিস্তির পরিমাণ *</label><input type="number" id="lrsNewInstAmount" value="0.0"></div>
         </div>
         <div class="form-row col2">
-          <div class="form-group"><label>No of Installment</label><input type="number"></div>
-          <div class="form-group"><label>1st Installment Date</label><input type="date"></div>
+          <div class="form-group"><label>কিস্তির সংখ্যা</label><input type="number" id="lrsNewInstCount"></div>
+          <div class="form-group"><label>১ম কিস্তির তারিখ</label><input type="date" id="lrsFirstInstDate"></div>
         </div>
         <div class="form-row col2">
-          <div class="form-group"><label>Installment Expiry Date</label><input type="date"></div>
-          <div class="form-group"><label>Form Fee</label><input type="number" value="0.0"></div>
+          <div class="form-group"><label>কিস্তি শেষের তারিখ</label><input type="date" id="lrsNewExpiryDate"></div>
+          <div class="form-group"><label>ফরম ফি</label><input type="number" id="lrsFormFee" value="0.0"></div>
         </div>
         <div class="form-row col2">
-          <div class="form-group"><label>Health Service Fee</label><input type="number" value="0.0"></div>
-          <div class="form-group"><label>Risk Insurance</label><input type="number" value="0.0"></div>
+          <div class="form-group"><label>স্বাস্থ্য সেবা ফি</label><input type="number" id="lrsHealthFee" value="0.0"></div>
+          <div class="form-group"><label>ঝুঁকি বীমা</label><input type="number" id="lrsRiskInsurance" value="0.0"></div>
         </div>
         <div class="form-row col2">
-          <div class="form-group"><label>Document Fee</label><input type="number" value="0.0"></div>
-          <div class="form-group"><label>EMI Locker Fee</label><input type="number" value="0.0"></div>
+          <div class="form-group"><label>ডকুমেন্ট ফি</label><input type="number" id="lrsDocumentFee" value="0.0"></div>
+          <div class="form-group"><label>EMI লকার ফি</label><input type="number" id="lrsEmiLockerFee" value="0.0"></div>
         </div>
-        <div class="form-group"><label>Others Fee</label><input type="number" value="0.0"></div>
+        <div class="form-group"><label>অন্যান্য ফি</label><input type="number" id="lrsOthersFee" value="0.0"></div>
       </div>
 
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-success">✅ Submit Reschedule</button>
-        <button class="btn btn-outline">🔍 Search Reschedule</button>
+        <button class="btn btn-success" onclick="saveLoanReschedule()">✅ পুনঃতফসিল সম্পন্ন করুন</button>
+        <button class="btn btn-outline" onclick="resetLoanRescheduleForm()">🔍 নতুন সার্চ</button>
       </div>
     </div>
   </div>
@@ -1852,7 +1852,7 @@ table tr:hover td{background:#f7fafd;}
     <div class="page-title">✂️ ঋণ মওকুফ (Loan Waiver)</div>
     <div class="card">
       <div class="form-row col2">
-        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>শাখা *</label><select id="lwaBranch"><option value="">— বাছুন —</option></select></div>
         <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
       </div>
       <div class="form-group" style="margin-bottom:12px;"><label>ঋণ একাউন্ট *</label><select><option>— ঋণ বাছুন —</option></select></div>
@@ -1880,7 +1880,7 @@ table tr:hover td{background:#f7fafd;}
     <div class="page-title">⚡ অতিরিক্ত EMI জরিমানা</div>
     <div class="card">
       <div class="form-row col2">
-        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>শাখা *</label><select id="lepBranch"><option value="">— বাছুন —</option></select></div>
         <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
       </div>
       <div class="form-group" style="margin-bottom:12px;"><label>ঋণ একাউন্ট *</label><select><option>— ঋণ বাছুন —</option></select></div>
@@ -1901,7 +1901,7 @@ table tr:hover td{background:#f7fafd;}
     <div class="page-title">📝 ঋণ প্রস্তাব (Loan Proposal)</div>
     <div class="card">
       <div class="form-row col2">
-        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>শাখা *</label><select id="lpBranch"><option value="">— বাছুন —</option></select></div>
         <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
       </div>
       <div class="form-row col2">
@@ -1913,7 +1913,7 @@ table tr:hover td{background:#f7fafd;}
         <div class="form-group"><label>জামিনদারের মোবাইল</label><input type="tel"></div>
       </div>
       <div class="form-group" style="margin-bottom:14px;"><label>বিবরণ</label><textarea rows="3"></textarea></div>
-      <button class="btn btn-primary btn-block">📝 প্রস্তাব দাখিল করুন</button>
+      <button class="btn btn-primary btn-block" onclick="saveLoanProposal()">📝 প্রস্তাব দাখিল করুন</button>
     </div>
   </div>
 
@@ -1969,7 +1969,7 @@ table tr:hover td{background:#f7fafd;}
     <div class="page-title">📅 DPS কিস্তি জমা</div>
     <div class="card">
       <div class="form-row col2">
-        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>শাখা *</label><select id="dpsdBranch"><option value="">— বাছুন —</option></select></div>
         <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
       </div>
       <div class="form-group" style="margin-bottom:12px;"><label>DPS একাউন্ট *</label><select><option>— DPS বাছুন —</option></select></div>
@@ -2113,21 +2113,21 @@ table tr:hover td{background:#f7fafd;}
     <div class="page-title">💹 ডিপোজিট মুনাফা প্রদান</div>
     <div class="card">
       <div class="form-row col2">
-        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
-        <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+        <div class="form-group"><label>শাখা *</label><select id="dppBranch"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text" id="dppMemberId" onchange="loadDepositAccountsForProfitPayment()"></div>
       </div>
-      <div class="form-group" style="margin-bottom:12px;"><label>ডিপোজিট একাউন্ট *</label><select><option>— FDR/DPS বাছুন —</option></select></div>
+      <div class="form-group" style="margin-bottom:12px;"><label>ডিপোজিট একাউন্ট *</label><select id="dppAccount" onchange="loadDepositAccountForProfitPaymentDetails()"><option value="">— FDR/DPS বাছুন —</option></select></div>
       <div class="info-grid" style="margin-bottom:14px;">
-        <div class="info-item"><label>আমানতের পরিমাণ</label><p>৳০</p></div>
-        <div class="info-item"><label>সুদের হার</label><p>০%</p></div>
-        <div class="info-item"><label>প্রাপ্য মুনাফা</label><p style="color:var(--success)">৳০</p></div>
-        <div class="info-item"><label>শেষ প্রদানের তারিখ</label><p>—</p></div>
+        <div class="info-item"><label>আমানতের পরিমাণ</label><p id="dppInfoBalance">৳০</p></div>
+        <div class="info-item"><label>সুদের হার</label><p id="dppInfoRate">০%</p></div>
+        <div class="info-item"><label>প্রাপ্য মুনাফা</label><p style="color:var(--success)" id="dppInfoDue">৳০</p></div>
+        <div class="info-item"><label>শেষ প্রদানের তারিখ</label><p id="dppInfoLastDate">—</p></div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label>মুনাফার পরিমাণ (৳) *</label><input type="number"></div>
-        <div class="form-group"><label>প্রদানের তারিখ *</label><input type="date"></div>
+        <div class="form-group"><label>মুনাফার পরিমাণ (৳) *</label><input type="number" id="dppAmount"></div>
+        <div class="form-group"><label>প্রদানের তারিখ *</label><input type="date" id="dppDate"></div>
       </div>
-      <button class="btn btn-success btn-block" style="margin-top:8px;">💹 মুনাফা প্রদান করুন</button>
+      <button class="btn btn-success btn-block" style="margin-top:8px;" onclick="saveDepositProfitPayment()">💹 মুনাফা প্রদান করুন</button>
     </div>
   </div>
 
@@ -2136,7 +2136,7 @@ table tr:hover td{background:#f7fafd;}
     <div class="page-title">📈 শেয়ার পেমেন্ট (Share Payment)</div>
     <div class="card">
       <div class="form-row col2">
-        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>শাখা *</label><select id="shpBranch"><option value="">— বাছুন —</option></select></div>
         <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
       </div>
       <div class="share-summary">
@@ -2161,18 +2161,18 @@ table tr:hover td{background:#f7fafd;}
     <div class="page-title">📊 শেয়ার গ্রহণ (Share Receive)</div>
     <div class="card">
       <div class="form-row col2">
-        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
-        <div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div>
+        <div class="form-group"><label>শাখা *</label><select id="srcBranch"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text" id="srcMemberId"></div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label>শেয়ার ফেরতের সংখ্যা *</label><input type="number" min="1"></div>
-        <div class="form-group"><label>ফেরতের পরিমাণ (৳) *</label><input type="number"></div>
+        <div class="form-group"><label>শেয়ার ফেরতের সংখ্যা *</label><input type="number" id="srcQty" min="1"></div>
+        <div class="form-group"><label>ফেরতের পরিমাণ (৳) *</label><input type="number" id="srcAmount"></div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label>তারিখ *</label><input type="date"></div>
-        <div class="form-group"><label>কারণ</label><input type="text"></div>
+        <div class="form-group"><label>তারিখ *</label><input type="date" id="srcDate"></div>
+        <div class="form-group"><label>কারণ</label><input type="text" id="srcReason"></div>
       </div>
-      <button class="btn btn-warning btn-block" style="margin-top:8px;">📊 শেয়ার গ্রহণ করুন</button>
+      <button class="btn btn-warning btn-block" style="margin-top:8px;" onclick="saveShareReceive()">📊 শেয়ার গ্রহণ করুন</button>
     </div>
   </div>
 
@@ -2309,15 +2309,8 @@ table tr:hover td{background:#f7fafd;}
     <div class="page-title">📋 কালেকশন শীট</div>
     <div class="card">
       <div class="form-row col2">
-        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
-        <div class="form-group"><label>সমিতি *</label><select><option>— বাছুন —</option></select></div>
-      </div>
-      <div class="form-row col2">
-        <div class="form-group"><label>তারিখ *</label><input type="date"></div>
-        <div class="form-group"><label>ধরন</label><select><option>সব</option><option>ঋণ কিস্তি</option><option>সঞ্চয়</option><option>DPS</option></select></div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
-        <button class="btn btn-primary" onclick="loadCollectionSheet()">🔍 লোড করুন</button>
+        <div class="form-group"><label>শাখা *</label><select id="colshBranch" onchange="loadSamitiesIntoSelect('colshSamity','colshBranch')"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>সমিতি *</label><select id="colshSamity"><option value="">— বাছুন —</option></select></div>
         <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
       </div>
     </div>
@@ -2437,8 +2430,8 @@ table tr:hover td{background:#f7fafd;}
     <div class="page-title">🔄 আন্তঃ শাখা ট্রানজেকশন</div>
     <div class="card">
       <div class="form-row col2">
-        <div class="form-group"><label>প্রেরক শাখা *</label><select><option>— বাছুন —</option></select></div>
-        <div class="form-group"><label>প্রাপক শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>প্রেরক শাখা *</label><select id="ibSenderBranch"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>প্রাপক শাখা *</label><select id="ibReceiverBranch"><option value="">— বাছুন —</option></select></div>
       </div>
       <div class="form-row col2">
         <div class="form-group"><label>পরিমাণ (৳) *</label><input type="number"></div>
@@ -3008,7 +3001,7 @@ table tr:hover td{background:#f7fafd;}
     <div class="page-title">📒 জার্নাল ভাউচার পোস্টিং</div>
     <div class="card">
       <div class="form-row col2">
-        <div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div>
+        <div class="form-group"><label>শাখা *</label><select id="jvBranch"><option value="">— বাছুন —</option></select></div>
         <div class="form-group"><label>ভাউচার তারিখ *</label><input type="date"></div>
       </div>
       <div class="form-group" style="margin-bottom:14px;"><label>বিবরণ *</label><input type="text"></div>
@@ -4275,7 +4268,20 @@ table tr:hover td{background:#f7fafd;}
   </div>
 
   <!-- Placeholder pages for remaining -->
-  <div id="page-memberClosing" class="page" style="display:none;"><div class="page-title">❌ সদস্য বন্ধ</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div></div><div class="form-row col2"><div class="form-group"><label>বন্ধের কারণ *</label><select><option>মৃত্যু</option><option>স্বেচ্ছায়</option><option>বদলি</option></select></div><div class="form-group"><label>তারিখ *</label><input type="date"></div></div><button class="btn btn-danger btn-block" style="margin-top:8px;">❌ সদস্য বন্ধ করুন</button></div></div>
+  <div id="page-memberClosing" class="page" style="display:none;">
+    <div class="page-title">❌ সদস্য বন্ধ</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা</label><select id="mcBranch"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text" id="mcMemberId" placeholder="সদস্য আইডি লিখুন"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>বন্ধের কারণ *</label><select id="mcReason"><option value="মৃত্যু">মৃত্যু</option><option value="স্বেচ্ছায়">স্বেচ্ছায়</option><option value="বদলি">বদলি</option></select></div>
+        <div class="form-group"><label>তারিখ *</label><input type="date" id="mcDate"></div>
+      </div>
+      <button class="btn btn-danger btn-block" style="margin-top:8px;" onclick="closeMemberAccount()">❌ সদস্য বন্ধ করুন</button>
+    </div>
+  </div>
 
   <div id="page-memberTransfer" class="page" style="display:none;">
     <div class="page-title">🔀 সদস্য সমিতি স্থানান্তর</div>
@@ -4314,17 +4320,76 @@ table tr:hover td{background:#f7fafd;}
     </div>
   </div>
 
-  <div id="page-loanInstallmentCancel" class="page" style="display:none;"><div class="page-title">❌ কিস্তি বাতিল</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div></div><div class="form-group" style="margin-bottom:12px;"><label>ঋণ একাউন্ট</label><select><option>— বাছুন —</option></select></div><div class="form-group" style="margin-bottom:12px;"><label>কিস্তির তারিখ *</label><input type="date"></div><div class="form-group" style="margin-bottom:14px;"><label>বাতিলের কারণ *</label><textarea rows="2"></textarea></div><button class="btn btn-danger btn-block">❌ কিস্তি বাতিল করুন</button></div></div>
+  <div id="page-loanInstallmentCancel" class="page" style="display:none;">
+    <div class="page-title">❌ কিস্তি বাতিল</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা</label><select id="licBranch"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text" id="licMemberId" placeholder="সদস্য আইডি লিখুন"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button class="btn btn-secondary" onclick="loadLoanAccountsForCancel()">🔍 ঋণ একাউন্ট খুঁজুন</button>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;"><label>ঋণ একাউন্ট</label><select id="licLoanAccount" onchange="searchLoanCancelInstallments()"><option value="">— বাছুন —</option></select></div>
+    </div>
+    <div class="card">
+      <div class="card-title">কিস্তির তালিকা (বাতিল করতে ক্লিক করুন)</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>তারিখ</th><th style="text-align:right;">পরিমাণ</th><th>মন্তব্য</th><th>কাজ</th></tr></thead>
+          <tbody id="licTableBody"><tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:14px;">ঋণ একাউন্ট বাছুন</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
   <div id="page-loanProposalList" class="page" style="display:none;"><div class="page-title">📝 ঋণ প্রস্তাব তালিকা</div><div class="card"><div class="table-wrap"><table><thead><tr><th>আইডি</th><th>সদস্যের নাম</th><th>প্রস্তাবিত ঋণ</th><th>উদ্দেশ্য</th><th>তারিখ</th><th>অবস্থা</th><th>কাজ</th></tr></thead><tbody><tr><td colspan="7" style="text-align:center;color:var(--text-light)">কোনো প্রস্তাব নেই</td></tr></tbody></table></div></div></div>
 
-  <div id="page-depositProfitDistribution" class="page" style="display:none;"><div class="page-title">💹 ডিপোজিট মুনাফা বিতরণ</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>বিতরণের মাস</label><input type="month"></div></div><div class="form-row col2"><div class="form-group"><label>একাউন্ট ধরন</label><select><option>সব FDR/DPS</option><option>শুধু FDR</option><option>শুধু DPS</option></select></div><div class="form-group"><label>মুনাফার হার (%)</label><input type="number"></div></div><button class="btn btn-success btn-block" style="margin-top:8px;">💹 মুনাফা বিতরণ করুন</button></div></div>
+  <div id="page-depositProfitDistribution" class="page" style="display:none;">
+    <div class="page-title">💹 ডিপোজিট মুনাফা বিতরণ</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select id="dpdBranch"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>বিতরণের মাস</label><input type="month" id="dpdMonth"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label>একাউন্ট ধরন</label><select id="dpdAccType"><option value="all">সব FDR/DPS</option><option value="fdr">শুধু FDR</option><option value="dps">শুধু DPS</option></select></div>
+        <div class="form-group"><label>মুনাফার হার (%)</label><input type="number" id="dpdRate" step="0.01"></div>
+      </div>
+      <button class="btn btn-outline btn-block" style="margin-top:8px;" onclick="previewDepositProfitDistribution()">👁️ প্রিভিউ দেখুন</button>
+    </div>
+    <div class="card" id="dpdPreviewCard" style="display:none;">
+      <div class="card-title">প্রিভিউ (নিশ্চিত করার আগে ভালো করে দেখুন)</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>একাউন্ট</th><th>সদস্য</th><th style="text-align:right;">ব্যালেন্স</th><th style="text-align:right;">মুনাফা</th></tr></thead>
+          <tbody id="dpdPreviewBody"></tbody>
+        </table>
+        <div style="text-align:right;font-weight:700;padding:10px;" id="dpdPreviewTotal"></div>
+      </div>
+      <button class="btn btn-success btn-block" style="margin-top:8px;" onclick="confirmDepositProfitDistribution()">💹 মুনাফা বিতরণ নিশ্চিত করুন</button>
+    </div>
+  </div>
 
-  <div id="page-depositBlockClear" class="page" style="display:none;"><div class="page-title">🔒 ডিপোজিট ব্লক/ক্লিয়ার</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>সদস্য আইডি *</label><input type="text"></div></div><div class="form-group" style="margin-bottom:12px;"><label>একাউন্ট *</label><select><option>— বাছুন —</option></select></div><div class="form-row col2"><div class="form-group"><label>কাজ</label><select><option>ব্লক করুন</option><option>ব্লক সরান</option></select></div><div class="form-group"><label>কারণ</label><input type="text"></div></div><button class="btn btn-warning btn-block" style="margin-top:8px;">🔒 সংরক্ষণ করুন</button></div></div>
+  <div id="page-depositBlockClear" class="page" style="display:none;">
+    <div class="page-title">🔒 ডিপোজিট ব্লক/ক্লিয়ার</div>
+    <div class="card">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা *</label><select id="dbcBranch"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text" id="dbcMemberId" onchange="loadDepositAccountsForBlockClear()" placeholder="সদস্য আইডি লিখুন"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;"><label>একাউন্ট *</label><select id="dbcAccount"><option value="">— বাছুন —</option></select></div>
+      <div class="form-row col2">
+        <div class="form-group"><label>কাজ</label><select id="dbcAction"><option value="block">ব্লক করুন</option><option value="clear">ব্লক সরান</option></select></div>
+        <div class="form-group"><label>কারণ</label><input type="text" id="dbcReason"></div>
+      </div>
+      <button class="btn btn-warning btn-block" style="margin-top:8px;" onclick="saveDepositBlockClear()">🔒 সংরক্ষণ করুন</button>
+    </div>
+  </div>
 
-  <div id="page-collectionReceive" class="page" style="display:none;"><div class="page-title">✅ কালেকশন গ্রহণ (Collection Receive)</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>সমিতি *</label><select><option>— বাছুন —</option></select></div></div><div class="form-row col2"><div class="form-group"><label>তারিখ *</label><input type="date"></div><div class="form-group"><label>কালেকশনের ধরন</label><select><option>সব</option><option>ঋণ</option><option>সঞ্চয়</option></select></div></div><button class="btn btn-success btn-block" style="margin-top:8px;">✅ কালেকশন গ্রহণ করুন</button></div></div>
+  <div id="page-collectionReceive" class="page" style="display:none;"><div class="page-title">✅ কালেকশন গ্রহণ (Collection Receive)</div><div class="card"><div class="alert alert-info" style="font-size:12px;margin-bottom:10px;">শাখা ও সমিতি বাছাই করে "কালেকশন গ্রহণ করুন" চাপলে "কালেকশন শীট" পেজে নিয়ে যাবে, যেখানে সমিতির প্রতিটি সদস্যের কালেকশন দেখে বিস্তারিতভাবে গ্রহণ করা যাবে।</div><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select id="crBranch" onchange="loadSamitiesIntoSelect('crSamity','crBranch')"><option value="">— বাছুন —</option></select></div><div class="form-group"><label>সমিতি *</label><select id="crSamity"><option value="">— বাছুন —</option></select></div></div><div class="form-row col2"><div class="form-group"><label>তারিখ *</label><input type="date" id="crDate"></div><div class="form-group"><label>কালেকশনের ধরন</label><select id="crType"><option>সব</option><option>ঋণ</option><option>সঞ্চয়</option></select></div></div><button class="btn btn-success btn-block" style="margin-top:8px;" onclick="goToCollectionSheetFor('cr')">✅ কালেকশন গ্রহণ করুন</button></div></div>
 
-  <div id="page-samityInstallment" class="page" style="display:none;"><div class="page-title">🏛️ সমিতি কিস্তি কালেকশন</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>সমিতি *</label><select><option>— বাছুন —</option></select></div></div><div class="form-row col2"><div class="form-group"><label>তারিখ *</label><input type="date"></div><div class="form-group"><label>কালেকশনের ধরন</label><select><option>সব</option><option>ঋণ</option><option>সঞ্চয়</option></select></div></div><button class="btn btn-primary btn-block" style="margin-top:8px;">🔍 সমিতি লোড করুন</button></div></div>
+  <div id="page-samityInstallment" class="page" style="display:none;"><div class="page-title">🏛️ সমিতি কিস্তি কালেকশন</div><div class="card"><div class="alert alert-info" style="font-size:12px;margin-bottom:10px;">শাখা ও সমিতি বাছাই করে "সমিতি লোড করুন" চাপলে "কালেকশন শীট" পেজে সমিতির সব সদস্যের কিস্তির তালিকা দেখাবে।</div><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select id="siBranch" onchange="loadSamitiesIntoSelect('siSamity','siBranch')"><option value="">— বাছুন —</option></select></div><div class="form-group"><label>সমিতি *</label><select id="siSamity"><option value="">— বাছুন —</option></select></div></div><div class="form-row col2"><div class="form-group"><label>তারিখ *</label><input type="date" id="siDate"></div><div class="form-group"><label>কালেকশনের ধরন</label><select id="siType"><option>সব</option><option>ঋণ</option><option>সঞ্চয়</option></select></div></div><button class="btn btn-primary btn-block" style="margin-top:8px;" onclick="goToCollectionSheetFor('si')">🔍 সমিতি লোড করুন</button></div></div>
 
   <div id="page-cashBankReport" class="page" style="display:none;">
     <div class="page-title">💵 ক্যাশবুক (Cash & Bank Book Report)</div>
@@ -4676,9 +4741,9 @@ table tr:hover td{background:#f7fafd;}
 
   <div id="page-smsSettings" class="page" style="display:none;"><div class="page-title">📱 SMS সেটিংস</div><div class="card"><div class="form-row col2"><div class="form-group"><label>API Key</label><input type="text"></div><div class="form-group"><label>Sender ID</label><input type="text"></div></div><div class="card-title" style="margin-top:8px;">SMS Template</div><div class="form-group" style="margin-bottom:12px;"><label>কিস্তি জমার SMS</label><textarea rows="3" placeholder="প্রিয় {নাম}, আপনার ৳{পরিমাণ} কিস্তি গ্রহণ করা হয়েছে।"></textarea></div><div class="form-group" style="margin-bottom:14px;"><label>বকেয়া সতর্কতার SMS</label><textarea rows="3" placeholder="প্রিয় {নাম}, আপনার ৳{বকেয়া} বকেয়া কিস্তি পরিশোধ করুন।"></textarea></div><button class="btn btn-primary btn-block">💾 সেটিংস সংরক্ষণ করুন</button></div></div>
 
-  <div id="page-samityDayChange" class="page" style="display:none;"><div class="page-title">📅 সমিতির দিন পরিবর্তন</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>সমিতি *</label><select><option>— বাছুন —</option></select></div></div><div class="form-row col2"><div class="form-group"><label>বর্তমান দিন</label><input type="text" readonly style="background:#f5f5f5"></div><div class="form-group"><label>নতুন দিন *</label><select><option>রবিবার</option><option>সোমবার</option><option>মঙ্গলবার</option><option>বুধবার</option><option>বৃহস্পতিবার</option><option>শুক্রবার</option><option>শনিবার</option></select></div></div><div class="form-group" style="margin-bottom:14px;"><label>কার্যকর তারিখ *</label><input type="date"></div><button class="btn btn-warning btn-block">📅 দিন পরিবর্তন করুন</button></div></div>
+  <div id="page-samityDayChange" class="page" style="display:none;"><div class="page-title">📅 সমিতির দিন পরিবর্তন</div><div class="card"><div class="form-row col2"><div class="form-group"><label>শাখা *</label><select id="sdcBranch" onchange="loadSamitiesIntoSelect('sdcSamity','sdcBranch')"><option value="">— বাছুন —</option></select></div><div class="form-group"><label>সমিতি *</label><select id="sdcSamity" onchange="loadCurrentSamityDay()"><option value="">— বাছুন —</option></select></div></div><div class="form-row col2"><div class="form-group"><label>বর্তমান দিন</label><input type="text" id="sdcCurrentDay" readonly style="background:#f5f5f5"></div><div class="form-group"><label>নতুন দিন *</label><select id="sdcNewDay"><option value="">— বাছুন —</option><option>রবিবার</option><option>সোমবার</option><option>মঙ্গলবার</option><option>বুধবার</option><option>বৃহস্পতিবার</option><option>শুক্রবার</option><option>শনিবার</option></select></div></div><div class="form-group" style="margin-bottom:14px;"><label>কার্যকর তারিখ *</label><input type="date" id="sdcEffectiveDate"></div><button class="btn btn-warning btn-block" onclick="saveSamityDayChange()">📅 দিন পরিবর্তন করুন</button></div></div>
 
-  <div id="page-branchSamityTransfer" class="page" style="display:none;"><div class="page-title">🔀 Branch Samity Transfer</div><div class="card"><div class="form-row col2"><div class="form-group"><label>বর্তমান শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>বর্তমান সমিতি *</label><select><option>— বাছুন —</option></select></div></div><div class="form-row col2"><div class="form-group"><label>নতুন শাখা *</label><select><option>— বাছুন —</option></select></div><div class="form-group"><label>নতুন সমিতি *</label><select><option>— বাছুন —</option></select></div></div><div class="form-row col2"><div class="form-group"><label>তারিখ *</label><input type="date"></div><div class="form-group"><label>কারণ</label><input type="text"></div></div><button class="btn btn-primary btn-block" style="margin-top:8px;">🔀 স্থানান্তর করুন</button></div></div>
+  <div id="page-branchSamityTransfer" class="page" style="display:none;"><div class="page-title">🔀 শাখা সমিতি স্থানান্তর (Branch Samity Transfer)</div><div class="card"><div class="form-row col2"><div class="form-group"><label>বর্তমান শাখা *</label><select id="bstCurBranch" onchange="loadSamitiesIntoSelect('bstCurSamity','bstCurBranch')"><option value="">— বাছুন —</option></select></div><div class="form-group"><label>বর্তমান সমিতি *</label><select id="bstCurSamity"><option value="">— বাছুন —</option></select></div></div><div class="form-row col2"><div class="form-group"><label>নতুন শাখা *</label><select id="bstNewBranch"><option value="">— বাছুন —</option></select></div><div class="form-group"><label>তারিখ *</label><input type="date" id="bstDate"></div></div><div class="form-group" style="margin-bottom:14px;"><label>কারণ</label><input type="text" id="bstReason"></div><button class="btn btn-primary btn-block" style="margin-top:8px;" onclick="saveBranchSamityTransfer()">🔀 স্থানান্তর করুন</button></div></div>
 
   <div id="page-closingDay" class="page" style="display:none;">
     <div class="page-title">🔒 Closing Current Business Day</div>
@@ -5508,6 +5573,34 @@ window.showPage = function(pageId) {
   const target = document.getElementById('page-' + pageId);
   if (target) { target.style.display = 'block'; window.scrollTo(0,0); }
   if (window.innerWidth < 768) window.closeSidebar();
+  if (pageId === 'memberAdd') {
+    loadBranchesIntoSelect('maBranch');
+  }
+  if (pageId === 'loanWaiver') loadBranchesIntoSelect('lwaBranch');
+  if (pageId === 'loanEmiPenalty') loadBranchesIntoSelect('lepBranch');
+  if (pageId === 'loanProposal') loadBranchesIntoSelect('lpBranch');
+  if (pageId === 'dpsDeposit') loadBranchesIntoSelect('dpsdBranch');
+  if (pageId === 'interBranch') {
+    loadBranchesIntoSelect('ibSenderBranch');
+    loadBranchesIntoSelect('ibReceiverBranch');
+  }
+  if (pageId === 'journalVoucher') loadBranchesIntoSelect('jvBranch');
+  if (pageId === 'depositProfitPayment') loadBranchesIntoSelect('dppBranch');
+  if (pageId === 'sharePayment') loadBranchesIntoSelect('shpBranch');
+  if (pageId === 'shareReceive') loadBranchesIntoSelect('srcBranch');
+  if (pageId === 'loanReschedule') loadBranchesIntoSelect('lrsBranch');
+  if (pageId === 'memberClosing') loadBranchesIntoSelect('mcBranch');
+  if (pageId === 'loanInstallmentCancel') loadBranchesIntoSelect('licBranch');
+  if (pageId === 'depositProfitDistribution') loadBranchesIntoSelect('dpdBranch');
+  if (pageId === 'depositBlockClear') loadBranchesIntoSelect('dbcBranch');
+  if (pageId === 'collectionReceive') loadBranchesIntoSelect('crBranch');
+  if (pageId === 'samityInstallment') loadBranchesIntoSelect('siBranch');
+  if (pageId === 'samityDayChange') loadBranchesIntoSelect('sdcBranch');
+  if (pageId === 'collectionSheet') loadBranchesIntoSelect('colshBranch');
+  if (pageId === 'branchSamityTransfer') {
+    loadBranchesIntoSelect('bstCurBranch');
+    loadBranchesIntoSelect('bstNewBranch');
+  }
   if (pageId === 'memberList') {
     loadBranchesIntoSelect('mlBranch');
     loadMembers();
@@ -6407,6 +6500,69 @@ window.searchLoanInstallmentHistory = async function(loanDocId) {
 }
 
 // ══════════════════════════════════════
+// ─── LOAN INSTALLMENT CANCEL (member loan, not staff loan) ───
+// ══════════════════════════════════════
+window.loadLoanAccountsForCancel = async function() {
+  const memberId = document.getElementById('licMemberId')?.value?.trim();
+  const sel = document.getElementById('licLoanAccount');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— বাছুন —</option>';
+  document.getElementById('licTableBody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:14px;">ঋণ একাউন্ট বাছুন</td></tr>';
+  if (!memberId) { toast('সদস্য আইডি দিন!','error'); return; }
+  try {
+    const snap = await db.collection('loans').where('memberId','==',memberId).get();
+    snap.forEach(d => {
+      const l = d.data();
+      sel.innerHTML += `<option value="${d.id}">${l.loanAccId||d.id} - ${tk(l.paidAmount||0)} পরিশোধিত</option>`;
+    });
+    if (sel.options.length <= 1) sel.innerHTML = '<option value="">— ঋণ একাউন্ট নেই —</option>';
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.searchLoanCancelInstallments = async function() {
+  const loanDocId = document.getElementById('licLoanAccount')?.value;
+  const tbody = document.getElementById('licTableBody');
+  if (!loanDocId) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr>'; return; }
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:14px;">লোড হচ্ছে... ⏳</td></tr>';
+  try {
+    const snap = await db.collection('loanInstallments').where('loanDocId','==',loanDocId).get();
+    const rows = [];
+    snap.forEach(d => rows.push({ id: d.id, r: d.data() }));
+    rows.sort((a,b) => (b.r.createdAt?.toMillis?.()||0) - (a.r.createdAt?.toMillis?.()||0));
+    let html = '';
+    rows.forEach(({id, r}) => {
+      html += `<tr><td>${r.instDate||'—'}</td><td style="text-align:right;">${tk(r.amount)}</td><td>${r.comment||'—'}</td>
+        <td><button class="btn btn-danger" style="padding:4px 10px;font-size:11px;" onclick="cancelLoanInstallment('${id}','${loanDocId}',${r.amount},${r.penalty||0})">❌ বাতিল</button></td></tr>`;
+    });
+    tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:14px;">কোনো কিস্তি জমা নেই</td></tr>';
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--danger);">Error: ${e.message}</td></tr>`;
+  }
+}
+
+window.cancelLoanInstallment = async function(instDocId, loanDocId, amount, penalty) {
+  if (!confirm('আপনি কি নিশ্চিত এই কিস্তি বাতিল করতে চান? ঋণ ব্যালেন্স পুনরায় হিসাব হবে।')) return;
+  try {
+    const loanRef = db.collection('loans').doc(loanDocId);
+    const loanSnap = await loanRef.get();
+    if (loanSnap.exists) {
+      const loan = loanSnap.data();
+      const newPaid = Math.max((loan.paidAmount||0) - amount, 0);
+      const newDue = Math.max((loan.totalRepayment||0) - newPaid, 0);
+      const newCount = Math.max((loan.installmentPaidCount||0) - 1, 0);
+      await loanRef.update({
+        paidAmount: newPaid, dueAmount: newDue, installmentPaidCount: newCount,
+        penaltyCollected: firebase.firestore.FieldValue.increment(-(penalty||0)),
+        status: newDue > 0 ? 'active' : loan.status
+      });
+    }
+    await db.collection('loanInstallments').doc(instDocId).delete();
+    toast('✅ কিস্তি বাতিল হয়েছে!');
+    window.searchLoanCancelInstallments();
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+// ══════════════════════════════════════
 // ─── DEPOSIT TRANSACTION MODULE (ডিপোজিট ট্রানজেকশন) ───
 // ══════════════════════════════════════
 
@@ -6641,6 +6797,198 @@ window.addDepositBlock = async function() {
     document.getElementById('dbReason').value = '';
     document.getElementById('dbDepositBlock').checked = false;
     document.getElementById('dbWithdrawBlock').checked = false;
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+// ─── Deposit Block/Clear (simplified single-toggle version) ───
+window.loadDepositAccountsForBlockClear = async function() {
+  const memberId = document.getElementById('dbcMemberId')?.value?.trim();
+  const sel = document.getElementById('dbcAccount');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— বাছুন —</option>';
+  if (!memberId) return;
+  try {
+    const snap = await db.collection('depositAccounts').where('memberId','==',memberId).get();
+    snap.forEach(d => {
+      const a = d.data();
+      const blockedTag = a.depositBlocked||a.withdrawBlocked ? ' 🔒' : '';
+      sel.innerHTML += `<option value="${d.id}">${a.accId||d.id} (${a.accTypeName||a.accType||''})${blockedTag}</option>`;
+    });
+    if (sel.options.length <= 1) sel.innerHTML = '<option value="">— একাউন্ট নেই —</option>';
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveDepositBlockClear = async function() {
+  const accDocId = document.getElementById('dbcAccount')?.value;
+  const action = document.getElementById('dbcAction')?.value;
+  const reason = document.getElementById('dbcReason')?.value?.trim();
+  if (!accDocId) { toast('একাউন্ট বাছুন!','error'); return; }
+  if (!reason) { toast('কারণ দিন!','error'); return; }
+  try {
+    const isBlocking = action === 'block';
+    await db.collection('depositAccounts').doc(accDocId).update({
+      depositBlocked: isBlocking,
+      withdrawBlocked: isBlocking,
+      blockReason: reason,
+      blockDate: new Date().toISOString().split('T')[0],
+      blockedBy: currentUser.uid
+    });
+    toast(isBlocking ? '✅ একাউন্ট ব্লক করা হয়েছে!' : '✅ ব্লক সরানো হয়েছে!');
+    document.getElementById('dbcReason').value = '';
+    window.loadDepositAccountsForBlockClear();
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+// ─── Bridge: কালেকশন গ্রহণ / সমিতি কিস্তি কালেকশন → কালেকশন শীট পেজে নিয়ে যাওয়া ───
+window.goToCollectionSheetFor = async function(prefix) {
+  const branchId = document.getElementById(prefix+'Branch')?.value;
+  const samityId = document.getElementById(prefix+'Samity')?.value;
+  const date = document.getElementById(prefix+'Date')?.value;
+  if (!branchId || !samityId) { toast('শাখা ও সমিতি বাছুন!','error'); return; }
+  window.showPage('collectionSheet');
+  // কালেকশন শীট পেজের ড্রপডাউন পূরণ হওয়ার জন্য একটু অপেক্ষা করা
+  await new Promise(r => setTimeout(r, 400));
+  const colshBranchEl = document.getElementById('colshBranch');
+  if (colshBranchEl) {
+    colshBranchEl.value = branchId;
+    await window.loadSamitiesIntoSelect('colshSamity','colshBranch');
+  }
+  const colshSamityEl = document.getElementById('colshSamity');
+  if (colshSamityEl) colshSamityEl.value = samityId;
+  const dateEl = document.querySelector('#page-collectionSheet input[type="date"]');
+  if (dateEl && date) dateEl.value = date;
+  window.loadCollectionSheet();
+}
+
+// ─── Deposit Profit Distribution (bulk, FDR/DPS) ───
+let _dpdPreviewData = null;
+window.previewDepositProfitDistribution = async function() {
+  const branchId = document.getElementById('dpdBranch')?.value;
+  const accTypeFilter = document.getElementById('dpdAccType')?.value;
+  const rate = Number(document.getElementById('dpdRate')?.value);
+  const previewCard = document.getElementById('dpdPreviewCard');
+  const previewBody = document.getElementById('dpdPreviewBody');
+  if (!branchId) { toast('শাখা বাছুন!','error'); return; }
+  if (!rate || rate <= 0) { toast('সঠিক মুনাফার হার দিন!','error'); return; }
+  try {
+    const snap = await db.collection('depositAccounts').where('branchId','==',branchId).get();
+    const rows = [];
+    snap.forEach(d => {
+      const a = d.data();
+      const type = (a.accType||'').toUpperCase();
+      const isFdr = type.includes('FDR');
+      const isDps = type.includes('DPS');
+      if (accTypeFilter === 'fdr' && !isFdr) return;
+      if (accTypeFilter === 'dps' && !isDps) return;
+      if (accTypeFilter === 'all' && !isFdr && !isDps) return;
+      if (a.status && a.status !== 'open') return;
+      const balance = a.balance||0;
+      const profit = Math.round(balance * rate / 100 * 100) / 100;
+      if (profit > 0) rows.push({ id: d.id, accId: a.accId||d.id, memberId: a.memberId||'', balance, profit });
+    });
+    if (rows.length === 0) {
+      previewCard.style.display = 'none';
+      toast('কোনো একাউন্ট পাওয়া যায়নি এই শর্তে!','error');
+      return;
+    }
+    let html = '', total = 0;
+    rows.forEach(r => {
+      total += r.profit;
+      html += `<tr><td>${r.accId}</td><td>${r.memberId}</td><td style="text-align:right;">${tk(r.balance)}</td><td style="text-align:right;color:var(--success);">${tk(r.profit)}</td></tr>`;
+    });
+    previewBody.innerHTML = html;
+    document.getElementById('dpdPreviewTotal').textContent = `মোট ${rows.length} টি একাউন্ট — সর্বমোট মুনাফা: ${tk(total)}`;
+    previewCard.style.display = 'block';
+    _dpdPreviewData = rows;
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.confirmDepositProfitDistribution = async function() {
+  if (!_dpdPreviewData || !_dpdPreviewData.length) { toast('আগে প্রিভিউ দেখুন!','error'); return; }
+  if (!confirm(`আপনি কি নিশ্চিত ${_dpdPreviewData.length} টি একাউন্টে মুনাফা বিতরণ করতে চান? এই কাজটি বাতিল করা যাবে না।`)) return;
+  const month = document.getElementById('dpdMonth')?.value || '';
+  const rate = Number(document.getElementById('dpdRate')?.value)||0;
+  const today = new Date().toISOString().split('T')[0];
+  let success = 0, failed = 0;
+  try {
+    for (const r of _dpdPreviewData) {
+      try {
+        const accRef = db.collection('depositAccounts').doc(r.id);
+        const accDoc = await accRef.get();
+        if (!accDoc.exists) { failed++; continue; }
+        const curBalance = accDoc.data().balance||0;
+        await accRef.update({ balance: curBalance + r.profit, lastProfitDate: today, lastProfitAmount: r.profit });
+        await db.collection('depositTransactions').add({
+          accDocId: r.id, memberId: r.memberId, amount: r.profit, date: today,
+          type: 'credit', comment: `মুনাফা বিতরণ (${rate}%, ${month||today})`,
+          createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        success++;
+      } catch(e) { failed++; }
+    }
+    toast(`✅ ${success} টি একাউন্টে মুনাফা বিতরণ সম্পন্ন হয়েছে!` + (failed ? ` (${failed} টি ব্যর্থ হয়েছে)` : ''));
+    document.getElementById('dpdPreviewCard').style.display = 'none';
+    _dpdPreviewData = null;
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+// ══════════════════════════════════════
+// ─── DEPOSIT PROFIT PAYMENT (একক একাউন্ট) ───
+// ══════════════════════════════════════
+window.loadDepositAccountsForProfitPayment = async function() {
+  const memberId = document.getElementById('dppMemberId')?.value?.trim();
+  const sel = document.getElementById('dppAccount');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— FDR/DPS বাছুন —</option>';
+  ['dppInfoBalance','dppInfoRate','dppInfoDue','dppInfoLastDate'].forEach(id => {});
+  if (!memberId) return;
+  try {
+    const snap = await db.collection('depositAccounts').where('memberId','==',memberId).get();
+    snap.forEach(d => {
+      const a = d.data();
+      const type = (a.accType||'').toUpperCase();
+      if (!type.includes('FDR') && !type.includes('DPS')) return;
+      sel.innerHTML += `<option value="${d.id}">${a.accId||d.id} (${a.accTypeName||a.accType||''})</option>`;
+    });
+    if (sel.options.length <= 1) sel.innerHTML = '<option value="">— FDR/DPS একাউন্ট নেই —</option>';
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.loadDepositAccountForProfitPaymentDetails = async function() {
+  const accDocId = document.getElementById('dppAccount')?.value;
+  if (!accDocId) return;
+  try {
+    const doc = await db.collection('depositAccounts').doc(accDocId).get();
+    if (!doc.exists) return;
+    const a = doc.data();
+    document.getElementById('dppInfoBalance').textContent = tk(a.balance||0);
+    document.getElementById('dppInfoRate').textContent = (a.profitRate||0) + '%';
+    const due = Math.round((a.balance||0) * (a.profitRate||0) / 100 * 100) / 100;
+    document.getElementById('dppInfoDue').textContent = tk(due);
+    document.getElementById('dppInfoLastDate').textContent = a.lastProfitDate || '—';
+    document.getElementById('dppAmount').value = due || '';
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveDepositProfitPayment = async function() {
+  const accDocId = document.getElementById('dppAccount')?.value;
+  const amount = Number(document.getElementById('dppAmount')?.value)||0;
+  const date = document.getElementById('dppDate')?.value;
+  if (!accDocId) { toast('ডিপোজিট একাউন্ট বাছুন!','error'); return; }
+  if (!amount || !date) { toast('মুনাফার পরিমাণ ও তারিখ দিন!','error'); return; }
+  try {
+    const accRef = db.collection('depositAccounts').doc(accDocId);
+    const accDoc = await accRef.get();
+    if (!accDoc.exists) { toast('একাউন্ট পাওয়া যায়নি!','error'); return; }
+    const a = accDoc.data();
+    await accRef.update({ balance: (a.balance||0) + amount, lastProfitDate: date, lastProfitAmount: amount });
+    await db.collection('depositTransactions').add({
+      accDocId, memberId: a.memberId||'', amount, date,
+      type: 'credit', comment: 'মুনাফা প্রদান',
+      createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ মুনাফা প্রদান সম্পন্ন হয়েছে!');
+    window.loadDepositAccountForProfitPaymentDetails();
   } catch(e) { toast('সমস্যা: '+e.message,'error'); }
 }
 
@@ -11523,6 +11871,45 @@ window.saveMember = async function() {
   }
 }
 
+// ══════════════════════════════════════
+// ─── MEMBER CLOSING ───
+// ══════════════════════════════════════
+window.closeMemberAccount = async function() {
+  const memberId = document.getElementById('mcMemberId')?.value?.trim();
+  const reason = document.getElementById('mcReason')?.value;
+  const date = document.getElementById('mcDate')?.value;
+  if (!memberId) { toast('সদস্য আইডি দিন!','error'); return; }
+  if (!reason || !date) { toast('বন্ধের কারণ ও তারিখ দিন!','error'); return; }
+  try {
+    const memSnap = await firebase.firestore().collection('members').where('memberId','==',memberId).limit(1).get();
+    if (memSnap.empty) { toast('সদস্য পাওয়া যায়নি!','error'); return; }
+    const memberDoc = memSnap.docs[0];
+
+    // সক্রিয় ঋণ আছে কিনা যাচাই
+    const loanSnap = await firebase.firestore().collection('loans').where('memberId','==',memberId).where('status','==','active').get();
+    let hasDue = false;
+    loanSnap.forEach(d => { if ((d.data().dueAmount||0) > 0) hasDue = true; });
+    if (hasDue) { toast('❌ এই সদস্যের সক্রিয় ঋণ বকেয়া আছে, আগে সেটা পরিশোধ/মওকুফ করুন!','error'); return; }
+
+    // ডিপোজিট একাউন্টে ব্যালেন্স আছে কিনা যাচাই
+    const depSnap = await firebase.firestore().collection('depositAccounts').where('memberId','==',memberId).get();
+    let hasBalance = false;
+    depSnap.forEach(d => { if ((d.data().balance||0) > 0) hasBalance = true; });
+    if (hasBalance) { toast('❌ এই সদস্যের ডিপোজিট একাউন্টে ব্যালেন্স আছে, আগে সেটা উত্তোলন/ফেরত করুন!','error'); return; }
+
+    await firebase.firestore().collection('members').doc(memberDoc.id).update({
+      status: 'closed',
+      closingReason: reason,
+      closingDate: date,
+      closedBy: currentUser.uid,
+      closedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ সদস্য বন্ধ করা হয়েছে!');
+    document.getElementById('mcMemberId').value = '';
+    document.getElementById('mcDate').value = '';
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
 async function loadMembers(searchTerm='') {
   const tbody = document.getElementById('memberTableBody');
   if (!tbody) return;
@@ -12058,20 +12445,7 @@ window.saveLoanWaiver = async function() {
   } catch(e) { toast('সমস্যা: '+e.message,'error'); }
 }
 
-window.saveLoanReschedule = async function() {
-  const page = document.getElementById('page-loanReschedule');
-  const inputs = page.querySelectorAll('input[type="number"]');
-  const totalLoan = Number(inputs[0]?.value);
-  if (!totalLoan) { toast('ঋণের পরিমাণ দিন!','error'); return; }
-  try {
-    await firebase.firestore().collection('loanReschedules').add({
-      totalLoan,
-      createdBy: currentUser.uid,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    toast('✅ ঋণ পুনঃতফসিল সম্পন্ন!');
-  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
-}
+// (old saveLoanReschedule stub removed — full version defined below in Loan Reschedule section)
 
 // (old saveStaffLoan stub removed — full version defined below in Staff Loan Management section)
 
@@ -12412,6 +12786,42 @@ window.saveSharePayment = async function() {
     });
     toast('✅ শেয়ার পেমেন্ট সংরক্ষণ হয়েছে!');
     inputs.forEach(i => i.value='');
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+// ══════════════════════════════════════
+// ─── SHARE RECEIVE (শেয়ার ফেরত) ───
+// ══════════════════════════════════════
+window.saveShareReceive = async function() {
+  const memberId = document.getElementById('srcMemberId')?.value?.trim();
+  const qty = Number(document.getElementById('srcQty')?.value)||0;
+  const amount = Number(document.getElementById('srcAmount')?.value)||0;
+  const date = document.getElementById('srcDate')?.value;
+  const reason = document.getElementById('srcReason')?.value?.trim()||'';
+  if (!memberId) { toast('সদস্য আইডি দিন!','error'); return; }
+  if (!qty || !amount || !date) { toast('শেয়ার সংখ্যা, পরিমাণ ও তারিখ দিন!','error'); return; }
+  try {
+    // বর্তমান শেয়ার সংখ্যা যাচাই (পেমেন্ট - ফেরত)
+    const txSnap = await firebase.firestore().collection('shareTransactions').where('memberId','==',memberId).get();
+    let currentQty = 0;
+    txSnap.forEach(d => {
+      const t = d.data();
+      currentQty += t.type === 'payment' ? (t.quantity||0) : -(t.quantity||0);
+    });
+    if (qty > currentQty) {
+      toast(`❌ সদস্যের কাছে মাত্র ${currentQty} টি শেয়ার আছে, ${qty} টি ফেরত দেওয়া যাবে না!`,'error');
+      return;
+    }
+    await firebase.firestore().collection('shareTransactions').add({
+      memberId, quantity: qty, amount, date, reason,
+      type: 'return', createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ শেয়ার গ্রহণ (ফেরত) সংরক্ষণ হয়েছে!');
+    document.getElementById('srcMemberId').value = '';
+    document.getElementById('srcQty').value = '';
+    document.getElementById('srcAmount').value = '';
+    document.getElementById('srcDate').value = '';
+    document.getElementById('srcReason').value = '';
   } catch(e) { toast('সমস্যা: '+e.message,'error'); }
 }
 
@@ -12770,6 +13180,71 @@ window.deleteSamity = async function(id) {
   await db.collection('samities').doc(id).delete();
   toast('🗑️ সমিতি মুছে ফেলা হয়েছে!','info');
   loadSamityList();
+}
+
+// ══════════════════════════════════════
+// ─── SAMITY DAY CHANGE ───
+// ══════════════════════════════════════
+window.loadCurrentSamityDay = async function() {
+  const samityId = document.getElementById('sdcSamity')?.value;
+  const currentDayEl = document.getElementById('sdcCurrentDay');
+  if (!currentDayEl) return;
+  currentDayEl.value = '';
+  if (!samityId) return;
+  try {
+    const doc = await db.collection('samities').doc(samityId).get();
+    if (doc.exists) currentDayEl.value = doc.data().meetingDay || '—';
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.saveSamityDayChange = async function() {
+  const samityId = document.getElementById('sdcSamity')?.value;
+  const newDay = document.getElementById('sdcNewDay')?.value;
+  const effectiveDate = document.getElementById('sdcEffectiveDate')?.value;
+  const oldDay = document.getElementById('sdcCurrentDay')?.value;
+  if (!samityId) { toast('সমিতি বাছুন!','error'); return; }
+  if (!newDay || !effectiveDate) { toast('নতুন দিন ও কার্যকর তারিখ দিন!','error'); return; }
+  try {
+    await db.collection('samities').doc(samityId).update({ meetingDay: newDay });
+    await db.collection('samityDayChanges').add({
+      samityId, oldDay: oldDay||'', newDay, effectiveDate,
+      createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    invalidateRefCache('samities_all'); invalidateRefCache('samities_ordered');
+    toast('✅ সমিতির দিন পরিবর্তন হয়েছে!');
+    document.getElementById('sdcCurrentDay').value = newDay;
+    document.getElementById('sdcNewDay').selectedIndex = 0;
+    document.getElementById('sdcEffectiveDate').value = '';
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+// ══════════════════════════════════════
+// ─── BRANCH SAMITY TRANSFER ───
+// ══════════════════════════════════════
+window.saveBranchSamityTransfer = async function() {
+  const samityId = document.getElementById('bstCurSamity')?.value;
+  const oldBranchId = document.getElementById('bstCurBranch')?.value;
+  const newBranchId = document.getElementById('bstNewBranch')?.value;
+  const date = document.getElementById('bstDate')?.value;
+  const reason = document.getElementById('bstReason')?.value?.trim()||'';
+  if (!samityId) { toast('বর্তমান সমিতি বাছুন!','error'); return; }
+  if (!newBranchId) { toast('নতুন শাখা বাছুন!','error'); return; }
+  if (!date) { toast('তারিখ দিন!','error'); return; }
+  if (oldBranchId === newBranchId) { toast('নতুন শাখা বর্তমান শাখার থেকে ভিন্ন হতে হবে!','error'); return; }
+  try {
+    await db.collection('samities').doc(samityId).update({ branchId: newBranchId });
+    await db.collection('branchSamityTransfers').add({
+      samityId, oldBranchId: oldBranchId||'', newBranchId, date, reason,
+      createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    invalidateRefCache('samities_all'); invalidateRefCache('samities_ordered');
+    toast('✅ সমিতি নতুন শাখায় স্থানান্তরিত হয়েছে!');
+    document.getElementById('bstCurBranch').selectedIndex = 0;
+    document.getElementById('bstCurSamity').innerHTML = '<option value="">— বাছুন —</option>';
+    document.getElementById('bstNewBranch').selectedIndex = 0;
+    document.getElementById('bstDate').value = '';
+    document.getElementById('bstReason').value = '';
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
 }
 
 async function loadSamityList(filterText) {
@@ -13428,28 +13903,122 @@ window.saveLoanWaiver = async function() {
 // ══════════════════════════════════════
 // ─── LOAN RESCHEDULE ───
 // ══════════════════════════════════════
-window.saveLoanReschedule = async function() {
-  const page = document.getElementById('page-loanReschedule');
-  const inputs = page.querySelectorAll('input');
-  const memberId = inputs[0].value.trim();
-  const newTenure = Number(inputs[1].value);
-  const newRate = Number(inputs[2].value);
-  const date = inputs[3].value;
-  const reason = inputs[4].value;
-  if (!memberId||!newTenure) { toast('সব তথ্য দিন!','error'); return; }
+
+// সদস্য বাছাই করলে তার সক্রিয় ঋণ একাউন্ট(গুলো) লোড করা
+window.loadLoanAccountsForReschedule = async function() {
+  const memberId = document.getElementById('lrsMember')?.value;
+  const sel = document.getElementById('lrsLoanAccount');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— বাছুন —</option>';
+  if (!memberId) return;
   try {
-    const lSnap = await firebase.firestore().collection('loans').where('memberId','==',memberId).where('status','==','active').get();
-    if (lSnap.empty) { toast('সক্রিয় ঋণ পাওয়া যায়নি!','error'); return; }
-    const loanDoc = lSnap.docs[0];
-    await firebase.firestore().collection('loanReschedules').add( {
-      loanId: loanDoc.id, memberId, newTenure, newRate, date, reason,
-      createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    const snap = await firebase.firestore().collection('loans').where('memberId','==',memberId).where('status','==','active').get();
+    snap.forEach(d => {
+      const l = d.data();
+      sel.innerHTML += `<option value="${d.id}">${l.loanAccId||d.id} - ${tk(l.totalRepayment||0)}</option>`;
     });
-    await firebase.firestore().collection('loans').doc(loanDoc.id).update( {
-      tenure: newTenure, interestRate: newRate||loanDoc.data().interestRate
+    if (sel.options.length <= 1) sel.innerHTML = '<option value="">— সক্রিয় ঋণ নেই —</option>';
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+// ঋণ একাউন্ট বাছাই করলে তার বর্তমান বিবরণ দেখানো
+window.loadLoanDetailsForReschedule = async function(loanDocId) {
+  if (!loanDocId) return;
+  try {
+    const doc = await firebase.firestore().collection('loans').doc(loanDocId).get();
+    if (!doc.exists) { toast('ঋণ একাউন্ট পাওয়া যায়নি!','error'); return; }
+    const l = doc.data();
+    const totalDue = Math.max((l.totalRepayment||0) - (l.paidAmount||0), 0);
+    document.getElementById('lrsDisburseAmount').value = tk(l.amount||0);
+    document.getElementById('lrsDisburseProfit').value = tk(l.profitAmount||0);
+    document.getElementById('lrsDisburseDate').value = l.disburseDate||l.openDate||'';
+    document.getElementById('lrsPrevInstAmount').value = tk(l.emi||0);
+    document.getElementById('lrsTotalInst').value = l.installmentCount||0;
+    document.getElementById('lrsPaidInst').value = l.installmentPaidCount||0;
+    document.getElementById('lrsTotalLoanAmt').value = tk(l.totalRepayment||0);
+    document.getElementById('lrsTotalPaid').value = tk(l.paidAmount||0);
+    document.getElementById('lrsTotalDue').value = tk(totalDue);
+    document.getElementById('lrsDuePrincipal').value = Math.max((l.amount||0)-(l.paidPrincipal||0), 0) || totalDue;
+    document.getElementById('lrsDueProfit').value = Math.max((l.profitAmount||0)-(l.paidProfit||0), 0);
+    document.getElementById('lrsExpiredDate').value = l.expiryDate||'';
+    // Pre-fill new details with current values as a starting point
+    document.getElementById('lrsNewTotalAmount').value = totalDue;
+    document.getElementById('lrsNewInstAmount').value = l.emi||0;
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.resetLoanRescheduleForm = function() {
+  const page = document.getElementById('page-loanReschedule');
+  page.querySelectorAll('input:not([type="date"]):not([readonly])').forEach(i => i.value = '0.0');
+  page.querySelectorAll('input[readonly]').forEach(i => i.value = '');
+  page.querySelectorAll('input[type="date"]:not([readonly])').forEach(i => i.value = '');
+  const freq = document.getElementById('lrsFrequency'); if (freq) freq.selectedIndex = 0;
+  document.getElementById('lrsLoanAccount').innerHTML = '<option value="">— বাছুন —</option>';
+}
+
+window.saveLoanReschedule = async function() {
+  const loanDocId = document.getElementById('lrsLoanAccount')?.value;
+  if (!loanDocId) { toast('ঋণ একাউন্ট বাছুন!','error'); return; }
+
+  const frequency = document.getElementById('lrsFrequency')?.value;
+  const rescheduleDate = document.getElementById('lrsRescheduleDate')?.value;
+  const newTotalAmount = Number(document.getElementById('lrsNewTotalAmount')?.value)||0;
+  const newInstAmount = Number(document.getElementById('lrsNewInstAmount')?.value)||0;
+  const newInstCount = Number(document.getElementById('lrsNewInstCount')?.value)||0;
+  const firstInstDate = document.getElementById('lrsFirstInstDate')?.value;
+  const newExpiryDate = document.getElementById('lrsNewExpiryDate')?.value;
+  const additionalProfit = Number(document.getElementById('lrsAdditionalProfit')?.value)||0;
+  const loanProfitAmount = Number(document.getElementById('lrsLoanProfitAmount')?.value)||0;
+  const formFee = Number(document.getElementById('lrsFormFee')?.value)||0;
+  const healthFee = Number(document.getElementById('lrsHealthFee')?.value)||0;
+  const riskInsurance = Number(document.getElementById('lrsRiskInsurance')?.value)||0;
+  const documentFee = Number(document.getElementById('lrsDocumentFee')?.value)||0;
+  const emiLockerFee = Number(document.getElementById('lrsEmiLockerFee')?.value)||0;
+  const othersFee = Number(document.getElementById('lrsOthersFee')?.value)||0;
+
+  if (!frequency || !rescheduleDate || !newTotalAmount || !newInstAmount) {
+    toast('কিস্তির ফ্রিকোয়েন্সি, তারিখ, মোট ঋণের পরিমাণ ও কিস্তির পরিমাণ আবশ্যক!','error'); return;
+  }
+
+  try {
+    const loanRef = firebase.firestore().collection('loans').doc(loanDocId);
+    const loanDoc = await loanRef.get();
+    if (!loanDoc.exists) { toast('ঋণ একাউন্ট পাওয়া যায়নি!','error'); return; }
+    const loan = loanDoc.data();
+
+    // পুনঃতফসিলের ইতিহাস সংরক্ষণ
+    await firebase.firestore().collection('loanReschedules').add({
+      loanDocId, loanAccId: loan.loanAccId||'', memberId: loan.memberId||'',
+      previousTotalRepayment: loan.totalRepayment||0,
+      previousEmi: loan.emi||0,
+      previousInstallmentCount: loan.installmentCount||0,
+      newTotalRepayment: newTotalAmount,
+      newEmi: newInstAmount,
+      newInstallmentCount: newInstCount,
+      frequency, rescheduleDate, firstInstDate, newExpiryDate,
+      additionalProfit, loanProfitAmount,
+      formFee, healthFee, riskInsurance, documentFee, emiLockerFee, othersFee,
+      createdBy: currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    toast('✅ ঋণ পুনঃতফসিল সম্পন্ন!');
-    inputs.forEach(i => i.value='');
+
+    // ঋণ একাউন্টের বর্তমান শর্ত আপডেট
+    await loanRef.update({
+      totalRepayment: newTotalAmount,
+      emi: newInstAmount,
+      installmentCount: newInstCount || loan.installmentCount || 0,
+      installmentPaidCount: 0,
+      paidAmount: 0,
+      dueAmount: newTotalAmount,
+      installmentFrequency: frequency,
+      expiryDate: newExpiryDate || loan.expiryDate || '',
+      rescheduled: true,
+      lastRescheduleDate: rescheduleDate,
+      status: 'active'
+    });
+
+    toast('✅ ঋণ পুনঃতফসিল সম্পন্ন হয়েছে!');
+    window.resetLoanRescheduleForm();
   } catch(e) { toast('সমস্যা: '+e.message,'error'); }
 }
 
@@ -13780,7 +14349,6 @@ document.addEventListener('click', e => {
   const pid = page.id.replace('page-','');
 
   if (text.includes('সদস্য সংরক্ষণ')) window.saveMember();
-  else if (text.includes('Receive Installment')) window.saveInstallment();
   else if (text.includes('সঞ্চয় জমা করুন')) window.saveDepositReceive();
   else if (text.includes('ঋণ একাউন্ট খুলুন') && pid==='loanAccountOpen') window.saveLoan();
   else if (text.includes('ঋণ প্রস্তাব') && pid==='loanProposal') window.saveLoanProposal();
