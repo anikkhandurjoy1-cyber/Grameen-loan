@@ -5333,19 +5333,37 @@ window.addEventListener('load', () => {
     document.getElementById('loader').style.opacity = '0';
     setTimeout(() => {
       document.getElementById('loader').style.display = 'none';
+    }, 500);
+  }, 2500);
+
+  // ── Firebase-এর নিজস্ব auth state ব্যবহার করা হচ্ছে ──
+  // আগে localStorage-এর পুরনো কপি দেখেই ধরে নেওয়া হতো "লগইন আছে", কিন্তু
+  // Firebase Auth-এ আসল সেশন না থাকলে প্রতিটা Firestore কল
+  // "Missing or insufficient permissions" এরর দিত। এখন থেকে Firebase নিজে
+  // যাচাই করবে সত্যিকারের সেশন আছে কিনা।
+  firebase.auth().onAuthStateChanged(async (user) => {
+    if (user) {
+      currentUser = { uid: user.uid, email: user.email, name: (user.email||'').split('@')[0], role: 'Admin' };
       const saved = localStorage.getItem('grameenLogin');
       if (saved) {
         try {
-          currentUser = JSON.parse(saved);
-          startApp();
-        } catch(e) {
-          showLoginScreen();
-        }
-      } else {
-        showLoginScreen();
+          const savedUser = JSON.parse(saved);
+          if (savedUser.uid === user.uid) currentUser = { ...currentUser, ...savedUser };
+        } catch(e) {}
       }
-    }, 500);
-  }, 2500);
+      try {
+        const snap = await firebase.firestore().collection('users').where('email','==',user.email).get();
+        if (!snap.empty) currentUser = { ...currentUser, ...snap.docs[0].data() };
+      } catch(e) {}
+      localStorage.setItem('grameenLogin', JSON.stringify(currentUser));
+      document.getElementById('loginScreen').style.display = 'none';
+      startApp();
+    } else {
+      localStorage.removeItem('grameenLogin');
+      currentUser = null;
+      showLoginScreen();
+    }
+  });
 });
 
 function showLoginScreen() {
@@ -5369,22 +5387,8 @@ window.doLogin = async function() {
   errEl.style.display = 'none';
 
   try {
-    const result = await firebase.auth().signInWithEmailAndPassword(email, pass);
-    currentUser = {
-      uid: result.user.uid,
-      email: result.user.email,
-      name: email.split('@')[0],
-      role: 'Admin'
-    };
-    try {
-      const snap = await firebase.firestore().collection('users').where('email','==',email).get();
-      if (!snap.empty) {
-        currentUser = { ...currentUser, ...snap.docs[0].data() };
-      }
-    } catch(e) {}
-    localStorage.setItem('grameenLogin', JSON.stringify(currentUser));
-    document.getElementById('loginScreen').style.display = 'none';
-    startApp();
+    await firebase.auth().signInWithEmailAndPassword(email, pass);
+    // onAuthStateChanged (নিচে) এখন স্বয়ংক্রিয়ভাবে currentUser সেট করে startApp() কল করবে
   } catch(e) {
     errEl.style.display = 'block';
     errEl.textContent = 'Email বা Password ভুল! Error: ' + (e.code||e.message);
