@@ -1717,7 +1717,7 @@ table tr:hover td{background:#f7fafd;}
     <div class="card">
       <div class="form-row col2">
         <div class="form-group"><label>শাখা নাম *</label><select id="instBranch"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>সদস্য আইডি *</label><select id="instMemberSelect" onchange="loadLoanAccountsForInstallment(this.value)"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text" placeholder="🔍 আইডি/নাম/মোবাইল লিখুন" oninput="loadMembersIntoSelect('instMemberSelect', this.value)" style="margin-bottom:4px;"><select id="instMemberSelect" onchange="loadLoanAccountsForInstallment(this.value)"><option value="">— বাছুন —</option></select></div>
       </div>
       <div class="form-row col2">
         <div class="form-group"><label>সদস্য একাউন্ট *</label><select id="instAccount" onchange="loadLoanAccountDetailsForInstallment(this.value)"><option value="">— বাছুন —</option></select></div>
@@ -1925,7 +1925,7 @@ table tr:hover td{background:#f7fafd;}
       <div class="card">
         <div class="form-row col2">
           <div class="form-group"><label>শাখা নাম</label><select id="drBranch"><option value="">— বাছুন —</option></select></div>
-          <div class="form-group"><label>সদস্য আইডি *</label><select id="drMember" onchange="loadDepositAccountsFor('dr', this.value)"><option value="">— বাছুন —</option></select></div>
+          <div class="form-group"><label>সদস্য আইডি *</label><input type="text" placeholder="🔍 আইডি/নাম/মোবাইল লিখুন" oninput="loadMembersIntoSelect('drMember', this.value)" style="margin-bottom:4px;"><select id="drMember" onchange="loadDepositAccountsFor('dr', this.value)"><option value="">— বাছুন —</option></select></div>
         </div>
         <div class="form-row col2">
           <div class="form-group"><label>জমা হিসাব *</label><select id="drAccount" onchange="loadDepositAccountDetails('dr', this.value)"><option value="">— বাছুন —</option></select></div>
@@ -1995,7 +1995,7 @@ table tr:hover td{background:#f7fafd;}
       <div class="card">
         <div class="form-row col2">
           <div class="form-group"><label>শাখা নাম</label><select id="dpBranch"><option value="">— বাছুন —</option></select></div>
-          <div class="form-group"><label>সদস্যের নাম *</label><select id="dpMember" onchange="loadDepositAccountsFor('dp', this.value)"><option value="">— বাছুন —</option></select></div>
+          <div class="form-group"><label>সদস্যের নাম *</label><input type="text" placeholder="🔍 আইডি/নাম/মোবাইল লিখুন" oninput="loadMembersIntoSelect('dpMember', this.value)" style="margin-bottom:4px;"><select id="dpMember" onchange="loadDepositAccountsFor('dp', this.value)"><option value="">— বাছুন —</option></select></div>
         </div>
         <div class="form-row col2">
           <div class="form-group"><label>জমা হিসাব *</label><select id="dpAccount" onchange="loadDepositAccountDetails('dp', this.value)"><option value="">— বাছুন —</option></select></div>
@@ -2342,7 +2342,7 @@ table tr:hover td{background:#f7fafd;}
     <div class="card no-print">
       <div class="form-row col2">
         <div class="form-group"><label>শাখা</label><select id="pbBranch"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>সদস্য আইডি *</label><select id="pbMember" onchange="loadPassbookAccounts(this.value)"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text" placeholder="🔍 আইডি/নাম/মোবাইল লিখুন" oninput="loadMembersIntoSelect('pbMember', this.value)" style="margin-bottom:4px;"><select id="pbMember" onchange="loadPassbookAccounts(this.value)"><option value="">— বাছুন —</option></select></div>
       </div>
       <div class="form-group" style="margin-bottom:12px;"><label>জমা হিসাব *</label><select id="pbAccount"><option value="">— বাছুন —</option></select></div>
       <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;">
@@ -2386,7 +2386,7 @@ table tr:hover td{background:#f7fafd;}
     <div class="card no-print">
       <div class="form-row col2">
         <div class="form-group"><label>শাখা</label><select id="fpbBranch" onchange="loadMembersIntoSelect('fpbMember')"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>সদস্য আইডি *</label><select id="fpbMember"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text" placeholder="🔍 আইডি/নাম/মোবাইল লিখুন" oninput="loadMembersIntoSelect('fpbMember', this.value)" style="margin-bottom:4px;"><select id="fpbMember"><option value="">— বাছুন —</option></select></div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="loadFullMemberPassbook()">🔍 দেখুন</button>
@@ -2454,7 +2454,7 @@ table tr:hover td{background:#f7fafd;}
     <div class="card">
       <div class="form-row col2">
         <div class="form-group"><label>শাখা নাম</label><select id="miBranch"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>Member ID *</label><select id="miMember" onchange="loadMemberCollectionSummary(this.value)"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>Member ID *</label><input type="text" placeholder="🔍 আইডি/নাম/মোবাইল লিখুন" oninput="loadMembersIntoSelect('miMember', this.value)" style="margin-bottom:4px;"><select id="miMember" onchange="loadMemberCollectionSummary(this.value)"><option value="">— বাছুন —</option></select></div>
       </div>
       <div class="form-group" style="margin-bottom:12px;"><label>Transaction Date *</label><input type="date" id="miDate"></div>
     </div>
@@ -11457,7 +11457,12 @@ window.searchMembersAdvanced = async function() {
       const m = d.data();
       if (name && !m.name?.includes(name)) return;
       if (phone && !m.mobile?.includes(phone)) return;
-      if (id && m.memberId !== id) return;
+      if (id) {
+        const mid = String(m.memberId||'').trim();
+        const searchId = id.trim();
+        const numMatch = !isNaN(parseInt(mid,10)) && !isNaN(parseInt(searchId,10)) && parseInt(mid,10) === parseInt(searchId,10);
+        if (mid !== searchId && !numMatch) return;
+      }
       if (nid && !m.nid?.includes(nid)) return;
       if (status && m.status !== status) return;
       if (samity && m.samityId !== samity && m.samity !== samity) return;
@@ -11496,22 +11501,40 @@ window.searchMembersAdvanced = async function() {
 }
 
 // Load active members into any select (FIX: this function was missing its declaration line — broke all member dropdowns)
-async function loadMembersIntoSelect(selectId) {
+let _allMembersCache = null;
+async function loadMembersIntoSelect(selectId, searchTerm) {
   const sel = document.getElementById(selectId);
   if (!sel) return;
   try {
     // NOTE: শুধু where('status') ব্যবহার করা হয়েছে (orderBy বাদ) যাতে Firestore
     // composite index না লাগে; সর্টিং জাভাস্ক্রিপ্টেই করা হয়েছে।
-    const snap = await db.collection('members').where('status','==','active').get();
-    const rows = [];
-    snap.forEach(d => rows.push(d.data()));
-    rows.sort((a,b) => (a.name||'').localeCompare(b.name||'', 'bn'));
+    if (!_allMembersCache) {
+      const snap = await db.collection('members').where('status','==','active').get();
+      _allMembersCache = [];
+      snap.forEach(d => _allMembersCache.push(d.data()));
+    }
+    let rows = _allMembersCache.slice();
+    const term = (searchTerm||'').trim();
+    if (term) {
+      rows = rows.filter(m =>
+        String(m.memberId||'').startsWith(term) ||
+        (m.name||'').includes(term) ||
+        (m.mobile||'').includes(term)
+      );
+    }
+    // সংখ্যাসূচক আইডি হলে সংখ্যা অনুযায়ী, নাহলে নাম অনুযায়ী সাজানো
+    rows.sort((a,b) => {
+      const na = parseInt(a.memberId,10), nb = parseInt(b.memberId,10);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      return (a.name||'').localeCompare(b.name||'', 'bn');
+    });
     sel.innerHTML = '<option value="">— সদস্য বাছুন —</option>';
     rows.forEach(m => {
       sel.innerHTML += `<option value="${m.memberId}">${m.memberId} - ${m.name} (${m.mobile||''})</option>`;
     });
   } catch(e) { console.error('loadMembersIntoSelect error:', e); }
 }
+window.invalidateMembersCache = function() { _allMembersCache = null; }
 
 // Load branches into any select
 async function loadBranchesIntoSelect(selectId) {
@@ -11904,6 +11927,7 @@ window.saveMember = async function() {
 
     await firebase.firestore().collection('members').add(data);
     toast('✅ সদস্য সংরক্ষণ হয়েছে! ID: ' + memberId);
+    window.invalidateMembersCache();
 
     // Clear form
     p.querySelectorAll('input:not([type="file"])').forEach(i => { if(!i.readOnly) i.value=''; });
