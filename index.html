@@ -800,6 +800,7 @@ table tr:hover td{background:#f7fafd;}
     <div class="submenu">
       <div class="sub-item" onclick="showPage('memberInstallment')">সদস্য ভিত্তিক কালেকশন</div>
       <div class="sub-item" onclick="showPage('memberPassbook')">সদস্য পাসবুক</div>
+      <div class="sub-item" onclick="showPage('fullMemberPassbook')">সম্পূর্ণ সদস্য পাসবুক (শেয়ার+সঞ্চয়+ঋণ)</div>
       <div class="sub-item" onclick="showPage('passbookIssue')">নতুন পাসবুক বিক্রয়</div>
       <div class="sub-item" onclick="showPage('collectionSheet')">কালেকশন শীট</div>
       <div class="sub-item" onclick="showPage('collectionReceive')">কালেকশন গ্রহণ</div>
@@ -1716,7 +1717,7 @@ table tr:hover td{background:#f7fafd;}
     <div class="card">
       <div class="form-row col2">
         <div class="form-group"><label>শাখা নাম *</label><select id="instBranch"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>সদস্য আইডি *</label><select id="instMemberSelect" onchange="loadLoanAccountsForInstallment(this.value)"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text" placeholder="🔍 আইডি/নাম/মোবাইল লিখুন" oninput="loadMembersIntoSelect('instMemberSelect', this.value)" style="margin-bottom:4px;"><select id="instMemberSelect" onchange="loadLoanAccountsForInstallment(this.value)"><option value="">— বাছুন —</option></select></div>
       </div>
       <div class="form-row col2">
         <div class="form-group"><label>সদস্য একাউন্ট *</label><select id="instAccount" onchange="loadLoanAccountDetailsForInstallment(this.value)"><option value="">— বাছুন —</option></select></div>
@@ -1761,8 +1762,8 @@ table tr:hover td{background:#f7fafd;}
       <div class="card-title">কিস্তি জমার হিস্টোরি</div>
       <div style="overflow-x:auto;">
         <table class="data-table" style="width:100%;font-size:12px;">
-          <thead><tr><th>তারিখ</th><th>জমার পরিমাণ</th><th>জরিমানা</th><th>মন্তব্য</th></tr></thead>
-          <tbody id="instHistoryBody"><tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr></tbody>
+          <thead><tr><th>তারিখ</th><th>জমার পরিমাণ</th><th>জরিমানা</th><th>মন্তব্য</th><th>Posted By</th></tr></thead>
+          <tbody id="instHistoryBody"><tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -1924,7 +1925,7 @@ table tr:hover td{background:#f7fafd;}
       <div class="card">
         <div class="form-row col2">
           <div class="form-group"><label>শাখা নাম</label><select id="drBranch"><option value="">— বাছুন —</option></select></div>
-          <div class="form-group"><label>সদস্য আইডি *</label><select id="drMember" onchange="loadDepositAccountsFor('dr', this.value)"><option value="">— বাছুন —</option></select></div>
+          <div class="form-group"><label>সদস্য আইডি *</label><input type="text" placeholder="🔍 আইডি/নাম/মোবাইল লিখুন" oninput="loadMembersIntoSelect('drMember', this.value)" style="margin-bottom:4px;"><select id="drMember" onchange="loadDepositAccountsFor('dr', this.value)"><option value="">— বাছুন —</option></select></div>
         </div>
         <div class="form-row col2">
           <div class="form-group"><label>জমা হিসাব *</label><select id="drAccount" onchange="loadDepositAccountDetails('dr', this.value)"><option value="">— বাছুন —</option></select></div>
@@ -1957,8 +1958,8 @@ table tr:hover td{background:#f7fafd;}
       <div class="card-title">সঞ্চয় জমার হিস্টোরি</div>
       <div style="overflow-x:auto;">
         <table class="data-table" style="width:100%;font-size:12px;">
-          <thead><tr><th>তারিখ</th><th>জমা (Credit)</th><th>উত্তোলন (Debit)</th><th>মন্তব্য</th></tr></thead>
-          <tbody id="drHistoryBody"><tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr></tbody>
+          <thead><tr><th>তারিখ</th><th>জমা (Credit)</th><th>উত্তোলন (Debit)</th><th>মন্তব্য</th><th>Posted By</th></tr></thead>
+          <tbody id="drHistoryBody"><tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -1994,7 +1995,7 @@ table tr:hover td{background:#f7fafd;}
       <div class="card">
         <div class="form-row col2">
           <div class="form-group"><label>শাখা নাম</label><select id="dpBranch"><option value="">— বাছুন —</option></select></div>
-          <div class="form-group"><label>সদস্যের নাম *</label><select id="dpMember" onchange="loadDepositAccountsFor('dp', this.value)"><option value="">— বাছুন —</option></select></div>
+          <div class="form-group"><label>সদস্যের নাম *</label><input type="text" placeholder="🔍 আইডি/নাম/মোবাইল লিখুন" oninput="loadMembersIntoSelect('dpMember', this.value)" style="margin-bottom:4px;"><select id="dpMember" onchange="loadDepositAccountsFor('dp', this.value)"><option value="">— বাছুন —</option></select></div>
         </div>
         <div class="form-row col2">
           <div class="form-group"><label>জমা হিসাব *</label><select id="dpAccount" onchange="loadDepositAccountDetails('dp', this.value)"><option value="">— বাছুন —</option></select></div>
@@ -2027,8 +2028,8 @@ table tr:hover td{background:#f7fafd;}
       <div class="card-title">লেনদেন হিস্টোরি</div>
       <div style="overflow-x:auto;">
         <table class="data-table" style="width:100%;font-size:12px;">
-          <thead><tr><th>তারিখ</th><th>জমা (Credit)</th><th>উত্তোলন (Debit)</th><th>মন্তব্য</th></tr></thead>
-          <tbody id="dpHistoryBody"><tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr></tbody>
+          <thead><tr><th>তারিখ</th><th>জমা (Credit)</th><th>উত্তোলন (Debit)</th><th>মন্তব্য</th><th>Posted By</th></tr></thead>
+          <tbody id="dpHistoryBody"><tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -2341,7 +2342,7 @@ table tr:hover td{background:#f7fafd;}
     <div class="card no-print">
       <div class="form-row col2">
         <div class="form-group"><label>শাখা</label><select id="pbBranch"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>সদস্য আইডি *</label><select id="pbMember" onchange="loadPassbookAccounts(this.value)"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text" placeholder="🔍 আইডি/নাম/মোবাইল লিখুন" oninput="loadMembersIntoSelect('pbMember', this.value)" style="margin-bottom:4px;"><select id="pbMember" onchange="loadPassbookAccounts(this.value)"><option value="">— বাছুন —</option></select></div>
       </div>
       <div class="form-group" style="margin-bottom:12px;"><label>জমা হিসাব *</label><select id="pbAccount"><option value="">— বাছুন —</option></select></div>
       <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;">
@@ -2352,26 +2353,69 @@ table tr:hover td{background:#f7fafd;}
     <div class="passbook" id="pbPrintArea" style="background:#fff;padding:20px;border:1px solid var(--border);border-radius:8px;margin-top:14px;">
       <div style="text-align:center;border-bottom:2px solid var(--primary);padding-bottom:10px;margin-bottom:14px;">
         <h3 style="margin:0;color:var(--primary);">গ্রামীন আশার আলো কৃষি সমবায় সমিতি লিঃ</h3>
-        <p style="margin:4px 0;font-size:13px;">Kalamakanda</p>
+        <p style="margin:4px 0;font-size:12px;color:#666;" id="pbiOrgAddress">Kalamakanda</p>
         <p style="margin:0;font-weight:700;">Member Passbook</p>
       </div>
       <div id="pbInfo" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;margin-bottom:14px;">
         <div>Member ID: <b id="pbiId">—</b></div>
         <div>Member Name: <b id="pbiName">—</b></div>
+        <div>Father Name: <b id="pbiFather">—</b></div>
+        <div>Mobile: <b id="pbiMobile">—</b></div>
         <div>Account Type: <b id="pbiType">—</b></div>
         <div>Account Number: <b id="pbiAcc">—</b></div>
         <div>Samity: <b id="pbiSamity">—</b></div>
+        <div>Admission Date: <b id="pbiAdmDate">—</b></div>
+        <div>Present Address: <b id="pbiAddress">—</b></div>
         <div>Account Balance: <b id="pbiBalance">0.00</b></div>
       </div>
       <div style="overflow-x:auto;">
         <table style="width:100%;border-collapse:collapse;font-size:12px;" border="1">
           <thead style="background:#f5f5f5;"><tr>
             <th style="padding:6px;">ক্রমিক</th><th style="padding:6px;">Date</th><th style="padding:6px;">Comments</th>
-            <th style="padding:6px;">Deposit</th><th style="padding:6px;">Withdraw</th><th style="padding:6px;">Balance</th>
+            <th style="padding:6px;">Deposit</th><th style="padding:6px;">Withdraw</th><th style="padding:6px;">Balance</th><th style="padding:6px;">Posted By</th>
           </tr></thead>
-          <tbody id="pbBody"><tr><td colspan="6" style="text-align:center;padding:14px;color:var(--text-light);">সদস্য ও একাউন্ট বাছুন</td></tr></tbody>
+          <tbody id="pbBody"><tr><td colspan="7" style="text-align:center;padding:14px;color:var(--text-light);">সদস্য ও একাউন্ট বাছুন</td></tr></tbody>
         </table>
       </div>
+    </div>
+  </div>
+
+  <!-- ════ FULL MEMBER PASSBOOK (শেয়ার+সঞ্চয়+ঋণ একসাথে) ════ -->
+  <div id="page-fullMemberPassbook" class="page" style="display:none;">
+    <div class="page-title">📘 সম্পূর্ণ সদস্য পাসবুক</div>
+    <div class="card no-print">
+      <div class="form-row col2">
+        <div class="form-group"><label>শাখা</label><select id="fpbBranch" onchange="loadMembersIntoSelect('fpbMember')"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>সদস্য আইডি *</label><input type="text" placeholder="🔍 আইডি/নাম/মোবাইল লিখুন" oninput="loadMembersIntoSelect('fpbMember', this.value)" style="margin-bottom:4px;"><select id="fpbMember"><option value="">— বাছুন —</option></select></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="loadFullMemberPassbook()">🔍 দেখুন</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-light);margin-top:8px;">* এখানে প্রতিটা লেনদেনের প্রকৃত রেকর্ড দেখানো হয় (যে তারিখে সত্যিকারের জমা/উত্তোলন/কিস্তি হয়েছে) — ঋণের ক্ষেত্রে প্রতিদিনের সম্পূর্ণ শিডিউল (যেদিন পেমেন্ট হয়নি) এখানে দেখানো হয় না।</div>
+    </div>
+    <div id="fpbPrintArea" style="background:#fff;">
+      <div class="print-header" style="text-align:center;border-bottom:2px solid var(--primary);padding-bottom:10px;margin-bottom:14px;display:block;">
+        <h2 style="margin:0;color:var(--primary);font-size:18px;">গ্রামীন আশার আলো কৃষি সমবায় সমিতি লিঃ</h2>
+        <p style="margin:4px 0;font-size:12px;color:#666;">চানপুর রোড, এতিমখানা বাজার, কলমাকান্দা, নেত্রকোণা</p>
+        <p style="margin:0;font-weight:700;">Member Passbook</p>
+      </div>
+      <div class="card" id="fpbMemberCard" style="display:none;">
+        <div class="card-title">Member Details</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;font-size:12px;">
+          <div>Member ID: <b id="fpbId">—</b></div>
+          <div>Member Name: <b id="fpbName">—</b></div>
+          <div>Father Name: <b id="fpbFather">—</b></div>
+          <div>Phone Number: <b id="fpbMobile">—</b></div>
+          <div>Samity Name: <b id="fpbSamity">—</b></div>
+          <div>Present Address: <b id="fpbPresentAddr">—</b></div>
+          <div>Permanent Address: <b id="fpbPermAddr">—</b></div>
+          <div>Admission Date: <b id="fpbAdmDate">—</b></div>
+        </div>
+      </div>
+      <div id="fpbAccountsArea"></div>
+      <div id="fpbLoansArea"></div>
+      <div id="fpbEmptyMsg" style="text-align:center;color:var(--text-light);padding:20px;">শাখা ও সদস্য বাছাই করে "দেখুন" চাপুন</div>
     </div>
   </div>
 
@@ -2410,7 +2454,7 @@ table tr:hover td{background:#f7fafd;}
     <div class="card">
       <div class="form-row col2">
         <div class="form-group"><label>শাখা নাম</label><select id="miBranch"><option value="">— বাছুন —</option></select></div>
-        <div class="form-group"><label>Member ID *</label><select id="miMember" onchange="loadMemberCollectionSummary(this.value)"><option value="">— বাছুন —</option></select></div>
+        <div class="form-group"><label>Member ID *</label><input type="text" placeholder="🔍 আইডি/নাম/মোবাইল লিখুন" oninput="loadMembersIntoSelect('miMember', this.value)" style="margin-bottom:4px;"><select id="miMember" onchange="loadMemberCollectionSummary(this.value)"><option value="">— বাছুন —</option></select></div>
       </div>
       <div class="form-group" style="margin-bottom:12px;"><label>Transaction Date *</label><input type="date" id="miDate"></div>
     </div>
@@ -5614,7 +5658,7 @@ window.showPage = function(pageId) {
   }
   if (pageId === 'memberList') {
     loadBranchesIntoSelect('mlBranch');
-    loadMembers();
+    searchMembersAdvanced();
   }
   if (pageId === 'dashboard') loadDashboard();
   if (pageId === 'loanProposalList') loadLoanProposals();
@@ -6085,6 +6129,13 @@ window.showPage = function(pageId) {
   if (pageId === 'memberPassbook') {
     loadBranchesIntoSelect('pbBranch'); loadMembersIntoSelect('pbMember');
   }
+  if (pageId === 'fullMemberPassbook') {
+    loadBranchesIntoSelect('fpbBranch'); loadMembersIntoSelect('fpbMember');
+    document.getElementById('fpbMemberCard').style.display = 'none';
+    document.getElementById('fpbAccountsArea').innerHTML = '';
+    document.getElementById('fpbLoansArea').innerHTML = '';
+    document.getElementById('fpbEmptyMsg').style.display = 'block';
+  }
   if (pageId === 'passbookIssue') {
     loadBranchesIntoSelect('piBranch'); loadMembersIntoSelect('piMember');
     const el = document.getElementById('piDate'); if (el && !el.value) el.value = depTxToday;
@@ -6167,6 +6218,28 @@ window.showPage = function(pageId) {
 // ══════════════════════════════════════
 
 // Load samities based on branch
+// ── uid থেকে কর্মীর নাম বের করা (কিস্তি/সঞ্চয় এন্ট্রিতে "Posted By" দেখানোর জন্য) ──
+let _employeeNameCache = null;
+async function getEmployeeNameMap() {
+  if (_employeeNameCache) return _employeeNameCache;
+  const map = {};
+  try {
+    const snap = await db.collection('users').get();
+    snap.forEach(d => {
+      const u = d.data();
+      if (u.authUid) map[u.authUid] = u.name || u.email || '—';
+    });
+  } catch(e) {}
+  _employeeNameCache = map;
+  return map;
+}
+function employeeNameFor(map, uid) {
+  if (!uid) return '—';
+  if (map[uid]) return map[uid];
+  if (currentUser && currentUser.uid === uid) return currentUser.name || currentUser.email || 'Admin';
+  return '—';
+}
+
 async function loadSamitiesIntoSelect(selectId, branchSelectId) {
   const sel = document.getElementById(selectId);
   if (!sel) return;
@@ -6386,7 +6459,7 @@ window.loadLoanAccountsForInstallment = async function(memberId) {
   const sel = document.getElementById('instAccount');
   if (!sel) return;
   sel.innerHTML = '<option value="">— বাছুন —</option>';
-  document.getElementById('instHistoryBody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr>';
+  document.getElementById('instHistoryBody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr>';
   if (!memberId) return;
   try {
     const snap = await db.collection('loans').where('memberId','==',memberId).where('status','==','active').get();
@@ -6495,20 +6568,24 @@ window.searchLoanInstallmentHistory = async function(loanDocId) {
   const tbody = document.getElementById('instHistoryBody');
   if (!tbody) return;
   loanDocId = loanDocId || document.getElementById('instAccount')?.value;
-  if (!loanDocId) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr>'; return; }
-  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:14px;">লোড হচ্ছে... ⏳</td></tr>';
+  if (!loanDocId) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr>'; return; }
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:14px;">লোড হচ্ছে... ⏳</td></tr>';
   try {
-    const snap = await db.collection('loanInstallments').where('loanDocId','==',loanDocId).get();
+    const [snap, empMap] = await Promise.all([
+      db.collection('loanInstallments').where('loanDocId','==',loanDocId).get(),
+      getEmployeeNameMap()
+    ]);
     const rows = [];
     snap.forEach(d => rows.push(d.data()));
     rows.sort((a,b) => (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
     let html = '';
     rows.forEach(r => {
-      html += `<tr><td>${r.instDate||'—'}</td><td>${tk(r.amount)}</td><td>${tk(r.penalty||0)}</td><td>${r.comment||'—'}</td></tr>`;
+      const postedBy = employeeNameFor(empMap, r.receivedBy);
+      html += `<tr><td>${r.instDate||'—'}</td><td>${tk(r.amount)}</td><td>${tk(r.penalty||0)}</td><td>${r.comment||'—'}</td><td>${postedBy}</td></tr>`;
     });
-    tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:14px;">কোনো কিস্তি জমা নেই</td></tr>';
+    tbody.innerHTML = html || '<tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:14px;">কোনো কিস্তি জমা নেই</td></tr>';
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--danger);">Error: ${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--danger);">Error: ${e.message}</td></tr>`;
   }
 }
 
@@ -6632,10 +6709,13 @@ window.searchDepositHistory = async function(prefix, accDocId) {
   const tbody = document.getElementById(prefix + 'HistoryBody');
   if (!tbody) return;
   accDocId = accDocId || document.getElementById(prefix + 'Account')?.value;
-  if (!accDocId) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr>'; return; }
-  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:14px;">লোড হচ্ছে... ⏳</td></tr>';
+  if (!accDocId) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr>'; return; }
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:14px;">লোড হচ্ছে... ⏳</td></tr>';
   try {
-    const snap = await db.collection('depositTransactions').where('accDocId','==',accDocId).get();
+    const [snap, empMap] = await Promise.all([
+      db.collection('depositTransactions').where('accDocId','==',accDocId).get(),
+      getEmployeeNameMap()
+    ]);
     const rows = [];
     snap.forEach(d => rows.push(d.data()));
     rows.sort((a,b) => (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
@@ -6643,11 +6723,12 @@ window.searchDepositHistory = async function(prefix, accDocId) {
     rows.forEach(r => {
       const credit = r.type === 'credit' ? tk(r.amount) : '—';
       const debit = r.type === 'debit' ? tk(r.amount) : '—';
-      html += `<tr><td>${r.date||'—'}</td><td style="color:var(--success);">${credit}</td><td style="color:var(--danger);">${debit}</td><td>${r.comment||'—'}</td></tr>`;
+      const postedBy = employeeNameFor(empMap, r.createdBy);
+      html += `<tr><td>${r.date||'—'}</td><td style="color:var(--success);">${credit}</td><td style="color:var(--danger);">${debit}</td><td>${r.comment||'—'}</td><td>${postedBy}</td></tr>`;
     });
-    tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:14px;">কোনো লেনদেন নেই</td></tr>';
+    tbody.innerHTML = html || '<tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:14px;">কোনো লেনদেন নেই</td></tr>';
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--danger);">Error: ${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--danger);">Error: ${e.message}</td></tr>`;
   }
 }
 
@@ -6775,38 +6856,218 @@ window.loadMemberPassbook = async function() {
   const memberId = document.getElementById('pbMember')?.value;
   const tbody = document.getElementById('pbBody');
   if (!accDocId) { toast('একাউন্ট বাছুন!','error'); return; }
-  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:14px;">লোড হচ্ছে... ⏳</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:14px;">লোড হচ্ছে... ⏳</td></tr>';
   try {
     const accDoc = await db.collection('depositAccounts').doc(accDocId).get();
     const a = accDoc.data();
     // member info
-    let mName = memberId, mSamity = '—';
+    let mName = memberId, mSamity = '—', mFather = '—', mMobile = '—', mAddress = '—', mAdmDate = '—';
     const memSnap = await db.collection('members').where('memberId','==',memberId).limit(1).get();
-    if (!memSnap.empty) { const m = memSnap.docs[0].data(); mName = m.name||memberId; mSamity = m.samityName||m.samity||'—'; }
+    if (!memSnap.empty) {
+      const m = memSnap.docs[0].data();
+      mName = m.name||memberId; mSamity = m.samityName||m.samity||'—';
+      mFather = m.fatherName||'—'; mMobile = m.mobile||'—';
+      mAddress = m.currentAddress||'—'; mAdmDate = m.joinDate||'—';
+    }
 
     document.getElementById('pbiId').textContent = memberId;
     document.getElementById('pbiName').textContent = mName;
+    document.getElementById('pbiFather').textContent = mFather;
+    document.getElementById('pbiMobile').textContent = mMobile;
     document.getElementById('pbiType').textContent = a.accTypeName||a.accType||'—';
     document.getElementById('pbiAcc').textContent = a.accId||'—';
     document.getElementById('pbiSamity').textContent = mSamity;
+    document.getElementById('pbiAdmDate').textContent = mAdmDate;
+    document.getElementById('pbiAddress').textContent = mAddress;
     document.getElementById('pbiBalance').textContent = tk(a.balance||0);
 
-    const snap = await db.collection('depositTransactions').where('accDocId','==',accDocId).get();
+    const [snap, empMap] = await Promise.all([
+      db.collection('depositTransactions').where('accDocId','==',accDocId).get(),
+      getEmployeeNameMap()
+    ]);
     const txRows = [];
     snap.forEach(d => txRows.push(d.data()));
     txRows.sort((a,b) => (a.createdAt?.toMillis?.()||0) - (b.createdAt?.toMillis?.()||0));
     let running = 0, html = '', i = 1;
     // opening row
-    html += `<tr><td style="padding:5px;text-align:center;">${i++}</td><td style="padding:5px;">${a.openDate||'—'}</td><td style="padding:5px;">Opening Balance</td><td style="padding:5px;text-align:right;">0.00</td><td style="padding:5px;text-align:right;">0.00</td><td style="padding:5px;text-align:right;">0.00</td></tr>`;
+    html += `<tr><td style="padding:5px;text-align:center;">${i++}</td><td style="padding:5px;">${a.openDate||'—'}</td><td style="padding:5px;">Opening Balance</td><td style="padding:5px;text-align:right;">0.00</td><td style="padding:5px;text-align:right;">0.00</td><td style="padding:5px;text-align:right;">0.00</td><td style="padding:5px;">—</td></tr>`;
     txRows.forEach(r => {
       const credit = r.type === 'credit' ? r.amount : 0;
       const debit = r.type === 'debit' ? r.amount : 0;
       running += credit - debit;
-      html += `<tr><td style="padding:5px;text-align:center;">${i++}</td><td style="padding:5px;">${r.date||'—'}</td><td style="padding:5px;">${r.comment||'—'}</td><td style="padding:5px;text-align:right;">${credit.toFixed(2)}</td><td style="padding:5px;text-align:right;">${debit.toFixed(2)}</td><td style="padding:5px;text-align:right;">${running.toFixed(2)}</td></tr>`;
+      const postedBy = employeeNameFor(empMap, r.createdBy);
+      html += `<tr><td style="padding:5px;text-align:center;">${i++}</td><td style="padding:5px;">${r.date||'—'}</td><td style="padding:5px;">${r.comment||'—'}</td><td style="padding:5px;text-align:right;">${credit.toFixed(2)}</td><td style="padding:5px;text-align:right;">${debit.toFixed(2)}</td><td style="padding:5px;text-align:right;">${running.toFixed(2)}</td><td style="padding:5px;">${postedBy}</td></tr>`;
     });
     tbody.innerHTML = html;
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--danger);">Error: ${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--danger);">Error: ${e.message}</td></tr>`;
+  }
+}
+
+// ─── সম্পূর্ণ সদস্য পাসবুক (শেয়ার+সঞ্চয়+ঋণ একসাথে) ───
+window.loadFullMemberPassbook = async function() {
+  const memberId = document.getElementById('fpbMember')?.value;
+  const memberCard = document.getElementById('fpbMemberCard');
+  const accountsArea = document.getElementById('fpbAccountsArea');
+  const loansArea = document.getElementById('fpbLoansArea');
+  const emptyMsg = document.getElementById('fpbEmptyMsg');
+  if (!memberId) { toast('সদস্য বাছুন!','error'); return; }
+
+  emptyMsg.style.display = 'block';
+  emptyMsg.textContent = 'লোড হচ্ছে... ⏳';
+  memberCard.style.display = 'none';
+  accountsArea.innerHTML = '';
+  loansArea.innerHTML = '';
+
+  try {
+    const [memSnap, accSnap, loanSnap, shareSnap, empMap] = await Promise.all([
+      db.collection('members').where('memberId','==',memberId).limit(1).get(),
+      db.collection('depositAccounts').where('memberId','==',memberId).get(),
+      db.collection('loans').where('memberId','==',memberId).get(),
+      db.collection('shareTransactions').where('memberId','==',memberId).get(),
+      getEmployeeNameMap()
+    ]);
+
+    if (memSnap.empty) { emptyMsg.textContent = 'সদস্য পাওয়া যায়নি!'; return; }
+    const m = memSnap.docs[0].data();
+
+    document.getElementById('fpbId').textContent = memberId;
+    document.getElementById('fpbName').textContent = m.name||'—';
+    document.getElementById('fpbFather').textContent = m.fatherName||'—';
+    document.getElementById('fpbMobile').textContent = m.mobile||'—';
+    document.getElementById('fpbSamity').textContent = m.samityName||m.samity||'—';
+    document.getElementById('fpbPresentAddr').textContent = m.currentAddress||'—';
+    document.getElementById('fpbPermAddr').textContent = m.permanentAddress||'—';
+    document.getElementById('fpbAdmDate').textContent = m.joinDate||'—';
+    memberCard.style.display = 'block';
+
+    // ── শেয়ার একাউন্ট সেকশন ──
+    let shareQty = 0, shareAmount = 0;
+    const shareRows = [];
+    shareSnap.forEach(d => { shareRows.push(d.data()); });
+    shareRows.sort((a,b) => (a.createdAt?.toMillis?.()||0) - (b.createdAt?.toMillis?.()||0));
+    shareRows.forEach(r => {
+      const sign = r.type === 'payment' ? 1 : -1;
+      shareQty += sign * (r.quantity||0);
+      shareAmount += sign * (r.amount||0);
+    });
+    let accHtml = '';
+    accHtml += `<div class="card" style="margin-top:14px;">
+      <div class="card-title">Account Type: Share Account</div>
+      <div style="font-size:12px;margin-bottom:8px;">বর্তমান শেয়ার সংখ্যা: <b>${shareQty}</b> &nbsp;|&nbsp; মোট শেয়ার মূল্য: <b>${tk(shareAmount)}</b></div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;" border="1">
+          <thead style="background:#f5f5f5;"><tr><th style="padding:5px;">ক্রমিক</th><th style="padding:5px;">Date</th><th style="padding:5px;">Comments</th><th style="padding:5px;">Deposit</th><th style="padding:5px;">Withdraw</th><th style="padding:5px;">Balance</th><th style="padding:5px;">Posted By</th></tr></thead>
+          <tbody>`;
+    if (shareRows.length === 0) {
+      accHtml += `<tr><td colspan="7" style="text-align:center;padding:8px;color:#999;">কোনো শেয়ার লেনদেন নেই</td></tr>`;
+    } else {
+      let running = 0, i = 1;
+      shareRows.forEach(r => {
+        const isPay = r.type === 'payment';
+        running += (isPay?1:-1) * (r.amount||0);
+        accHtml += `<tr><td style="padding:5px;text-align:center;">${i++}</td><td style="padding:5px;">${r.date||'—'}</td><td style="padding:5px;">${isPay?'শেয়ার পেমেন্ট':'শেয়ার ফেরত'}${r.reason?(' - '+r.reason):''}</td><td style="padding:5px;text-align:right;">${isPay?tk(r.amount):'0.00'}</td><td style="padding:5px;text-align:right;">${!isPay?tk(r.amount):'0.00'}</td><td style="padding:5px;text-align:right;">${tk(running)}</td><td style="padding:5px;">${employeeNameFor(empMap, r.createdBy)}</td></tr>`;
+      });
+    }
+    accHtml += `</tbody></table></div></div>`;
+    accountsArea.innerHTML += accHtml;
+
+    // ── প্রতিটা ডিপোজিট (সঞ্চয়/FDR/DPS) একাউন্ট সেকশন ──
+    const accDocs = [];
+    accSnap.forEach(d => accDocs.push({ id: d.id, ...d.data() }));
+    const depTxSnap = accDocs.length ? await db.collection('depositTransactions').where('memberId','==',memberId).get() : null;
+    const txByAcc = {};
+    if (depTxSnap) depTxSnap.forEach(d => {
+      const t = d.data();
+      if (!txByAcc[t.accDocId]) txByAcc[t.accDocId] = [];
+      txByAcc[t.accDocId].push(t);
+    });
+
+    accDocs.forEach(a => {
+      const txs = (txByAcc[a.id]||[]).slice().sort((x,y) => (x.createdAt?.toMillis?.()||0) - (y.createdAt?.toMillis?.()||0));
+      let html = `<div class="card" style="margin-top:14px;">
+        <div class="card-title">Account Type: ${a.accTypeName||a.accType||'—'}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:12px;margin-bottom:8px;">
+          <div>Account Number: <b>${a.accId||'—'}</b></div>
+          <div>Open Date: <b>${a.openDate||'—'}</b></div>
+          <div>Account Balance: <b>${tk(a.balance||0)}</b></div>
+          <div>Profit Rate: <b>${a.profitRate||0}%</b></div>
+          <div>Status: <b>${a.status||'active'}</b></div>
+          <div>Last Profit Date: <b>${a.lastProfitDate||'—'}</b></div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:11px;" border="1">
+            <thead style="background:#f5f5f5;"><tr><th style="padding:5px;">ক্রমিক</th><th style="padding:5px;">Date</th><th style="padding:5px;">Comments</th><th style="padding:5px;">Deposit</th><th style="padding:5px;">Withdraw</th><th style="padding:5px;">Balance</th><th style="padding:5px;">Posted By</th></tr></thead>
+            <tbody>
+              <tr><td style="padding:5px;text-align:center;">1</td><td style="padding:5px;">${a.openDate||'—'}</td><td style="padding:5px;">Opening Balance</td><td style="padding:5px;text-align:right;">0.00</td><td style="padding:5px;text-align:right;">0.00</td><td style="padding:5px;text-align:right;">0.00</td><td style="padding:5px;">—</td></tr>`;
+      let running = 0, i = 2;
+      txs.forEach(t => {
+        const credit = t.type === 'credit' ? (t.amount||0) : 0;
+        const debit = t.type === 'debit' ? (t.amount||0) : 0;
+        running += credit - debit;
+        html += `<tr><td style="padding:5px;text-align:center;">${i++}</td><td style="padding:5px;">${t.date||'—'}</td><td style="padding:5px;">${t.comment||'—'}</td><td style="padding:5px;text-align:right;">${credit?tk(credit):'0.00'}</td><td style="padding:5px;text-align:right;">${debit?tk(debit):'0.00'}</td><td style="padding:5px;text-align:right;">${tk(running)}</td><td style="padding:5px;">${employeeNameFor(empMap, t.createdBy)}</td></tr>`;
+      });
+      html += `</tbody></table></div></div>`;
+      accountsArea.innerHTML += html;
+    });
+
+    // ── ঋণ একাউন্ট সেকশন ──
+    const loanDocs = [];
+    loanSnap.forEach(d => loanDocs.push({ id: d.id, ...d.data() }));
+    let instByLoan = {};
+    if (loanDocs.length) {
+      const instSnap = await db.collection('loanInstallments').where('memberId','==',memberId).get();
+      instSnap.forEach(d => {
+        const t = d.data();
+        if (!instByLoan[t.loanDocId]) instByLoan[t.loanDocId] = [];
+        instByLoan[t.loanDocId].push(t);
+      });
+    }
+    loanDocs.forEach(l => {
+      const insts = (instByLoan[l.id]||[]).slice().sort((x,y) => String(x.instDate||'').localeCompare(String(y.instDate||'')));
+      const totalDue = Math.max((l.totalRepayment||0)-(l.paidAmount||0),0);
+      let html = `<div class="card" style="margin-top:14px;">
+        <div class="card-title">Loan Details [ Account: ${l.loanAccId||l.id} ]</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;font-size:12px;margin-bottom:10px;">
+          <div>Loan Amount: <b>${tk(l.amount||0)}</b></div>
+          <div>Profit Rate: <b>${l.profitRate||0}%</b></div>
+          <div>Total Installment: <b>${l.installmentCount||0}</b></div>
+          <div>Installment Frequency: <b>${l.installmentFreq||'—'}</b></div>
+          <div>Total Paid Amount: <b style="color:var(--success)">${tk(l.paidAmount||0)}</b></div>
+          <div>Total Due Amount: <b style="color:var(--danger)">${tk(totalDue)}</b></div>
+          <div>Opening Date: <b>${l.startDate||'—'}</b></div>
+          <div>Installment From: <b>${l.instStartDate||'—'}</b></div>
+          <div>Total Repayment Amount: <b>${tk(l.totalRepayment||0)}</b></div>
+          <div>Installment Amount: <b>${tk(l.emi||0)}</b></div>
+          <div>Installment Expire Date: <b>${l.expiryDate||'—'}</b></div>
+          <div>Loan Purpose: <b>${l.purpose||'—'}</b></div>
+          <div>No of Installment Payment: <b>${l.installmentPaidCount||0}</b></div>
+          <div>Status: <b>${l.status||'active'}</b></div>
+        </div>
+        <div style="font-weight:600;font-size:12px;margin-bottom:6px;">Installment Details</div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:11px;" border="1">
+            <thead style="background:#f5f5f5;"><tr><th style="padding:5px;">ক্রমিক</th><th style="padding:5px;">Date</th><th style="padding:5px;">Installment</th><th style="padding:5px;">Charge</th><th style="padding:5px;">Comment</th><th style="padding:5px;">Posted By</th><th style="padding:5px;">Loan Balance</th></tr></thead>
+            <tbody>`;
+      if (insts.length === 0) {
+        html += `<tr><td colspan="7" style="text-align:center;padding:8px;color:#999;">কোনো কিস্তি জমা নেই</td></tr>`;
+      } else {
+        let paidSoFar = 0, i = 1;
+        insts.forEach(t => {
+          paidSoFar += (t.amount||0);
+          const balance = Math.max((l.totalRepayment||0) - paidSoFar, 0);
+          html += `<tr><td style="padding:5px;text-align:center;">${i++}</td><td style="padding:5px;">${t.instDate||'—'}</td><td style="padding:5px;text-align:right;">${tk(t.amount||0)}</td><td style="padding:5px;text-align:right;">${tk(t.penalty||0)}</td><td style="padding:5px;">${t.comment||'—'}</td><td style="padding:5px;">${employeeNameFor(empMap, t.receivedBy)}</td><td style="padding:5px;text-align:right;">${tk(balance)}</td></tr>`;
+        });
+      }
+      html += `</tbody></table></div></div>`;
+      loansArea.innerHTML += html;
+    });
+
+    emptyMsg.style.display = 'none';
+  } catch(e) {
+    emptyMsg.style.display = 'block';
+    emptyMsg.textContent = 'সমস্যা: ' + e.message;
+    emptyMsg.style.color = 'var(--danger)';
   }
 }
 
@@ -11196,7 +11457,12 @@ window.searchMembersAdvanced = async function() {
       const m = d.data();
       if (name && !m.name?.includes(name)) return;
       if (phone && !m.mobile?.includes(phone)) return;
-      if (id && !m.memberId?.includes(id)) return;
+      if (id) {
+        const mid = String(m.memberId||'').trim();
+        const searchId = id.trim();
+        const numMatch = !isNaN(parseInt(mid,10)) && !isNaN(parseInt(searchId,10)) && parseInt(mid,10) === parseInt(searchId,10);
+        if (mid !== searchId && !numMatch) return;
+      }
       if (nid && !m.nid?.includes(nid)) return;
       if (status && m.status !== status) return;
       if (samity && m.samityId !== samity && m.samity !== samity) return;
@@ -11235,22 +11501,40 @@ window.searchMembersAdvanced = async function() {
 }
 
 // Load active members into any select (FIX: this function was missing its declaration line — broke all member dropdowns)
-async function loadMembersIntoSelect(selectId) {
+let _allMembersCache = null;
+async function loadMembersIntoSelect(selectId, searchTerm) {
   const sel = document.getElementById(selectId);
   if (!sel) return;
   try {
     // NOTE: শুধু where('status') ব্যবহার করা হয়েছে (orderBy বাদ) যাতে Firestore
     // composite index না লাগে; সর্টিং জাভাস্ক্রিপ্টেই করা হয়েছে।
-    const snap = await db.collection('members').where('status','==','active').get();
-    const rows = [];
-    snap.forEach(d => rows.push(d.data()));
-    rows.sort((a,b) => (a.name||'').localeCompare(b.name||'', 'bn'));
+    if (!_allMembersCache) {
+      const snap = await db.collection('members').where('status','==','active').get();
+      _allMembersCache = [];
+      snap.forEach(d => _allMembersCache.push(d.data()));
+    }
+    let rows = _allMembersCache.slice();
+    const term = (searchTerm||'').trim();
+    if (term) {
+      rows = rows.filter(m =>
+        String(m.memberId||'').startsWith(term) ||
+        (m.name||'').includes(term) ||
+        (m.mobile||'').includes(term)
+      );
+    }
+    // সংখ্যাসূচক আইডি হলে সংখ্যা অনুযায়ী, নাহলে নাম অনুযায়ী সাজানো
+    rows.sort((a,b) => {
+      const na = parseInt(a.memberId,10), nb = parseInt(b.memberId,10);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      return (a.name||'').localeCompare(b.name||'', 'bn');
+    });
     sel.innerHTML = '<option value="">— সদস্য বাছুন —</option>';
     rows.forEach(m => {
       sel.innerHTML += `<option value="${m.memberId}">${m.memberId} - ${m.name} (${m.mobile||''})</option>`;
     });
   } catch(e) { console.error('loadMembersIntoSelect error:', e); }
 }
+window.invalidateMembersCache = function() { _allMembersCache = null; }
 
 // Load branches into any select
 async function loadBranchesIntoSelect(selectId) {
@@ -11560,6 +11844,31 @@ async function loadDashboard() {
 // ══════════════════════════════════════
 // ─── MEMBERS ───
 // ══════════════════════════════════════
+// ══════════════════════════════════════
+// ─── ক্রমিক সদস্য আইডি (১, ২, ৩... এভাবে) ───
+// ══════════════════════════════════════
+async function getNextMemberId() {
+  const counterRef = db.collection('counters').doc('members');
+  const counterDoc = await counterRef.get();
+  if (!counterDoc.exists) {
+    // প্রথমবার ব্যবহার — বিদ্যমান সদস্যদের মধ্যে সর্বোচ্চ সংখ্যাসূচক আইডি খুঁজে বের করে কাউন্টার শুরু করা
+    const snap = await db.collection('members').get();
+    let maxId = 0;
+    snap.forEach(d => {
+      const n = parseInt(d.data().memberId, 10);
+      if (!isNaN(n) && n > maxId) maxId = n;
+    });
+    await counterRef.set({ lastId: maxId });
+  }
+  const newId = await db.runTransaction(async (transaction) => {
+    const doc = await transaction.get(counterRef);
+    const next = ((doc.exists ? doc.data().lastId : 0) || 0) + 1;
+    transaction.set(counterRef, { lastId: next }, { merge: true });
+    return next;
+  });
+  return String(newId);
+}
+
 window.saveMember = async function() {
   const p = document.getElementById('page-memberAdd');
   const get = id => document.getElementById(id)?.value?.trim()||'';
@@ -11575,7 +11884,7 @@ window.saveMember = async function() {
   const textareas = p.querySelectorAll('textarea');
 
   try {
-    const memberId = 'M-' + Date.now().toString().slice(-6);
+    const memberId = await getNextMemberId();
     const data = {
       memberId,
       name: inputs[0]?.value?.trim()||'',
@@ -11618,6 +11927,7 @@ window.saveMember = async function() {
 
     await firebase.firestore().collection('members').add(data);
     toast('✅ সদস্য সংরক্ষণ হয়েছে! ID: ' + memberId);
+    window.invalidateMembersCache();
 
     // Clear form
     p.querySelectorAll('input:not([type="file"])').forEach(i => { if(!i.readOnly) i.value=''; });
