@@ -11460,8 +11460,11 @@ window.searchMembersAdvanced = async function() {
       if (id) {
         const mid = String(m.memberId||'').trim();
         const searchId = id.trim();
-        const numMatch = !isNaN(parseInt(mid,10)) && !isNaN(parseInt(searchId,10)) && parseInt(mid,10) === parseInt(searchId,10);
-        if (mid !== searchId && !numMatch) return;
+        const bothNumeric = /^\d+$/.test(mid) && /^\d+$/.test(searchId);
+        const exactMatch = bothNumeric ? (parseInt(mid,10) === parseInt(searchId,10)) : (mid === searchId);
+        // নতুন (শুধু সংখ্যা) আইডি হলে exact match, পুরনো ফরম্যাটের (যেমন M-123456) আইডি হলে আংশিক মিল দিয়েও খোঁজা যাবে
+        const partialMatch = !bothNumeric && mid.toLowerCase().includes(searchId.toLowerCase());
+        if (!exactMatch && !partialMatch) return;
       }
       if (nid && !m.nid?.includes(nid)) return;
       if (status && m.status !== status) return;
