@@ -660,6 +660,7 @@ table tr:hover td{background:#f7fafd;}
 <!-- HEADER -->
 <div class="header">
   <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+  <button class="menu-btn" id="backBtn" onclick="goBack()" title="পূর্বের পেজ" style="display:none;padding:4px 6px;">←</button>
   <div class="logo-area">
     <img src="logo.png" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
     <div style="display:none;font-size:26px;">🌾</div>
@@ -1037,6 +1038,10 @@ table tr:hover td{background:#f7fafd;}
       </div>
       <div style="margin-top:10px;background:rgba(255,255,255,.15);border-radius:6px;padding:8px 12px;font-size:12px;">
         📢 আজকের আদায় টার্গেট পূরণ করুন। <span style="color:#ffd700;font-weight:700;" id="targetPercent">0%</span>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between;">
+        <span id="statsStamp" style="font-size:11px;opacity:.75;">হিসাব লোড হচ্ছে...</span>
+        <button onclick="recalcDashboard()" title="সঞ্চয়/ঋণ/সদস্যের সর্বমোট হিসাব নতুন করে করা হবে" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:4px 12px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">🔄 হিসাব রিফ্রেশ</button>
       </div>
     </div>
 
@@ -5372,13 +5377,20 @@ function tk(n) { return '৳' + (Number(n)||0).toLocaleString('en'); }
 function todayStr() { return new Date().toISOString().split('T')[0]; }
 
 // ─── INIT ───
+let _loaderHidden = false;
+function hideLoader() {
+  if (_loaderHidden) return;
+  _loaderHidden = true;
+  const el = document.getElementById('loader');
+  if (!el) return;
+  el.style.opacity = '0';
+  setTimeout(() => { el.style.display = 'none'; }, 300);
+}
+
 window.addEventListener('load', () => {
-  setTimeout(() => {
-    document.getElementById('loader').style.opacity = '0';
-    setTimeout(() => {
-      document.getElementById('loader').style.display = 'none';
-    }, 500);
-  }, 2500);
+  // আগে এখানে বাধ্যতামূলক ২.৫ সেকেন্ড অপেক্ষা ছিল — এখন auth শেষ হওয়ামাত্রই
+  // লোডার সরে যায়। নিচের ৩ সেকেন্ড শুধু safety net (auth আটকে গেলে)।
+  setTimeout(hideLoader, 3000);
 
   // ── Firebase-এর নিজস্ব auth state ব্যবহার করা হচ্ছে ──
   // আগে localStorage-এর পুরনো কপি দেখেই ধরে নেওয়া হতো "লগইন আছে", কিন্তু
@@ -5396,15 +5408,23 @@ window.addEventListener('load', () => {
         } catch(e) {}
       }
       try {
-        const snap = await firebase.firestore().collection('users').where('email','==',user.email).get();
-        if (!snap.empty) currentUser = { ...currentUser, ...snap.docs[0].data() };
+        // doc ID = Auth UID, তাই সরাসরি doc() — পুরো কালেকশন স্ক্যান লাগে না
+        const byUid = await db.collection('users').doc(user.uid).get();
+        if (byUid.exists) currentUser = { ...currentUser, ...byUid.data() };
+        else {
+          // পুরনো ফরম্যাটের (random doc ID) ইউজারদের জন্য fallback
+          const snap = await db.collection('users').where('email','==',user.email).limit(1).get();
+          if (!snap.empty) currentUser = { ...currentUser, ...snap.docs[0].data() };
+        }
       } catch(e) {}
       localStorage.setItem('grameenLogin', JSON.stringify(currentUser));
       document.getElementById('loginScreen').style.display = 'none';
+      hideLoader();
       startApp();
     } else {
       localStorage.removeItem('grameenLogin');
       currentUser = null;
+      hideLoader();
       showLoginScreen();
     }
   });
@@ -5453,6 +5473,10 @@ window.doLogout = function() {
   localStorage.removeItem('grameenLogin');
   try { firebase.auth().signOut(); } catch(e) {}
   currentUser = null;
+  // পেজ হিস্ট্রি ক্লিয়ার — নতুন ইউজার লগইন করলে যেন পুরনো ইউজারের নেভিগেশন না থাকে
+  _pageHistory = [];
+  const _bb = document.getElementById('backBtn');
+  if (_bb) _bb.style.display = 'none';
   document.getElementById('app').style.display = 'none';
   showLoginScreen();
 }
@@ -5623,7 +5647,30 @@ window.toggleMenu = function(el) {
   if (!isOpen) { sub.classList.add('open'); el.classList.add('open'); }
 }
 
+// ─── PAGE HISTORY (Back বাটন) ───
+let _pageHistory = [];
+let _navigatingBack = false;
+
+function updateBackBtn() {
+  const bb = document.getElementById('backBtn');
+  if (bb) bb.style.display = _pageHistory.length > 1 ? 'block' : 'none';
+}
+
+window.goBack = function() {
+  if (_pageHistory.length <= 1) return;
+  _pageHistory.pop();                                  // বর্তমান পেজ বাদ
+  const prev = _pageHistory[_pageHistory.length - 1];   // আগেরটা
+  _navigatingBack = true;
+  window.showPage(prev);
+  _navigatingBack = false;
+}
+
 window.showPage = function(pageId) {
+  if (!_navigatingBack) {
+    if (_pageHistory[_pageHistory.length - 1] !== pageId) _pageHistory.push(pageId);
+    if (_pageHistory.length > 50) _pageHistory.shift();  // মেমরি বাড়তে দেব না
+  }
+  updateBackBtn();
   document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
   const target = document.getElementById('page-' + pageId);
   if (target) { target.style.display = 'block'; window.scrollTo(0,0); }
@@ -11714,7 +11761,7 @@ function renderHalfPie(circleId, legendId, totalId, segments) {
   }).join('');
 }
 
-async function loadDashboard() {
+async function computeDashboardStats() {
   try {
     const today = todayStr();
 
@@ -11841,8 +11888,134 @@ async function loadDashboard() {
         empEl.innerHTML = html || '<p style="color:var(--text-light);font-size:13px;">কোনো সক্রিয় কর্মী নেই</p>';
       }
     }
+
+    // ── হিসাবের ফলাফল stats/dashboard ডকে সেভ করা ──
+    // পরের বার ড্যাশবোর্ড খুললে এই ১টা ডক পড়েই সব দেখাবে (১৩,০০০ read → ১ read)
+    try {
+      await db.collection('stats').doc('dashboard').set({
+        dep, loanStatus,
+        totalLoanAcc, totalDisbursed, expiredCount, totalDue, totalPrincipal, totalProfit,
+        activeCount, inactiveCount,
+        employeeHtml: (document.getElementById('employeeRecoveryList') || {}).innerHTML || '',
+        updatedAtStr: new Date().toLocaleString('bn-BD'),
+        updatedBy: currentUser ? (currentUser.name || currentUser.email || '') : '',
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch(saveErr) { console.log('stats save failed:', saveErr); }
+  } catch(e) { console.log('Dashboard recalc error:', e); toast('হিসাব করতে সমস্যা: '+e.message,'error'); }
+}
+
+// ══════════════════════════════════════
+// ─── DASHBOARD (ফ্রি টিয়ার অপ্টিমাইজড) ───
+// ══════════════════════════════════════
+// আগে প্রতিবার ড্যাশবোর্ড খুললে পুরো members + loans + depositAccounts
+// কালেকশন পড়া হতো (~১৩,০০০ Firestore read)। ৭ জন স্টাফ একবার লগইন করলেই
+// ফ্রি টিয়ারের দৈনিক ৫০,০০০ লিমিট শেষ হয়ে যেত।
+//
+// এখন: ভারী হিসাবগুলো stats/dashboard ডকে সেভ থাকে → ড্যাশবোর্ড লোডে মাত্র ১ read।
+// শুধু "আজকের কালেকশন" লাইভ পড়া হয় (তারিখ-ফিল্টার করা, তাই সস্তা)।
+// হিসাব হালনাগাদ করতে উপরের 🔄 বাটন চাপতে হয় (দিনে ১-২ বারই যথেষ্ট)।
+
+window.recalcDashboard = async function() {
+  toast('⏳ হিসাব করা হচ্ছে, একটু সময় লাগবে...', 'info');
+  await computeDashboardStats();
+  toast('✅ হিসাব হালনাগাদ হয়েছে!');
+  loadDashboard();
+}
+
+async function loadDashboard() {
+  try {
+    const today = todayStr();
+
+    // ── ১ read: সেভ করা হিসাব ──
+    let s = null;
+    try {
+      const doc = await db.collection('stats').doc('dashboard').get();
+      if (doc.exists) s = doc.data();
+    } catch(e) { console.log('stats read failed:', e); }
+
+    // প্রথমবার — কোনো সেভ করা হিসাব নেই, তাই একবার পুরো হিসাব করে নেওয়া
+    if (!s) {
+      await computeDashboardStats();
+      try {
+        const doc2 = await db.collection('stats').doc('dashboard').get();
+        if (doc2.exists) s = doc2.data();
+      } catch(e) {}
+      if (!s) return;
+    }
+
+    const dep = s.dep || { general:0, security:0, fdr:0, dps:0 };
+    const loanStatus = s.loanStatus || { regular:0, overdue:0, expired:0 };
+
+    // ── সঞ্চয় স্থিতি ──
+    renderDonutChart('savingsDonut', 'savingsDonutLegend', 'savingsDonutTotal', [
+      { label: 'সাধারণ সঞ্চয়', value: dep.general, color: '#8e44ad' },
+      { label: 'বিশেষ সঞ্চয়', value: dep.security, color: '#2ecc71' },
+      { label: 'স্থায়ী আমানত (FDR)', value: dep.fdr, color: '#3498db' },
+      { label: 'মেয়াদী আমানত (DPS)', value: dep.dps, color: '#f39c12' }
+    ]);
+    document.getElementById('d-gs').textContent = tk(dep.general);
+    document.getElementById('d-ss').textContent = tk(dep.security);
+    document.getElementById('d-fdr').textContent = tk(dep.fdr);
+    document.getElementById('d-dps').textContent = tk(dep.dps);
+
+    // ── ঋণ স্থিতি ──
+    renderDonutChart('loanDonut', 'loanDonutLegend', 'loanDonutTotal', [
+      { label: 'Regular Term Loan', value: loanStatus.regular, color: '#2ecc71' },
+      { label: 'Total Loan Overdue', value: loanStatus.overdue, color: '#f39c12' },
+      { label: 'Total Expire Amount', value: loanStatus.expired, color: '#e74c3c' }
+    ]);
+    document.getElementById('totalLoanAcc').textContent = s.totalLoanAcc || 0;
+    document.getElementById('expiredLoan').textContent = s.expiredCount || 0;
+    document.getElementById('totalDisbursed').textContent = tk(s.totalDisbursed || 0);
+    document.getElementById('totalPrincipal').textContent = tk(s.totalPrincipal || 0);
+    document.getElementById('totalInterest').textContent = tk(s.totalProfit || 0);
+
+    // ── সদস্য তথ্য ──
+    renderHalfPie('memberDonut', 'memberDonutLegend', 'memberDonutTotal', [
+      { label: 'Active', value: s.activeCount || 0, color: '#2ecc71' },
+      { label: 'Inactive', value: s.inactiveCount || 0, color: '#e74c3c' }
+    ]);
+
+    // ── কর্মচারীর ঋণ আদায়ের হার (সেভ করা HTML) ──
+    const empEl = document.getElementById('employeeRecoveryList');
+    if (empEl) empEl.innerHTML = s.employeeHtml || '<p style="color:var(--text-light);font-size:13px;">হিসাব করতে 🔄 চাপুন</p>';
+
+    // ── আজকের কালেকশন (লাইভ, তারিখ-ফিল্টার করা তাই সস্তা) ──
+    const [instSnap, depTxSnap, disbSnap] = await Promise.all([
+      db.collection('loanInstallments').where('instDate','==',today).get(),
+      db.collection('depositTransactions').where('date','==',today).get(),
+      db.collection('loans').where('startDate','==',today).get()
+    ]);
+    let todayCollect = 0;
+    instSnap.forEach(d => todayCollect += (Number(d.data().amount)||0));
+    let todayDeposit = 0, todayDepositPayment = 0;
+    depTxSnap.forEach(d => {
+      const t = d.data();
+      const amt = Number(t.amount)||0;
+      if (t.type === 'credit') todayDeposit += amt; else if (t.type === 'debit') todayDepositPayment += amt;
+    });
+    let todayDisb = 0;
+    disbSnap.forEach(d => todayDisb += (Number(d.data().amount)||0));
+
+    const totalDue = s.totalDue || 0;
+    document.getElementById('ds-loanTarget').textContent = tk(totalDue);
+    document.getElementById('ds-loanCollect').textContent = tk(todayCollect);
+    document.getElementById('ds-loanDue').textContent = tk(Math.max(0, totalDue - todayCollect));
+    document.getElementById('ds-disbursment').textContent = tk(todayDisb);
+    document.getElementById('ds-depositReceive').textContent = tk(todayDeposit);
+    document.getElementById('ds-depositPayment').textContent = tk(todayDepositPayment);
+    const targetPct = totalDue > 0 ? Math.min(100, Math.round(todayCollect/totalDue*100)) : 0;
+    const tpEl = document.getElementById('targetPercent'); if (tpEl) tpEl.textContent = targetPct + '%';
+
+    // ── শেষ হিসাবের সময় দেখানো ──
+    const stampEl = document.getElementById('statsStamp');
+    if (stampEl) {
+      stampEl.textContent = s.updatedAtStr ? ('শেষ হিসাব: ' + s.updatedAtStr) : 'হিসাব করা হয়নি';
+    }
   } catch(e) { console.log('Dashboard error:', e); }
 }
+
 
 // ══════════════════════════════════════
 // ─── MEMBERS ───
@@ -12027,6 +12200,7 @@ window.showMemberProfile = async function(id) {
           </div>` : ''}
           <div style="display:flex;gap:8px;">
             <button onclick="this.closest('div[style*=fixed]').remove()" style="flex:1;padding:10px;background:var(--border);border:none;border-radius:7px;cursor:pointer;font-family:inherit;">বন্ধ করুন</button>
+            <button onclick="editMember('${id}');this.closest('div[style*=fixed]').remove()" style="flex:1;padding:10px;background:var(--warning);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:inherit;">✏️ সম্পাদনা</button>
             <button onclick="openLoanForMember('${m.memberId}');this.closest('div[style*=fixed]').remove()" style="flex:1;padding:10px;background:var(--primary);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:inherit;">💰 ঋণ দেখুন</button>
           </div>
         </div>
@@ -14618,44 +14792,13 @@ window.saveJournalVoucher = async function() {
 }
 
 // ══════════════════════════════════════
-// ─── BUTTON CLICK HANDLERS (HTML buttons) ───
+// ─── BUTTON CLICK HANDLERS (সরানো হয়েছে) ───
 // ══════════════════════════════════════
-document.addEventListener('click', e => {
-  const btn = e.target.closest('button.btn');
-  if (!btn) return;
-  const text = btn.textContent.trim();
-  const page = btn.closest('.page');
-  if (!page) return;
-  const pid = page.id.replace('page-','');
-
-  if (text.includes('সদস্য সংরক্ষণ')) window.saveMember();
-  else if (text.includes('সঞ্চয় জমা করুন')) window.saveDepositReceive();
-  else if (text.includes('ঋণ একাউন্ট খুলুন') && pid==='loanAccountOpen') window.saveLoan();
-  else if (text.includes('ঋণ প্রস্তাব') && pid==='loanProposal') window.saveLoanProposal();
-  else if (text.includes('শেয়ার পেমেন্ট')) window.saveSharePayment();
-  else if (text.includes('ট্রানজেকশন সম্পন্ন')) window.saveInterBranch();
-  else if (text.includes('ইউজার তৈরি')) window.saveUser();
-  else if (text.includes('শাখা যোগ')) window.saveBranch();
-  else if (text.includes('সমিতি সংরক্ষণ')) window.saveSamity();
-  else if (text.includes('ছুটি যোগ')) window.saveHoliday();
-  else if (text.includes('নোটিশ প্রকাশ')) window.saveNotice();
-  else if (text.includes('পরিচালক যোগ')) window.saveDirector();
-  else if (text.includes('কর্মী নিবন্ধন')) window.saveEmployee();
-  else if (text.includes('মওকুফ নিশ্চিত')) window.saveLoanWaiver();
-  else if (text.includes('পুনঃতফসিল করুন')) window.saveLoanReschedule();
-  else if (text.includes('কর্মী ঋণ খুলুন')) window.saveStaffLoan();
-  else if (text.includes('DPS জমা')) window.saveDpsDeposit();
-  else if (text.includes('জরিমানা যোগ')) window.saveEmiPenalty();
-  else if (text.includes('বেতন সেটআপ সংরক্ষণ')) window.saveSalarySetup();
-  else if (text.includes('ভাউচার পোস্ট')) window.saveJournalVoucher();
-  else if (text.includes('একাউন্ট খুলুন') && pid==='depositAccountOpen') {
-    const activeTab = page.querySelector('.tab-content.active');
-    if (activeTab?.id==='tab-savings') window.saveDepositAccount('savings');
-    else if (activeTab?.id==='tab-special') window.saveDepositAccount('special');
-    else if (activeTab?.id==='tab-fdr') window.saveDepositAccount('fdr');
-    else if (activeTab?.id==='tab-dps') window.saveDepositAccount('dps');
-  }
-});
+// এখানে আগে একটা global click delegate ছিল যেটা বাটনের টেক্সট মিলিয়ে
+// save ফাংশন কল করত। কিন্তু ঐ বাটনগুলোতে onclick ও ছিল, ফলে একবার ক্লিকে
+// ফাংশন দুইবার চলত → Firestore-এ ডুপ্লিকেট এন্ট্রি (শেয়ার পেমেন্ট, ঋণ মওকুফ,
+// DPS জমা, জরিমানা, আন্তঃশাখা লেনদেন, জার্নাল ভাউচার)।
+// সব বাটনে সরাসরি onclick আছে, তাই এই ব্লকটা পুরোপুরি সরানো হলো।
 
 // ─── PREVIEW IMAGE ───
 window.previewImage = function(input, previewId) {
@@ -14744,6 +14887,221 @@ window.searchModules = function(val) {
     </div>`
   ).join('');
 }
+
+// ══════════════════════════════════════
+// ─── সদস্য সম্পাদনা (Member Edit) ───
+// ══════════════════════════════════════
+// আগে সদস্য তৈরি করার পর ভুল নাম/মোবাইল/NID ঠিক করার কোনো উপায় ছিল না।
+// এখানে একটা মডাল দিয়ে মূল ফিল্ডগুলো সম্পাদনা করা যায়।
+// মনে রাখবেন: memberId কখনো বদলানো যাবে না (সব লেনদেন ওটার সাথে বাঁধা)।
+
+window.editMember = async function(docId) {
+  try {
+    const doc = await db.collection('members').doc(docId).get();
+    if (!doc.exists) { toast('সদস্য পাওয়া যায়নি!','error'); return; }
+    const m = doc.data();
+
+    const esc = s => String(s == null ? '' : s).replace(/"/g,'&quot;');
+    const opts = (list, cur) => list.map(v =>
+      `<option value="${esc(v)}"${String(cur||'') === String(v) ? ' selected' : ''}>${v || '— বাছুন —'}</option>`
+    ).join('');
+
+    const modal = document.createElement('div');
+    modal.id = 'memberEditModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:900;display:flex;align-items:center;justify-content:center;padding:16px;';
+    modal.innerHTML = `
+      <div style="background:#fff;border-radius:12px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;">
+        <div style="background:var(--primary);color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:2;">
+          <span style="font-weight:700;font-size:15px;">✏️ সদস্য তথ্য সম্পাদনা</span>
+          <button onclick="document.getElementById('memberEditModal').remove()" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">×</button>
+        </div>
+        <div style="padding:16px;">
+          <div style="background:#e8f4fd;border-radius:7px;padding:8px 12px;margin-bottom:12px;font-size:12px;">
+            সদস্য আইডি <b>${esc(m.memberId)}</b> — এটা পরিবর্তন করা যাবে না
+          </div>
+          <input type="hidden" id="meDocId" value="${esc(docId)}">
+          <div class="form-row col2">
+            <div class="form-group"><label>পুরো নাম *</label><input type="text" id="meName" value="${esc(m.name)}"></div>
+            <div class="form-group"><label>মোবাইল *</label><input type="tel" id="meMobile" value="${esc(m.mobile)}"></div>
+          </div>
+          <div class="form-row col2">
+            <div class="form-group"><label>পিতার নাম</label><input type="text" id="meFather" value="${esc(m.fatherName)}"></div>
+            <div class="form-group"><label>মাতার নাম</label><input type="text" id="meMother" value="${esc(m.motherName)}"></div>
+          </div>
+          <div class="form-row col2">
+            <div class="form-group"><label>স্বামী / স্ত্রী</label><input type="text" id="meSpouse" value="${esc(m.spouseName)}"></div>
+            <div class="form-group"><label>বৈবাহিক অবস্থা</label><select id="meMarital">${opts(['অবিবাহিত','বিবাহিত','বিধবা/বিপত্নীক','তালাকপ্রাপ্ত'], m.maritalStatus)}</select></div>
+          </div>
+          <div class="form-row col2">
+            <div class="form-group"><label>জাতীয় পরিচয়পত্র নং</label><input type="text" id="meNid" value="${esc(m.nid)}"></div>
+            <div class="form-group"><label>জন্ম তারিখ</label><input type="date" id="meDob" value="${esc(m.dob)}"></div>
+          </div>
+          <div class="form-row col2">
+            <div class="form-group"><label>লিঙ্গ</label><select id="meGender">${opts(['পুরুষ','মহিলা','অন্যান্য'], m.gender)}</select></div>
+            <div class="form-group"><label>রক্তের গ্রুপ</label><select id="meBlood">${opts(['','A+','A-','B+','B-','AB+','AB-','O+','O-'], m.bloodGroup)}</select></div>
+          </div>
+          <div class="form-row col2">
+            <div class="form-group"><label>ধর্ম</label><select id="meReligion">${opts(['ইসলাম','হিন্দু','খ্রিস্টান','বৌদ্ধ','অন্যান্য'], m.religion)}</select></div>
+            <div class="form-group"><label>পেশা</label><input type="text" id="meOccupation" value="${esc(m.occupation)}"></div>
+          </div>
+          <div class="form-row col2">
+            <div class="form-group"><label>শাখা</label><select id="meBranch"><option value="">— বাছুন —</option></select></div>
+            <div class="form-group"><label>সমিতি</label><select id="meSamity"><option value="">— বাছুন —</option></select></div>
+          </div>
+          <div class="form-row col2">
+            <div class="form-group"><label>ই-মেইল</label><input type="email" id="meEmail" value="${esc(m.email)}"></div>
+            <div class="form-group"><label>স্ট্যাটাস</label><select id="meStatus">${opts(['active','inactive'], m.status)}</select></div>
+          </div>
+          <div class="form-row col2">
+            <div class="form-group"><label>বর্তমান ঠিকানা</label><textarea rows="2" id="meCurrentAddr">${esc(m.currentAddress)}</textarea></div>
+            <div class="form-group"><label>স্থায়ী ঠিকানা</label><textarea rows="2" id="mePermanentAddr">${esc(m.permanentAddress)}</textarea></div>
+          </div>
+          <div style="background:#f0faf4;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;color:var(--success);margin-bottom:8px;font-size:13px;">👤 নমিনির তথ্য</div>
+            <div class="form-row col2">
+              <div class="form-group"><label>নমিনির নাম</label><input type="text" id="meNomineeName" value="${esc(m.nomineeName)}"></div>
+              <div class="form-group"><label>মোবাইল</label><input type="tel" id="meNomineeMobile" value="${esc(m.nomineeMobile)}"></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById('memberEditModal').remove()">বাতিল</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="updateMember()">💾 আপডেট করুন</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+
+    // শাখা ও সমিতি ড্রপডাউন ভরে বর্তমান মান সিলেক্ট করা
+    await loadBranchesIntoSelect('meBranch');
+    const bSel = document.getElementById('meBranch');
+    if (bSel && m.branch) bSel.value = m.branch;
+    await loadSamitiesIntoSelect('meSamity','meBranch');
+    const sSel = document.getElementById('meSamity');
+    if (sSel && m.samity) sSel.value = m.samity;
+    if (bSel) bSel.onchange = () => loadSamitiesIntoSelect('meSamity','meBranch');
+
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+window.updateMember = async function() {
+  const docId = document.getElementById('meDocId')?.value;
+  const name = document.getElementById('meName')?.value?.trim();
+  const mobile = document.getElementById('meMobile')?.value?.trim();
+  if (!docId) { toast('সদস্য পাওয়া যায়নি!','error'); return; }
+  if (!name || !mobile) { toast('নাম ও মোবাইল আবশ্যক!','error'); return; }
+
+  const g = id => document.getElementById(id)?.value?.trim() || '';
+  try {
+    await db.collection('members').doc(docId).update({
+      name, mobile,
+      fatherName: g('meFather'),
+      motherName: g('meMother'),
+      spouseName: g('meSpouse'),
+      maritalStatus: g('meMarital'),
+      nid: g('meNid'),
+      dob: g('meDob'),
+      gender: g('meGender'),
+      bloodGroup: g('meBlood'),
+      religion: g('meReligion'),
+      occupation: g('meOccupation'),
+      branch: g('meBranch'),
+      samity: g('meSamity'),
+      email: g('meEmail'),
+      status: g('meStatus') || 'active',
+      currentAddress: g('meCurrentAddr'),
+      permanentAddress: g('mePermanentAddr'),
+      nomineeName: g('meNomineeName'),
+      nomineeMobile: g('meNomineeMobile'),
+      updatedBy: currentUser ? currentUser.uid : '',
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ সদস্যের তথ্য আপডেট হয়েছে!');
+    window.invalidateMembersCache();
+    invalidateRefCache('members_all');
+    const modal = document.getElementById('memberEditModal');
+    if (modal) modal.remove();
+    // সদস্য তালিকা পেজে থাকলে রিফ্রেশ
+    const listPage = document.getElementById('page-memberList');
+    if (listPage && listPage.style.display !== 'none') searchMembersAdvanced();
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+// ══════════════════════════════════════
+// ─── DOUBLE-CLICK / DOUBLE-SUBMIT গার্ড ───
+// ══════════════════════════════════════
+// নেট স্লো হলে ক্যাশিয়ার দুইবার চাপলে আগে ডাবল এন্ট্রি হতো।
+// এখন প্রতিটা save/receive ফাংশন চলাকালীন সেটা লক থাকে ও বাটন disable হয়।
+
+let _lastClickedBtn = null;
+// capture phase — inline onclick চলার আগেই কোন বাটন চাপা হয়েছে সেটা ধরে রাখে।
+// এটা শুধু রেকর্ড করে, কোনো ফাংশন কল করে না।
+document.addEventListener('click', e => {
+  _lastClickedBtn = (e.target && e.target.closest) ? e.target.closest('button') : null;
+}, true);
+
+const _busyFns = new Set();
+
+function _guardWrite(name) {
+  const original = window[name];
+  if (typeof original !== 'function') return;   // ফাংশন না থাকলে চুপচাপ বাদ
+  if (original._guarded) return;                // দুইবার wrap হওয়া ঠেকানো
+
+  const wrapped = async function(...args) {
+    if (_busyFns.has(name)) {
+      toast('⏳ আগেরটা প্রসেস হচ্ছে, একটু অপেক্ষা করুন', 'info');
+      return;
+    }
+    _busyFns.add(name);
+    const btn = _lastClickedBtn;
+    let oldHtml = null;
+    if (btn) {
+      oldHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+      btn.innerHTML = '⏳ অপেক্ষা করুন...';
+    }
+    try {
+      return await original.apply(this, args);
+    } finally {
+      _busyFns.delete(name);
+      if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = '';
+        if (oldHtml !== null) btn.innerHTML = oldHtml;
+      }
+    }
+  };
+  wrapped._guarded = true;
+  window[name] = wrapped;
+}
+
+// যেসব ফাংশন Firestore-এ লেখে — সবগুলো গার্ড করা হলো
+[
+  // লোন
+  'receiveLoanInstallment','saveLoanAccountNew','saveLoanReschedule','saveLoanWaiver',
+  'saveEmiPenalty','saveLoanProposal','cancelLoanInstallment',
+  // ডিপোজিট
+  'receiveDeposit','payDeposit','transferDeposit','closeDepositAccount','addDepositBlock',
+  'saveDepositAccountNew','saveDepositProfitPayment','confirmDepositProfitDistribution',
+  'saveDepositBlockClear','saveDpsDeposit',
+  // সদস্য / শেয়ার / কালেকশন
+  'saveMember','updateMember','closeMemberAccount','submitMemberTransfer',
+  'submitMemberCollection','issuePassbook','saveSharePayment','saveShareReceive',
+  // কর্মী ঋণ
+  'saveStaffLoan','receiveStaffInstallment','cancelStaffInstallment',
+  // অ্যাকাউন্টস (AIS)
+  'postAccountTransaction','submitContraVoucher','saveJournalVoucher','createLedger','seedDefaultCOA',
+  // আন্তঃ শাখা
+  'submitFundTransferReq','approveTransfer','rejectTransfer','saveInterBranch',
+  // বেতন
+  'saveSalarySetup','submitSalaryDisbursement',
+  // সেটআপ / ইউজার
+  'saveBranch','saveSamity','saveEmployee','saveDirector','saveHoliday','saveNotice',
+  'saveSamityDayChange','saveBranchSamityTransfer','startClosingBusinessDay',
+  'createStaffUser','resetUserPassword','saveUserPermissions','saveGroupPermissions',
+  // ড্যাশবোর্ড হিসাব — ভারী কাজ, দুইবার একসাথে চলা ঠেকানো
+  'recalcDashboard'
+].forEach(_guardWrite);
 
 </script>
 
