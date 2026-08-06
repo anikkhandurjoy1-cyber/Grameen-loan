@@ -1957,14 +1957,28 @@ table tr:hover td{background:#f7fafd;}
           <tr><td style="padding:4px 0;color:var(--text-light);">Total Withdrawal</td><td style="text-align:right;color:var(--danger);" id="drInfoWithdraw">0.00</td></tr>
           <tr><td style="padding:4px 0;color:var(--text-light);border-top:1px solid var(--border);">Account Balance</td><td style="text-align:right;font-weight:700;border-top:1px solid var(--border);" id="drInfoBalance">0.00</td></tr>
         </table>
+        <div id="drMemberMedia" style="margin-top:12px;display:none;">
+          <div style="display:flex;gap:10px;">
+            <div style="flex:1;text-align:center;">
+              <div style="font-size:11px;color:var(--text-light);margin-bottom:4px;">ছবি</div>
+              <img id="drMemberPhoto" src="" style="width:100%;max-height:110px;object-fit:cover;border:1px solid var(--border);border-radius:6px;display:none;">
+              <div id="drMemberPhotoNone" style="font-size:11px;color:var(--text-light);padding:16px 0;">👤 নেই</div>
+            </div>
+            <div style="flex:1;text-align:center;">
+              <div style="font-size:11px;color:var(--text-light);margin-bottom:4px;">স্বাক্ষর</div>
+              <img id="drMemberSign" src="" style="width:100%;max-height:110px;object-fit:contain;border:1px solid var(--border);border-radius:6px;display:none;">
+              <div id="drMemberSignNone" style="font-size:11px;color:var(--text-light);padding:16px 0;">✍️ নেই</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="card" style="margin-top:14px;">
       <div class="card-title">সঞ্চয় জমার হিস্টোরি</div>
       <div style="overflow-x:auto;">
         <table class="data-table" style="width:100%;font-size:12px;">
-          <thead><tr><th>তারিখ</th><th>জমা (Credit)</th><th>উত্তোলন (Debit)</th><th>মন্তব্য</th><th>Posted By</th></tr></thead>
-          <tbody id="drHistoryBody"><tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr></tbody>
+          <thead><tr><th>তারিখ</th><th>জমা (Credit)</th><th>উত্তোলন (Debit)</th><th>মন্তব্য</th><th>Posted By</th><th>Action</th></tr></thead>
+          <tbody id="drHistoryBody"><tr><td colspan="6" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -2033,8 +2047,8 @@ table tr:hover td{background:#f7fafd;}
       <div class="card-title">লেনদেন হিস্টোরি</div>
       <div style="overflow-x:auto;">
         <table class="data-table" style="width:100%;font-size:12px;">
-          <thead><tr><th>তারিখ</th><th>জমা (Credit)</th><th>উত্তোলন (Debit)</th><th>মন্তব্য</th><th>Posted By</th></tr></thead>
-          <tbody id="dpHistoryBody"><tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr></tbody>
+          <thead><tr><th>তারিখ</th><th>জমা (Credit)</th><th>উত্তোলন (Debit)</th><th>মন্তব্য</th><th>Posted By</th><th>Action</th></tr></thead>
+          <tbody id="dpHistoryBody"><tr><td colspan="6" style="text-align:center;color:var(--text-light);padding:14px;">একাউন্ট বাছুন</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -2684,6 +2698,15 @@ table tr:hover td{background:#f7fafd;}
   <!-- ════ USER LIST ════ -->
   <div id="page-userListPage" class="page" style="display:none;">
     <div class="page-title">👥 ইউজার তালিকা (User List)</div>
+    <div class="card">
+      <div class="alert alert-warning" style="font-size:12px;line-height:1.6;">
+        <div>
+          <b>🔑 doc ID চেক:</b> Firestore security rules কাজ করার জন্য প্রতিটা ইউজারের doc ID = তার Auth UID হতে হবে।
+          পুরনো পদ্ধতিতে বানানো ইউজারদের ID random ছিল। নিচের বাটন চেপে একবারে ঠিক করে নিন।
+        </div>
+      </div>
+      <button class="btn btn-warning" onclick="migrateUserDocIds()">🔑 ইউজার doc ID চেক ও ঠিক করুন</button>
+    </div>
     <div class="card">
       <div class="table-wrap">
         <table>
@@ -6682,6 +6705,27 @@ window.loadDepositAccountDetails = async function(prefix, accDocId) {
       const payEl = document.getElementById('dcPayable');
       if (payEl) payEl.value = tk(Math.max((a.balance||0) - charge, 0));
     }
+
+    // ── সদস্যের ছবি ও স্বাক্ষর দেখানো (শুধু dr প্যানেলে) ──
+    const mediaBox = document.getElementById(prefix + 'MemberMedia');
+    if (mediaBox && a.memberId) {
+      try {
+        const mSnap = await db.collection('members').where('memberId','==',String(a.memberId)).limit(1).get();
+        if (!mSnap.empty) {
+          const m = mSnap.docs[0].data();
+          mediaBox.style.display = 'block';
+          const photo = document.getElementById(prefix + 'MemberPhoto');
+          const photoNone = document.getElementById(prefix + 'MemberPhotoNone');
+          if (m.photoUrl) { photo.src = m.photoUrl; photo.style.display = 'block'; photoNone.style.display = 'none'; }
+          else { photo.style.display = 'none'; photoNone.style.display = 'block'; }
+          const sign = document.getElementById(prefix + 'MemberSign');
+          const signNone = document.getElementById(prefix + 'MemberSignNone');
+          if (m.signatureUrl) { sign.src = m.signatureUrl; sign.style.display = 'block'; signNone.style.display = 'none'; }
+          else { sign.style.display = 'none'; signNone.style.display = 'block'; }
+        }
+      } catch(mErr) { console.log('member media load failed:', mErr); }
+    }
+
     searchDepositHistory(prefix, accDocId);
   } catch(e) {}
 }
@@ -6764,19 +6808,80 @@ window.searchDepositHistory = async function(prefix, accDocId) {
       getEmployeeNameMap()
     ]);
     const rows = [];
-    snap.forEach(d => rows.push(d.data()));
+    snap.forEach(d => rows.push({ _id: d.id, ...d.data() }));
     rows.sort((a,b) => (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
+    const canCancel = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Branch Manager');
     let html = '';
     rows.forEach(r => {
       const credit = r.type === 'credit' ? tk(r.amount) : '—';
       const debit = r.type === 'debit' ? tk(r.amount) : '—';
       const postedBy = employeeNameFor(empMap, r.createdBy);
-      html += `<tr><td>${r.date||'—'}</td><td style="color:var(--success);">${credit}</td><td style="color:var(--danger);">${debit}</td><td>${r.comment||'—'}</td><td>${postedBy}</td></tr>`;
+      if (r.cancelled) {
+        // বাতিল করা লেনদেন — কে বাতিল করল সেটাসহ দেখানো
+        const cancelledBy = employeeNameFor(empMap, r.cancelledBy);
+        html += `<tr style="opacity:.6;background:#fff5f5;">
+          <td>${r.date||'—'}</td>
+          <td style="text-decoration:line-through;color:var(--text-light);">${credit}</td>
+          <td style="text-decoration:line-through;color:var(--text-light);">${debit}</td>
+          <td><span style="color:var(--danger);font-size:11px;">⛔ বাতিল — ${cancelledBy}</span></td>
+          <td>${postedBy}</td>
+          <td style="text-align:center;color:var(--text-light);font-size:11px;">—</td></tr>`;
+      } else {
+        const cancelBtn = canCancel
+          ? `<button class="btn btn-danger btn-sm" style="padding:2px 8px;font-size:11px;" onclick="cancelDeposit('${r._id}','${prefix}','${accDocId}')">বাতিল</button>`
+          : '<span style="color:var(--text-light);font-size:11px;">—</span>';
+        html += `<tr><td>${r.date||'—'}</td>
+          <td style="color:var(--success);">${credit}</td>
+          <td style="color:var(--danger);">${debit}</td>
+          <td>${r.comment||'—'}</td>
+          <td>${postedBy}</td>
+          <td style="text-align:center;">${cancelBtn}</td></tr>`;
+      }
     });
-    tbody.innerHTML = html || '<tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:14px;">কোনো লেনদেন নেই</td></tr>';
+    tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:var(--text-light);padding:14px;">কোনো লেনদেন নেই</td></tr>';
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--danger);">Error: ${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--danger);">Error: ${e.message}</td></tr>`;
   }
+}
+
+// ── সঞ্চয় লেনদেন বাতিল (Cancel Deposit Transaction) ──
+// লেনদেন মুছে ফেলা হয় না — cancelled:true মার্ক করা হয় (audit trail),
+// ব্যালেন্স উল্টো দিকে ঠিক করা হয়, আর কে বাতিল করল তা সেভ করা হয়।
+window.cancelDeposit = async function(txId, prefix, accDocId) {
+  if (!currentUser || (currentUser.role !== 'Admin' && currentUser.role !== 'Branch Manager')) {
+    toast('⛔ শুধু Admin বা শাখা ব্যবস্থাপক বাতিল করতে পারবেন!','error'); return;
+  }
+  if (!confirm('এই লেনদেনটি বাতিল করবেন? ব্যালেন্স ঠিক করে দেওয়া হবে।')) return;
+  try {
+    const txRef = db.collection('depositTransactions').doc(txId);
+    const txSnap = await txRef.get();
+    if (!txSnap.exists) { toast('লেনদেন পাওয়া যায়নি!','error'); return; }
+    const tx = txSnap.data();
+    if (tx.cancelled) { toast('এটি আগেই বাতিল করা হয়েছে!','error'); return; }
+
+    const accRef = db.collection('depositAccounts').doc(tx.accDocId || accDocId);
+    const accSnap = await accRef.get();
+    if (!accSnap.exists) { toast('একাউন্ট পাওয়া যায়নি!','error'); return; }
+    const a = accSnap.data();
+    const amt = Number(tx.amount)||0;
+
+    // credit বাতিল হলে ব্যালেন্স কমবে, debit বাতিল হলে বাড়বে
+    const newBalance = tx.type === 'credit' ? (a.balance||0) - amt : (a.balance||0) + amt;
+
+    await txRef.update({
+      cancelled: true,
+      cancelledBy: currentUser.uid,
+      cancelledByName: currentUser.name || currentUser.email || '',
+      cancelledAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    const upd = { balance: newBalance };
+    if (tx.type === 'credit') upd.totalDeposit  = firebase.firestore.FieldValue.increment(-amt);
+    else                      upd.totalWithdraw = firebase.firestore.FieldValue.increment(-amt);
+    await accRef.update(upd);
+
+    toast('✅ লেনদেন বাতিল হয়েছে, ব্যালেন্স ঠিক করা হয়েছে');
+    loadDepositAccountDetails(prefix, tx.accDocId || accDocId);
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
 }
 
 // Deposit Transfer (between two accounts)
@@ -11564,12 +11669,12 @@ async function loadMembersIntoSelect(selectId, searchTerm) {
       snap.forEach(d => _allMembersCache.push(d.data()));
     }
     let rows = _allMembersCache.slice();
-    const term = (searchTerm||'').trim();
+    const term = (searchTerm||'').trim().toLowerCase();
     if (term) {
       rows = rows.filter(m =>
-        String(m.memberId||'').startsWith(term) ||
-        (m.name||'').includes(term) ||
-        (m.mobile||'').includes(term)
+        String(m.memberId||'').toLowerCase().includes(term) ||
+        String(m.name||'').toLowerCase().includes(term) ||
+        String(m.mobile||'').includes(term)
       );
     }
     // সংখ্যাসূচক আইডি হলে সংখ্যা অনুযায়ী, নাহলে নাম অনুযায়ী সাজানো
@@ -12061,8 +12166,25 @@ window.saveMember = async function() {
 
   try {
     const memberId = await getNextMemberId();
+
+    // ── সদস্যের ছবি ও স্বাক্ষর আপলোড (imgbb) ──
+    // আগে ফর্মে ছবি তোলা যেত কিন্তু কোথাও সেভ হতো না, তাই প্রোফাইলে দেখাত না।
+    let photoUrl = '', signatureUrl = '';
+    const photoFile = document.getElementById('memberProfilePic')?.files?.[0];
+    const signFile  = document.getElementById('memberSignaturePic')?.files?.[0];
+    if (photoFile) {
+      try { photoUrl = await uploadImageToImgbb(photoFile); }
+      catch(err) { toast('⚠️ ছবি আপলোড ব্যর্থ, বাকি তথ্য সংরক্ষণ হচ্ছে','error'); }
+    }
+    if (signFile) {
+      try { signatureUrl = await uploadImageToImgbb(signFile); }
+      catch(err) { toast('⚠️ স্বাক্ষর আপলোড ব্যর্থ, বাকি তথ্য সংরক্ষণ হচ্ছে','error'); }
+    }
+
     const data = {
       memberId,
+      photoUrl,
+      signatureUrl,
       name: inputs[0]?.value?.trim()||'',
       mobile: p.querySelector('input[type="tel"]')?.value?.trim()||'',
       fatherName: inputs[2]?.value?.trim()||'',
@@ -12108,6 +12230,10 @@ window.saveMember = async function() {
     // Clear form
     p.querySelectorAll('input:not([type="file"])').forEach(i => { if(!i.readOnly) i.value=''; });
     p.querySelectorAll('textarea').forEach(t => t.value='');
+    p.querySelectorAll('input[type="file"]').forEach(f => f.value='');
+    ['memberProfilePreview','memberSignaturePreview'].forEach(id => {
+      const el = document.getElementById(id); if (el) { el.src=''; el.style.display='none'; }
+    });
 
     window.showPage('memberList');
   } catch(e) {
@@ -12836,7 +12962,10 @@ window.createStaffUser = async function() {
     // if a saved group permission exists, prefer it
     try { const gp = await db.collection('groupPermissions').doc(role).get(); if (gp.exists && Array.isArray(gp.data().pages)) pages = gp.data().pages; } catch(e){}
 
-    await db.collection('users').add({
+    // ⚠️ গুরুত্বপূর্ণ: doc ID অবশ্যই Auth UID হতে হবে।
+    // Firestore security rules users/{request.auth.uid} দিয়ে রোল পড়ে —
+    // random ID হলে rules ইউজারকে চিনতে পারে না, সব কাজ ব্লক হয়ে যায়।
+    await db.collection('users').doc(apiData.uid).set({
       name, email, role, branch, mobile, empDocId,
       authUid: apiData.uid,
       depositLimit: Number(document.getElementById('cuDepositLimit')?.value)||0,
@@ -14889,6 +15018,56 @@ window.searchModules = function(val) {
 }
 
 // ══════════════════════════════════════
+// ─── ইউজার doc ID মাইগ্রেশন (একবারের কাজ) ───
+// ══════════════════════════════════════
+// পুরনো createStaffUser() .add() ব্যবহার করত, ফলে users ডকের ID random হতো
+// আর আসল Auth UID শুধু authUid ফিল্ডে থাকত।
+// কিন্তু Firestore security rules users/{request.auth.uid} দিয়ে রোল পড়ে —
+// তাই ID অবশ্যই UID হতে হবে, নাহলে rules চালু করলে ঐ ইউজাররা আটকে যাবে।
+// এই ফাংশন প্রতিটা ভুল ডক UID নামে নতুন করে বানিয়ে পুরনোটা মুছে দেয়।
+
+window.migrateUserDocIds = async function() {
+  try {
+    const snap = await db.collection('users').get();
+    const wrong = [], noUid = [];
+    snap.forEach(d => {
+      const u = d.data();
+      if (!u.authUid) { noUid.push({ id: d.id, name: u.name || u.email || d.id }); return; }
+      if (d.id !== u.authUid) wrong.push({ id: d.id, uid: u.authUid, data: u, name: u.name || u.email || d.id });
+    });
+
+    if (!wrong.length && !noUid.length) {
+      toast('✅ সব ইউজারের doc ID ঠিক আছে — কিছু করার নেই!');
+      return;
+    }
+
+    let msg = '';
+    if (wrong.length) msg += `${wrong.length} টি ইউজারের doc ID ঠিক করা হবে:\n` + wrong.map(w => '• ' + w.name).join('\n') + '\n\n';
+    if (noUid.length) msg += `⚠️ ${noUid.length} টি ইউজারের authUid নেই, এগুলো হাতে ঠিক করতে হবে:\n` + noUid.map(w => '• ' + w.name).join('\n') + '\n\n';
+    if (!wrong.length) { alert(msg); return; }
+    msg += 'চালিয়ে যাবেন?';
+    if (!confirm(msg)) return;
+
+    let done = 0, failed = 0;
+    for (const w of wrong) {
+      try {
+        // একই UID-তে আগে থেকে ডক থাকলে ওভাররাইট করব না
+        const existing = await db.collection('users').doc(w.uid).get();
+        if (existing.exists) { failed++; continue; }
+        await db.collection('users').doc(w.uid).set(w.data);
+        await db.collection('users').doc(w.id).delete();
+        done++;
+      } catch(e) { failed++; console.log('migrate failed for', w.name, e); }
+    }
+
+    _employeeNameCache = null;   // "Posted By" ম্যাপ নতুন করে বানাতে হবে
+    toast(`✅ ${done} টি ঠিক হয়েছে${failed ? `, ${failed} টি ব্যর্থ` : ''}`);
+    if (noUid.length) alert(`⚠️ এই ${noUid.length} টি ইউজারের authUid নেই — Firebase Authentication → Users থেকে UID কপি করে হাতে ঠিক করতে হবে:\n\n` + noUid.map(w => '• ' + w.name).join('\n'));
+    loadUserListPage();
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+// ══════════════════════════════════════
 // ─── সদস্য সম্পাদনা (Member Edit) ───
 // ══════════════════════════════════════
 // আগে সদস্য তৈরি করার পর ভুল নাম/মোবাইল/NID ঠিক করার কোনো উপায় ছিল না।
@@ -14963,6 +15142,30 @@ window.editMember = async function(docId) {
               <div class="form-group"><label>মোবাইল</label><input type="tel" id="meNomineeMobile" value="${esc(m.nomineeMobile)}"></div>
             </div>
           </div>
+          <div style="background:#fdf6f0;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;color:var(--primary);margin-bottom:8px;font-size:13px;">📷 ছবি ও স্বাক্ষর</div>
+            <div style="font-size:11px;color:var(--text-light);margin-bottom:10px;">নতুন ছবি বাছলে পুরনোটা বদলে যাবে। খালি রাখলে আগেরটাই থাকবে।</div>
+            <div class="form-row col2">
+              <div class="form-group">
+                <label>সদস্যের ছবি</label>
+                <div style="display:flex;gap:10px;align-items:center;">
+                  <div style="width:70px;height:70px;border:1px solid var(--border);border-radius:6px;overflow:hidden;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">
+                    <img id="mePhotoPreview" src="${m.photoUrl ? esc(m.photoUrl) : ''}" style="width:100%;height:100%;object-fit:cover;${m.photoUrl ? '' : 'display:none;'}"><span ${m.photoUrl ? 'style="display:none;"' : ''}>👤</span>
+                  </div>
+                  <input type="file" accept="image/*" id="mePhotoFile" onchange="previewImage(this,'mePhotoPreview')" style="flex:1;font-size:12px;">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>স্বাক্ষর</label>
+                <div style="display:flex;gap:10px;align-items:center;">
+                  <div style="width:70px;height:70px;border:1px solid var(--border);border-radius:6px;overflow:hidden;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">
+                    <img id="meSignPreview" src="${m.signatureUrl ? esc(m.signatureUrl) : ''}" style="width:100%;height:100%;object-fit:contain;${m.signatureUrl ? '' : 'display:none;'}"><span ${m.signatureUrl ? 'style="display:none;"' : ''}>✍️</span>
+                  </div>
+                  <input type="file" accept="image/*" id="meSignFile" onchange="previewImage(this,'meSignPreview')" style="flex:1;font-size:12px;">
+                </div>
+              </div>
+            </div>
+          </div>
           <div style="display:flex;gap:8px;">
             <button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById('memberEditModal').remove()">বাতিল</button>
             <button class="btn btn-primary" style="flex:1;" onclick="updateMember()">💾 আপডেট করুন</button>
@@ -14992,7 +15195,21 @@ window.updateMember = async function() {
 
   const g = id => document.getElementById(id)?.value?.trim() || '';
   try {
-    await db.collection('members').doc(docId).update({
+    // নতুন ছবি/স্বাক্ষর বাছা হলে আপলোড করা হয়; নাহলে ফিল্ড আপডেট করা হয় না
+    // (পুরনো URL অক্ষত থাকে)।
+    const photoFile = document.getElementById('mePhotoFile')?.files?.[0];
+    const signFile  = document.getElementById('meSignFile')?.files?.[0];
+    let newPhotoUrl = null, newSignUrl = null;
+    if (photoFile) {
+      try { newPhotoUrl = await uploadImageToImgbb(photoFile); }
+      catch(err) { toast('⚠️ ছবি আপলোড ব্যর্থ, বাকি তথ্য সংরক্ষণ হচ্ছে','error'); }
+    }
+    if (signFile) {
+      try { newSignUrl = await uploadImageToImgbb(signFile); }
+      catch(err) { toast('⚠️ স্বাক্ষর আপলোড ব্যর্থ, বাকি তথ্য সংরক্ষণ হচ্ছে','error'); }
+    }
+
+    const updateData = {
       name, mobile,
       fatherName: g('meFather'),
       motherName: g('meMother'),
@@ -15014,7 +15231,11 @@ window.updateMember = async function() {
       nomineeMobile: g('meNomineeMobile'),
       updatedBy: currentUser ? currentUser.uid : '',
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    };
+    if (newPhotoUrl !== null) updateData.photoUrl = newPhotoUrl;
+    if (newSignUrl !== null)  updateData.signatureUrl = newSignUrl;
+
+    await db.collection('members').doc(docId).update(updateData);
     toast('✅ সদস্যের তথ্য আপডেট হয়েছে!');
     window.invalidateMembersCache();
     invalidateRefCache('members_all');
@@ -15083,7 +15304,7 @@ function _guardWrite(name) {
   // ডিপোজিট
   'receiveDeposit','payDeposit','transferDeposit','closeDepositAccount','addDepositBlock',
   'saveDepositAccountNew','saveDepositProfitPayment','confirmDepositProfitDistribution',
-  'saveDepositBlockClear','saveDpsDeposit',
+  'saveDepositBlockClear','saveDpsDeposit','cancelDeposit',
   // সদস্য / শেয়ার / কালেকশন
   'saveMember','updateMember','closeMemberAccount','submitMemberTransfer',
   'submitMemberCollection','issuePassbook','saveSharePayment','saveShareReceive',
