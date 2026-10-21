@@ -67,7 +67,7 @@ const Member = {
         const dupM = idx.find(x => x.status !== 'closed' && ((f.nid && x.nid === f.nid) || x.mobile === f.mobile));
         if (dupM && !confirm(`সতর্কতা: ${dupM.id} - ${dupM.name} এর সাথে মোবাইল/NID মিলে যাচ্ছে। তবুও ভর্তি করবেন?`)) return;
         const seq = await nextSeq('member_' + f.branch);
-        const memberId = f.branch + pad(seq, 5);
+        const memberId = f.branch + pad(seq, 6); // eKisti: শাখা + ৬ ডিজিট (101000001)
         const pending = !isBM();
         const sam = await Data.samity(f.samity);
         const mdoc = { memberId, branch: f.branch, samity: f.samity, ...data, status: pending ? 'pending' : 'active', shareAdmit: num(f.share), admitFee: num(f.admitFee), passbookFee: num(f.passbookFee), createdBy: App.user.userId, createdAt: FV.serverTimestamp() };

@@ -507,6 +507,8 @@ async function onSignedIn(fbUser) {
   } else App.user = { uid: fbUser.uid, ...ud.data() };
   // পুরোনো (v1) ইউজার ডক: role → group
   if (!App.user.group && App.user.role) App.user.group = App.user.role === 'Admin' ? 'Super Admin' : App.user.role;
+  if (!App.user.userId) App.user.userId = String(App.user.email || fbUser.email || App.user.name || fbUser.uid).split('@')[0];
+  if (App.user.branch === undefined) App.user.branch = '';
   if (App.user.status === 'inactive') { toast('আপনার ইউজার নিষ্ক্রিয় করা আছে', 'error'); await auth.signOut(); return; }
   await loadPermissions();
   const bl = await Data.branches();
