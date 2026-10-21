@@ -1,0 +1,38 @@
+rules_version = '2';
+// গ্রামীন আশার আলো — Firestore Security Rules (v2)
+// Firebase Console → Firestore → Rules এ পুরোটা পেস্ট করে Publish করুন
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function userDoc() { return /databases/$(database)/documents/users/$(request.auth.uid); }
+    function me() { return get(userDoc()).data; }
+    function active() { return signedIn() && exists(userDoc()) && me().status != 'inactive'; }
+    function superAdmin() { return active() && (me().group == 'Super Admin' || me().role == 'Admin'); }
+
+    // ইউজার প্রোফাইল
+    match /users/{uid} {
+      allow read: if signedIn();
+      // প্রথম ইউজার (সেটআপ) — শুধু একবার, নিজেকে Super Admin হিসেবে
+      allow create: if superAdmin() || (signedIn() && request.auth.uid == uid && !exists(/databases/$(database)/documents/config/bootstrap) && request.resource.data.group == 'Super Admin');
+      allow update: if superAdmin() || (active() && request.auth.uid == uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastActivity', 'passwordChangedAt']));
+      allow delete: if superAdmin();
+    }
+    match /config/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn();
+      allow update, delete: if superAdmin();
+    }
+    // পারমিশন গ্রুপ, শাখা, COA — শুধু Super Admin পরিবর্তন করবেন
+    match /permGroups/{id} { allow read: if active(); allow write: if superAdmin(); }
+    match /ledgers/{id} { allow read: if active(); allow write: if superAdmin(); }
+    // হিসাবের মূল রেকর্ড — মুছে ফেলা শুধু Super Admin
+    match /vouchers/{id} { allow read, create, update: if active(); allow delete: if superAdmin(); }
+    match /txns/{id} { allow read, create, update: if active(); allow delete: if superAdmin(); }
+    match /glDaily/{id} { allow read, create, update: if active(); allow delete: if superAdmin(); }
+    match /glMonthly/{id} { allow read, create, update: if active(); allow delete: if superAdmin(); }
+    // বাকি সব কালেকশন — সক্রিয় ইউজার
+    match /{coll}/{id} {
+      allow read, write: if active() && !(coll in ['users', 'config', 'permGroups', 'ledgers', 'vouchers', 'txns', 'glDaily', 'glMonthly']);
+    }
+  }
+}

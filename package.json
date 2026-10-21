@@ -1,0 +1,9 @@
+{
+  "name": "grameen-loan",
+  "private": true,
+  "version": "2.0.0",
+  "description": "গ্রামীন আশার আলো কৃষি সমবায় সমিতি লিঃ — ঋণ ও সঞ্চয় ব্যবস্থাপনা",
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}
