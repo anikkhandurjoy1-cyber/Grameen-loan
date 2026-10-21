@@ -233,7 +233,7 @@ const VList = {
     const body = `<div class="meta"><span>ভাউচার: <b>${vno}</b></span><span>তারিখ: ${fmtD(v.date)}</span><span>ধরন: ${v.type}</span></div><div>${esc(v.narration || '')}</div>`
       + UI.table([{ h: 'Ledger Code', f: l => l.gl }, { h: 'Ledger Name', f: l => esc((lm[l.gl] || {}).name || '') }, { h: 'Account', f: l => l.accNo || '' }, { h: 'Debit', f: l => l.dr ? amt(l.dr) : '', r: 1, sum: 1, v: l => l.dr }, { h: 'Credit', f: l => l.cr ? amt(l.cr) : '', r: 1, sum: 1, v: l => l.cr }], v.lines)
       + `<div class="mini">Entry: ${esc(v.byName || '')} ${tsStr(v.on)} ${v.authBy ? '| Auth: ' + esc(v.authBy) : ''} ${v.cancelBy ? '| Cancel: ' + esc(v.cancelBy) + ' (' + esc(v.cancelReason || '') + ')' : ''}</div>`;
-    UI.modal('🧾 ভাউচার ' + vno, body, UI.btn('🖨️ প্রিন্ট', `printHTML('${v.lines.some(l => l.gl === REF.GL.cash && l.dr) ? 'Credit Voucher' : 'Debit Voucher'}', this.closest('.modal').querySelector('.modal-body').innerHTML)`, 'btn-outline'));
+    UI.modal('🧾 ভাউচার ' + vno, body, UI.btn('🖨️ ভাউচার প্রিন্ট', `Voucher.print('${vno}')`, 'btn-outline') + UI.btn('🧾 রসিদ', `Receipt.print('${vno}')`, 'btn-outline'));
   },
   cancel(vno, btn) { const reason = prompt('বাতিলের কারণ:'); if (reason === null) return; return guard(btn, async () => { if (!isBM()) fail('অনুমতি নেই'); await Eng.cancel(vno, reason); toast('✅ ভাউচার বাতিল হয়েছে'); btn.closest('tr').querySelector('td:nth-child(10)').innerHTML = '<span class="tag red">Cancelled</span>'; }); },
 };

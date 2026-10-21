@@ -230,7 +230,9 @@ const LoanForm = {
     const feeMap = [['form', REF.GL.formFee], ['health', REF.GL.health], ['risk', REF.GL.risk], ['doc', REF.GL.docFee], ['locker', REF.GL.locker], ['others', REF.GL.othersFee]];
     const feeTotal = sum(feeMap, ([k]) => num(d.fees[k]));
     const parts = [];
-    const lines = [{ gl: prod.gl, dr: d.principal, accNo }];
+    // eKisti: ঋণ হিসাবে আসল+মুনাফা ডেবিট, মুনাফা Profit Receivable এ ক্রেডিট
+    const lines = [{ gl: prod.gl, dr: r2(num(d.principal) + num(d.profit)), accNo }];
+    if (num(d.profit)) lines.push({ gl: prod.recGl, cr: num(d.profit), memo: 'Loan Disbursement Profit' });
     let trf = null;
     if (d.trfAcc) { trf = await Tx.acc(d.trfAcc); const p = await Tx.credit(trf, d.principal, { contraGl: null, tt: 'LOAN_DISB_TRF', narration: 'ঋণ বিতরণ ' + accNo, skipProfile: true }); parts.push(p); }
     else lines.push({ gl: d.payLedger || REF.GL.cash, cr: d.principal });

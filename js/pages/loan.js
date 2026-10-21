@@ -26,15 +26,7 @@ async function loanReceiptList(el, accNo, cancelMode) {
     { h: 'Action', f: r => r.cancelled ? '<span class="tag red">বাতিল</span>' : (cancelMode ? UI.btn('✖ বাতিল', `EmiCancel.run('${r.vno}',this)`, 'btn-danger btn-sm') : UI.btn('🧾', `Receipt.print('${r.vno}')`, 'btn-outline btn-sm')) }], rows);
 }
 // রসিদ প্রিন্ট
-const Receipt = {
-  async print(vno) {
-    const v = (await db.collection('vouchers').doc(vno).get()).data(); if (!v) return;
-    const ts = (await db.collection('txns').where('vno', '==', vno).get()).docs.map(d => d.data());
-    const mid = (ts[0] || {}).memberId; const m = mid ? await Data.member(mid) : null;
-    printHTML('আদায় রসিদ', `<div class="meta"><span>ভাউচার: ${vno}</span><span>তারিখ: ${fmtD(v.date)}</span></div>${m ? `<div class="meta"><span>সদস্য: ${esc(m.memberId + ' - ' + m.name)}</span><span>সমিতি: ${esc(m.samity)}</span></div>` : ''}`
-      + UI.table([{ h: 'একাউন্ট', f: t => t.accNo }, { h: 'বিবরণ', f: t => esc(TT_NAME[t.tt] || t.tt) }, { h: 'পরিমাণ', f: t => amt(t.amount + num(t.penalty)), r: 1, sum: 1, v: t => t.amount + num(t.penalty) }], ts) + `<div style="margin-top:6px">${esc(v.narration || '')}</div>`, { noSig: false });
-  },
-};
+// রসিদ প্রিন্ট: js/pages/receipts.js (Receipt / Voucher)
 const TT_NAME = { EMI_RCV: 'ঋণের কিস্তি জমা', EMI_MANUAL: 'ম্যানুয়াল কিস্তি', EMI_TRF: 'সঞ্চয় থেকে কিস্তি', EMI_SHEET: 'শীট কিস্তি', DEP_RCV: 'সঞ্চয় জমা', DEP_PAY: 'সঞ্চয় ফেরত', DPS_RCV: 'ডিপিএস জমা', SAV_RCV: 'সেভিংস জমা', SHARE_RCV: 'শেয়ার জমা', SHARE_PAY: 'শেয়ার ফেরত', LOAN_DISB: 'ঋণ বিতরণ', DEP_TRF_IN: 'স্থানান্তর জমা', DEP_TRF_OUT: 'স্থানান্তর উত্তোলন', DEP_CLOSE: 'হিসাব ক্লোজিং', PROFIT_POST: 'মুনাফা জমা', PROFIT_PAY: 'মুনাফা প্রদান', ADMISSION_FEE: 'ভর্তি ফি', PASSBOOK_FEE: 'পাসবই ফি', LOAN_DISB_TRF: 'ঋণ বিতরণ (জমা)', EMI_WAIVE: 'ঋণ মওকুফ', OTHER_RCV: 'জমা', OTHER_PAY: 'প্রদান' };
 
 // ── কিস্তি জমা পেজ (সাধারণ / ম্যানুয়াল / কর্মী) ──
@@ -210,7 +202,7 @@ const Resched = {
       const upd = { freq: f.freq, firstDate: f.firstDate, instAmount: rs.inst, actualN: rs.fullN, lastInst: rs.last, expDate: Loan.expiry(f.firstDate, f.freq, rs.n), base: num(l.paidTotal), rescheduled: (l.rescheduled || 0) + 1 };
       await Eng.post({
         branch: f.branch, date: f.date, type: 'LOAN_RESCHEDULE', narration: 'ঋণ পুনঃতফসিল ' + l.accNo, ref: { accNo: l.accNo },
-        lines: feeTotal ? [{ gl: REF.GL.cash, dr: feeTotal }, ...feeLines] : [],
+        lines: [...(feeTotal ? [{ gl: REF.GL.cash, dr: feeTotal }, ...feeLines] : []), ...(rs.add ? [{ gl: REF.LOAN[l.type].gl, dr: rs.add, accNo: l.accNo }, { gl: REF.LOAN[l.type].recGl, cr: rs.add, memo: 'Reschedule Profit' }] : [])],
         accOps: [{ accNo: l.accNo, samity: l.samity, inc: { profit: rs.add, totalRepay: rs.add, balance: rs.add }, snapInc: { pf: rs.add, tr: rs.add, b: rs.add }, set: upd, snapSet: { fq: upd.freq, fd: upd.firstDate, ia: upd.instAmount, an: upd.actualN, li: upd.lastInst, ed: upd.expDate, bs: upd.base }, undoSet: { ...prev } }],
         extra: async b => b.set(db.collection('reschedules').doc(), { branch: f.branch, accNo: l.accNo, memberId: l.memberId, date: f.date, prev, next: upd, addProfit: rs.add, fees, by: App.user.userId, on: FV.serverTimestamp() }),
       });
@@ -251,7 +243,7 @@ const Waive = {
       const newOut = r2(num(l.balance) - p - pr), closing = newOut <= 0.001;
       await Eng.post({
         branch: f.branch, date: f.date, type: 'LOAN_WAIVER', narration: 'ঋণ মওকুফ ' + l.accNo + ' — ' + f.comments, ref: { accNo: l.accNo },
-        lines: p ? [{ gl: REF.GL.waiver, dr: p }, { gl: prod.gl, cr: p, accNo: l.accNo }] : [],
+        lines: (p + pr) ? [{ gl: REF.GL.waiver, dr: p }, { gl: prod.recGl, dr: pr, memo: 'Profit Waiver' }, { gl: prod.gl, cr: r2(p + pr), accNo: l.accNo }] : [],
         txns: [{ accNo: l.accNo, kind: 'loan', type: l.type, memberId: l.memberId, samity: l.samity, tt: 'EMI_WAIVE', amount: r2(p + pr), dc: 'C', principal: p, profit: pr, penalty: c, waiver: true, narration: f.comments }],
         accOps: [{ accNo: l.accNo, samity: l.samity, inc: { balance: -(p + pr), paidP: p, paidPr: pr, paidTotal: p + pr, penDue: -c, wvP: p, wvPr: pr, wvC: c }, snapInc: { b: -(p + pr), pp: p, ppr: pr, pt: p + pr }, set: closing ? { status: 'closed', closeDate: f.date } : null, snapSet: closing ? { st: 'closed', cd: f.date } : null, undoSet: closing ? { status: 'active' } : null }],
       });
@@ -284,6 +276,7 @@ const Penalty = {
       const ap = num(f.addProfit), pen = num(f.penaltyAmt); if (ap + pen <= 0) fail('পরিমাণ দিন');
       await Eng.post({
         branch: f.branch, date: f.date, type: 'LOAN_PENALTY', narration: 'জরিমানা/অতিরিক্ত মুনাফা ' + l.accNo + ' — ' + f.comments, ref: { accNo: l.accNo },
+        lines: ap ? [{ gl: REF.LOAN[l.type].gl, dr: ap, accNo: l.accNo }, { gl: REF.LOAN[l.type].recGl, cr: ap, memo: 'Additional Profit' }] : [],
         txns: [{ accNo: l.accNo, kind: 'loan', type: l.type, memberId: l.memberId, samity: l.samity, tt: 'EMI_PENALTY', amount: r2(ap + pen), dc: 'D', profit: ap, penalty: pen, narration: f.comments }],
         accOps: [{ accNo: l.accNo, samity: l.samity, inc: { profit: ap, totalRepay: ap, balance: ap, penDue: pen }, snapInc: { pf: ap, tr: ap, b: ap } }],
       });

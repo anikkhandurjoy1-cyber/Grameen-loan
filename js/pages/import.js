@@ -61,10 +61,10 @@ const Imp = {
   glLines(P, branch) {
     const by = {}; const add = (gl, d) => { by[gl] = r2((by[gl] || 0) + d); };   // d>0 = Dr
     P.accounts.filter(a => a.branch === branch && a.status !== 'closed').forEach(a => {
-      if (a.kind === 'loan') add((REF.LOAN[a.type] || REF.LOAN['3001']).gl, r2(a.principal - a.paidP));
+      if (a.kind === 'loan') { const pr = REF.LOAN[a.type] || REF.LOAN['3001']; add(pr.gl, r2(a.balance)); add(pr.recGl, -r2(a.profit - a.paidPr)); }
       else add(Eng.productGl(a.kind, a.type), -a.balance);
     });
-    const productGls = new Set([...Object.values(REF.DEP).map(d => d.gl), ...Object.values(REF.LOAN).map(d => d.gl), REF.GL.share, ...Object.values(REF.OTHER).map(d => d.gl)]);
+    const productGls = new Set([...Object.values(REF.DEP).map(d => d.gl), ...Object.values(REF.LOAN).map(d => d.gl), ...Object.values(REF.LOAN).map(d => d.recGl), REF.GL.share, ...Object.values(REF.OTHER).map(d => d.gl)]);
     (P.glOpening || []).filter(g => !g.branch || String(g.branch) === branch).forEach(g => { if (!productGls.has(String(g.gl))) add(String(g.gl), r2(num(g.dr) - num(g.cr))); });
     const lines = Object.entries(by).filter(([, v]) => r2(v)).map(([gl, v]) => v > 0 ? { gl, dr: v, cr: 0 } : { gl, dr: 0, cr: -v });
     const net = r2(sum(lines, l => l.dr) - sum(lines, l => l.cr));

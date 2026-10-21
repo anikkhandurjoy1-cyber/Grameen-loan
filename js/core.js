@@ -80,7 +80,7 @@ const App = {
   branch: '',          // বর্তমান কাজের শাখা কোড
   pages: {},           // রেজিস্টারকৃত পেজ
   current: null,
-  org: { name: 'গ্রামীন আশার আলো কৃষি সমবায় সমিতি লিঃ', reg: '২০২৫.১.০১.৭২৪০.০২১৩', address: 'কলমাকান্দা, নেত্রকোনা' },
+  org: { name: 'গ্রামীন আশার আলো কৃষি সমবায় সমিতি লিঃ', reg: '২০২৫.১.০১.৭২৪০.০২১৩', address: 'চানপুর রোড়,এতিমখানা বাজার,কলমাকান্দা,নেত্রকোনা ।', mobile: '01716532508' },
 };
 const isAdmin = () => App.user && (App.user.group === 'Super Admin');
 const isBM = () => App.user && (isAdmin() || App.user.group === 'Branch Manager' || (App.user.flags || {}).bm);
@@ -147,7 +147,7 @@ const Data = {
   },
 };
 const Idx = {
-  memberRow: m => [m.name || '', m.samity || '', m.mobile || '', m.status || 'active', m.father || '', m.nid || ''],
+  memberRow: m => [m.name || '', m.samity || '', m.mobile || '', m.status || 'active', m.father || '', m.nid || '', m.presentAddr || ''],
   accRow: a => [a.memberId || '', a.kind, a.type, a.status || 'active', a.samity || '', a.title || ''],
   setMember(batch, branch, m) { batch.set(db.collection('idx').doc('mem_' + branch), { rows: { [m.memberId]: Idx.memberRow(m) } }, { merge: true }); Cache.drop('midx_' + branch); },
   setAccount(batch, branch, a) { batch.set(db.collection('idx').doc('acc_' + branch), { rows: { [a.accNo]: Idx.accRow(a) } }, { merge: true }); Cache.drop('aidx_' + branch); },
@@ -236,9 +236,30 @@ const UI = {
   opts(list, vf, tf, blank = '------------') { return (blank !== null ? `<option value="">${blank}</option>` : '') + list.map(x => `<option value="${esc(vf(x))}">${esc(tf(x))}</option>`).join(''); },
   fill(sel, list, vf, tf, blank) { if (!sel) return; const cur = sel.value; sel.innerHTML = UI.opts(list, vf, tf, blank); if ([...sel.options].some(o => o.value === cur)) sel.value = cur; },
   table(cols, rows, opts = {}) {
-    // cols: [{h, f:(row)=>html, r(right align), sum:true}]
-    const foot = cols.some(c => c.sum) ? `<tfoot><tr>${cols.map((c, i) => `<td class="${c.r ? 'r' : ''}"><b>${c.sum ? amt(sum(rows, r => num(c.v ? c.v(r) : c.f(r)))) : (i === 0 ? 'মোট' : '')}</b></td>`).join('')}</tr></tfoot>` : '';
-    return `<div class="table-wrap"><table class="${opts.cls || ''}"><thead><tr>${cols.map(c => `<th class="${c.r ? 'r' : ''}">${esc(c.h)}</th>`).join('')}</tr></thead><tbody>${rows.length ? rows.map(r => `<tr>${cols.map(c => `<td class="${c.r ? 'r' : ''}">${c.f(r) == null ? '' : c.f(r)}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${cols.length}" class="empty">${opts.empty || 'কোনো তথ্য নেই'}</td></tr>`}</tbody>${foot}</table></div>`;
+    // cols: [{h, f:(row)=>html, r(right align), sum:true, v, g:'গ্রুপ' | ['গ্রুপ','সাব-গ্রুপ']}]  — g থাকলে eKisti এর মতো মাল্টি-রো হেডার
+    cols = cols.filter(Boolean);
+    const path = c => [...(Array.isArray(c.g) ? c.g : c.g ? [c.g] : []), c.h];
+    const depth = Math.max(1, ...cols.map(c => path(c).length));
+    let thead = '';
+    for (let L = 0; L < depth; L++) {
+      let row = '';
+      for (let i = 0; i < cols.length; i++) {
+        const p = path(cols[i]); if (p.length <= L) continue;
+        if (L < p.length - 1) {
+          // গ্রুপ সেল: একই prefix এর পরপর কলাম একত্র
+          if (i > 0) { const q = path(cols[i - 1]); if (q.length > L + 1 && q.slice(0, L + 1).join('\u0001') === p.slice(0, L + 1).join('\u0001')) continue; }
+          let span = 1; while (i + span < cols.length) { const q = path(cols[i + span]); if (q.length > L + 1 && q.slice(0, L + 1).join('\u0001') === p.slice(0, L + 1).join('\u0001')) span++; else break; }
+          row += `<th class="c" colspan="${span}">${esc(p[L])}</th>`;
+        } else if (L === p.length - 1) row += `<th class="${cols[i].r ? 'r' : 'c'}"${depth - L > 1 ? ` rowspan="${depth - L}"` : ''}>${esc(p[L])}</th>`;
+      }
+      thead += `<tr>${row}</tr>`;
+    }
+    let foot = '';
+    if (cols.some(c => c.sum)) {
+      let lead = 0; while (lead < cols.length && !cols[lead].sum) lead++;
+      foot = `<tfoot><tr>${lead ? `<td colspan="${lead}" class="r"><b>${opts.totalLabel || 'Total :'}</b></td>` : ''}${cols.slice(lead).map(c => `<td class="${c.r ? 'r' : ''}"><b>${c.sum ? (c.int ? sum(rows, r => num(c.v ? c.v(r) : c.f(r))) : amt(sum(rows, r => num(c.v ? c.v(r) : c.f(r))))) : ''}</b></td>`).join('')}</tr></tfoot>`;
+    }
+    return `<div class="table-wrap"><table class="${opts.cls || ''}"><thead>${thead}</thead><tbody>${rows.length ? rows.map((r, ri) => `<tr${opts.rowCls ? ` class="${opts.rowCls(r) || ''}"` : ''}>${cols.map(c => { const v = c.sl ? ri + 1 : c.f(r); return `<td class="${c.r ? 'r' : c.sl ? 'c' : ''}">${v == null ? '' : v}</td>`; }).join('')}</tr>`).join('') : `<tr><td colspan="${cols.length}" class="empty">${opts.empty || 'কোনো তথ্য নেই'}</td></tr>`}</tbody>${foot}</table></div>`;
   },
   btn(label, onclick, cls = 'btn-primary', attrs = '') { return `<button class="btn ${cls}" ${attrs} onclick="${onclick}">${label}</button>`; },
   card(title, body, extra = '') { return `<div class="card">${title ? `<div class="card-title">${title}${extra}</div>` : ''}${body}</div>`; },
@@ -345,23 +366,40 @@ function typeFull(kind, type) {
 }
 
 // ─────────────── প্রিন্ট ───────────────
+// eKisti এর রিপোর্ট প্রিন্ট ভিউ: লোগো + প্রতিষ্ঠানের নাম + রিপোর্টের নাম + তথ্য গ্রিড + টেবিল + স্বাক্ষর
+// opts: {landscape, sub, branchName, branchAddr, info:[[label,value]], noSig, addr(true হলে ঠিকানা লাইন), sigs:[...], auto(সাথে সাথে প্রিন্ট)}
+const PRINT_CSS = `body{font-family:'Hind Siliguri',Arial,sans-serif;color:#000;margin:0;background:#fff}
+  #wrap{max-width:96%;margin:0 auto;padding-top:10px}
+  .tb{text-align:right;padding:8px}.tb button{background:#333;color:#fff;border:0;padding:6px 12px;font-size:14px;cursor:pointer;margin-left:2px}
+  .ph{display:flex;align-items:center;border-bottom:1px solid #2E71B8;padding-bottom:6px;margin-bottom:8px}
+  .ph img{width:120px;height:100px;object-fit:contain}.ph .t{flex:1;text-align:center;padding-right:120px}
+  .ph h2{margin:0;font-size:30px;font-weight:600}.ph h4{margin:4px 0 0;font-size:19px;font-weight:400}.ph .ad{font-size:16px;margin-top:4px}
+  .ig{display:flex;flex-wrap:wrap;margin-bottom:6px}.ig p{margin:3px 0;font-size:14px;width:33%}.ig p:nth-child(3n){text-align:right}.ig p:nth-child(3n+2){width:34%}
+  table{width:100%;border-collapse:collapse;border:solid #000;border-width:1px 0 0 1px;margin-top:4px}
+  th,td{border:solid #000;border-width:0 1px 1px 0;font-size:12px;padding:3px 4px;vertical-align:middle}
+  th{background:#f5f5f5;font-size:12px;font-weight:700;text-align:center}td.r,th.r{text-align:right}td.c,th.c{text-align:center}
+  tfoot td{font-weight:700}.empty{text-align:center;color:#666}.grp td{background:#f3f3f3;font-weight:700}
+  .sig{display:flex;justify-content:space-between;margin-top:40px;font-size:13px}.sig div{width:32%}.sig div:nth-child(2){text-align:center}.sig div:nth-child(3){text-align:right}.sig p{margin:4px 0}
+  .pf{font-size:10px;color:#555;margin-top:10px}.btnp{display:block;width:100%;background:#337ab7;color:#fff;border:0;padding:10px;font-size:15px;margin-top:14px;cursor:pointer;text-transform:uppercase}
+  @media print{.no-print{display:none!important}#wrap{max-width:100%}th{background:transparent!important;font-size:10px}td{font-size:10px}}`;
 function printHTML(title, body, opts = {}) {
   const w = window.open('', '_blank');
   if (!w) { toast('পপ-আপ ব্লক করা আছে — অনুমতি দিন', 'error'); return; }
-  const branchLine = opts.branchName ? `<div>${esc(opts.branchName)}</div>` : '';
+  const info = opts.info || [];
+  if (!opts.info && opts.sub) info.push(['', opts.sub]);
+  const sigs = opts.sigs || ['Prepared By', 'Verified By', 'Approved By'];
+  const logo = App.logoData || new URL('logo.png', location.href).href;
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>body{font-family:'Hind Siliguri',sans-serif;font-size:12px;margin:18px;color:#000}
-  .ph{text-align:center;margin-bottom:10px}.ph h2{margin:0;font-size:18px}.ph h3{margin:6px 0 0;font-size:14px;text-decoration:underline}.ph div{font-size:11px}
-  table{width:100%;border-collapse:collapse;margin-top:6px}th,td{border:1px solid #444;padding:3px 5px;vertical-align:top}th{background:#eee}
-  td.r,th.r{text-align:right}.empty{text-align:center;color:#777}tfoot td{background:#f4f4f4}.meta{display:flex;justify-content:space-between;font-size:11px;margin:4px 0}
-  .grp td{background:#f7f7f7;font-weight:700}.sig{display:flex;justify-content:space-between;margin-top:50px}.sig div{border-top:1px solid #000;padding-top:3px;width:22%;text-align:center}
-  @page{size:${opts.landscape ? 'A4 landscape' : 'A4'};margin:10mm}</style></head><body>
-  <div class="ph"><h2>${esc(App.org.name)}</h2><div>নিবন্ধন নং: ${esc(App.org.reg)}</div>${branchLine}<h3>${esc(title)}</h3>${opts.sub ? `<div>${opts.sub}</div>` : ''}</div>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>${PRINT_CSS}@page{size:${opts.landscape ? 'A4 landscape' : 'A4'};margin:8mm}</style></head><body>
+  <div class="tb no-print"><button onclick="fz(1)">A+</button><button onclick="fz(-1)">A-</button></div>
+  <div id="wrap"><div class="ph"><img src="${logo}" alt=""><div class="t"><h2>${esc(App.org.name)}</h2>${opts.addr ? `<div class="ad">${esc(App.org.address)}</div>` : ''}<h4>${esc(title)}</h4></div></div>
+  ${info.length ? `<div class="ig">${info.map(([l, v]) => `<p>${l ? `<b>${esc(l)} : </b>` : ''}${v == null ? '' : v}</p>`).join('')}</div>` : ''}
   ${body}
-  ${opts.noSig ? '' : '<div class="sig"><div>প্রস্তুতকারী</div><div>হিসাবরক্ষক</div><div>শাখা ব্যবস্থাপক</div><div>পরিচালক</div></div>'}
-  <div style="font-size:10px;color:#666;margin-top:8px">প্রিন্ট: ${new Date().toLocaleString('en-GB')} — ${esc(App.user ? App.user.userId || App.user.email : '')}</div>
-  <script>setTimeout(()=>window.print(),600)<\/script></body></html>`);
+  ${opts.noSig ? '' : `<div class="sig">${sigs.map(s => `<div><p>${esc(s)} :</p><p>Signature :</p><p>Designation :</p></div>`).join('')}</div>`}
+  <div class="pf">Print: ${new Date().toLocaleString('en-GB')} — ${esc(App.user ? App.user.userId || App.user.email : '')}</div>
+  <button class="btnp no-print" onclick="window.print()">Print Report</button></div>
+  <script>let z=0;function fz(d){z+=d;document.querySelectorAll('td,th,p').forEach(e=>{const b=parseFloat(e.dataset.f||getComputedStyle(e).fontSize);e.dataset.f=b;e.style.fontSize=(b+z)+'px'})}${opts.auto ? 'setTimeout(()=>window.print(),700)' : ''}<\/script></body></html>`);
   w.document.close();
 }
 function downloadExcel(filename, html) {
@@ -478,7 +516,10 @@ async function onSignedIn(fbUser) {
   db.collection('users').doc(fbUser.uid).update({ lastActivity: FV.serverTimestamp() }).catch(() => {});
   startApp();
 }
+// প্রিন্টে লোগো নিশ্চিত করতে data URL হিসেবে রাখা
+function preloadLogo() { fetch('logo.png').then(r => r.blob()).then(b => { const fr = new FileReader(); fr.onload = () => App.logoData = fr.result; fr.readAsDataURL(b); }).catch(() => {}); }
 async function startApp() {
+  preloadLogo();
   $('#loginScreen').style.display = 'none';
   $('#app').style.display = 'block';
   $('#hdrUser').textContent = (App.user.userId || App.user.email || '') + ' • ' + (App.user.group || '');
@@ -636,8 +677,21 @@ ReportPage.run = function (id, btn, print, mode) {
     const b = f.branch ? await Data.branch(f.branch) : null;
     el._last = { ...res, branchName: b ? b.code + ' - ' + b.name : 'সকল শাখা' };
     $('.rpt-out', el).innerHTML = `<div class="mini" style="margin-bottom:6px">${res.sub || ''}</div>` + res.html;
-    if (print) printHTML(res.title || o.title, res.html, { sub: res.sub, landscape: res.landscape != null ? res.landscape : o.landscape, branchName: el._last.branchName, noSig: res.noSig });
+    if (print) printHTML(res.title || o.title, res.html, { info: res.info || await ReportPage.info(o, f, el), landscape: res.landscape != null ? res.landscape : o.landscape, noSig: res.noSig, addr: res.addr });
   });
+};
+// eKisti এর মতো রিপোর্ট তথ্য: Reporting Date, Branch Name, Branch Address, Samity, Field Officer, Account Type
+ReportPage.info = async function (o, f, el) {
+  const fr = $('.report-filter', el); const txt = k => { const e = UI.el(fr, k); return e && e.tagName === 'SELECT' && e.selectedIndex >= 0 ? e.options[e.selectedIndex].text : ''; };
+  const b = f.branch ? await Data.branch(f.branch) : null; const out = [];
+  out.push(['Reporting Date', f.from && f.upto ? `${fmtD(f.from)} to ${fmtD(f.upto)}` : fmtD(f.date || f.upto || '')]);
+  if ('branch' in f) { out.push(['Branch Name', b ? esc(b.name) : 'All Branch']); out.push(['Branch Address', b ? esc(b.address || '') : '']); }
+  ['kind', 'ltype', 'dtype'].forEach(k => { if (k in f) out.push(['Account Type', f[k] ? esc(txt(k)) : 'All Account Type']); });
+  if ('samity' in f) out.push(['Samity Name', f.samity ? esc(txt('samity')) : 'All']);
+  if ('employee' in f) out.push(['Field Officer', f.employee ? esc(txt('employee')) : 'All Officer']);
+  if ('member' in f && f.member) out.push(['Member', esc(UI.el(fr, 'member').value)]);
+  if ('user' in f) out.push(['User Name', f.user ? esc(txt('user')) : 'All User']);
+  return out;
 };
 ReportPage.excel = function (id) { const el = $('#page-' + id); if (!el._last) return toast('আগে "দেখুন" চাপুন', 'error'); downloadExcel(ReportPage.defs[id].title, el._last.html); };
 const F = { // সাধারণ ফিল্টার স্পেক
