@@ -7,7 +7,7 @@
 // ═══════════════════════════════════════════════════════════════
 App.page('dashboard', {
   title: 'ড্যাশবোর্ড', icon: '🏠', always: true,
-  render: () => `<div class="card db-filter"><div class="db-welcome"><h3>Welcome back, ${esc((App.user && (App.user.name || App.user.userId)) || '')} !</h3><div class="mini">Track your somity activity here.</div></div>
+  render: () => Home.html() + `<div class="card db-filter"><div class="db-welcome"><h3>Welcome back, ${esc((App.user && (App.user.name || App.user.userId)) || '')} !</h3><div class="mini">Track your somity activity here.</div></div>
     ${UI.grid([{ ...F.branch, l: 'Branch Name' }, { k: 'btype', l: 'Branch Type', t: 'select', opts: [['me', 'Only Me'], ['all', 'All Branch'], ['others', 'All Others Branch']] }, { k: 'employee', l: 'Employee Name', t: 'select' }, { k: 'date', l: 'Business Date', t: 'date', req: 1 }], 4)}
     <div class="actions">${UI.btn('Refresh Dashboard', 'Dash.load(this,true)', 'btn-info')}</div></div><div class="dash-out"><div class="mini">লোড হচ্ছে...</div></div>`,
   init: async el => {
@@ -15,9 +15,46 @@ App.page('dashboard', {
     await Pick.branch(f, 'branch'); await Pick.employee(f, 'employee', 'branch', { blank: '----------' });
     UI.el(f, 'date').value = await businessDate();
     UI.el(f, 'branch').addEventListener('change', async () => { UI.el(f, 'date').value = await businessDate(UI.el(f, 'branch').value); });
+    Home.bind(el);
     await Dash.load();
   },
 });
+
+// ── eKisti হোম: মডিউল সার্চ + আইকন টাইল ──
+const HOME_TILES = [
+  ['সদস্য ভর্তি', 'memberAdd', '🧑‍💼', '#dbeafe'], ['সদস্য তালিকা', 'memberList', '👥', '#fde68a'], ['সদস্য পাসবই', 'rptPassbook', '📘', '#e0e7ff'], ['নতুন সঞ্চয়ী হিসাব', 'depOpen', '🌱', '#dcfce7'],
+  ['সঞ্চয় জমা', 'depRcv', '💰', '#fef3c7'], ['সঞ্চয় ফেরত', 'depPay', '💵', '#fee2e2'], ['সঞ্চয় হিসাব ক্লোজ', 'depClosing', '🏠', '#fce7f3'], ['নতুন ঋণ হিসাব', 'loanOpen', '🏦', '#ede9fe'],
+  ['ঋণের তালিকা', 'loanDisbList', '📋', '#e0f2fe'], ['ঋণের কিস্তি', 'emiRcv', '🤝', '#dcfce7'], ['সমিতি কালেকশন', 'sheetPosting', '🧮', '#f1f5f9'], ['সদস্য কিস্তি কালেকশন', 'memberColl', '📅', '#fef9c3'],
+  ['আজকের সকল কালেকশন', 'rptCollDetails', '🗂️', '#ffedd5'], ['এ্যাকাউন্ট লেনদেন', 'accTxn', '🔁', '#ffedd5'], ['লেজার লেনদেন', 'ledgerTxn', '📒', '#dcfce7'], ['ভাউচার তালিকা', 'voucherList', '🧾', '#f3e8ff'],
+  ['কালেকশন শীট', 'rptCollSheet', '📝', '#e0f2fe'], ['এ্যাকাউন্ট ভিত্তিক প্রাপ্তি-প্রদান', 'rptAccRecPay', '🏧', '#dcfce7'], ['ক্যাশ বুক (ক্যাশ এবং ব্যাংক)', 'rptCashBook', '🏛️', '#fef3c7'], ['ডি.সি.আর', 'rptDCR', '📊', '#fee2e2'],
+  ['লোন রিকভারি রিপোর্ট', 'rptRecovery', '📈', '#fef9c3'], ['প্রাপ্তি প্রদান-২', 'rptRecPay2', '🧮', '#dbeafe'], ['ভর্তি রেজিঃ', 'rptAdmission', '📇', '#ffedd5'], ['বিতরণ রেজিঃ', 'rptDisbReg', '📓', '#f1f5f9'],
+  ['ফিল্ড অফিসার রিপোর্ট', 'rptFieldOfficer', '🧑‍🌾', '#e0f2fe'], ['সদস্য ব্যালেন্স রিপোর্ট', 'rptMemberBalance', '📑', '#fef3c7'], ['ডি.পি.এস জমা', 'dpsRcv', '🪙', '#fef9c3'], ['সঞ্চয় লেনদেন ব্লক', 'lienAdd', '🔒', '#f1f5f9'],
+];
+const Home = {
+  html() {
+    const tiles = HOME_TILES.filter(([, p]) => App.pages[p] && App.canSee(p));
+    return `<div class="card home-card"><div class="home-search"><span>🔍 <b>Search</b></span><div class="hs-wrap"><input type="search" class="hs-inp" placeholder="Search modules, forms, reports" autocomplete="off"><div class="hs-list" hidden></div></div></div>
+      <div class="home-grid">${tiles.map(([l, p, ic, bg]) => `<a class="home-tile" onclick="App.go('${p}')"><span class="ht-ic" style="background:${bg}">${ic}</span><span class="ht-l">${esc(l)}</span></a>`).join('')}</div></div>`;
+  },
+  all() {
+    const out = [];
+    MENU.forEach(sec => { if (sec.page) out.push([sec.t, sec.page, '']); (sec.items || []).forEach(([l, p]) => out.push([l, p, sec.t])); });
+    return out.filter(([, p]) => App.pages[p] && App.canSee(p)).filter((x, i, a) => a.findIndex(y => y[1] === x[1]) === i);
+  },
+  bind(el) {
+    const inp = $('.hs-inp', el), box = $('.hs-list', el); if (!inp) return;
+    const draw = () => {
+      const q = inp.value.trim().toLowerCase();
+      const list = Home.all().filter(([l, p, s]) => !q || l.toLowerCase().includes(q) || p.toLowerCase().includes(q) || (App.pages[p].title || '').toLowerCase().includes(q) || s.toLowerCase().includes(q)).slice(0, 60);
+      box.innerHTML = list.length ? list.map(([l, p, s]) => `<div class="hs-it" data-p="${p}">${esc(l)} <small>${esc(s)}</small></div>`).join('') : '<div class="hs-it">কিছু পাওয়া যায়নি</div>';
+      box.hidden = false;
+    };
+    inp.addEventListener('focus', draw); inp.addEventListener('input', draw);
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') { const f = $('.hs-it[data-p]', box); if (f) App.go(f.dataset.p); } });
+    inp.addEventListener('blur', () => setTimeout(() => box.hidden = true, 150));
+    box.addEventListener('pointerdown', e => { const it = e.target.closest('.hs-it[data-p]'); if (it) { e.preventDefault(); App.go(it.dataset.p); } });
+  },
+};
 const DEP_GROUP = t => { const d = REF.DEP[t] || {}; return d.dtype === 'FD' ? 'fd' : d.dtype === 'RD' ? 'rd' : t === '2002' || d.comp ? 'ss' : 'gs'; };
 const DEP_GROUP_NAME = { gs: 'সাধারণ সঞ্চয়', ss: 'বিশেষ সঞ্চয়', fd: 'স্থায়ী আমানত', rd: 'মেয়াদী আমানত' };
 const Dash = {

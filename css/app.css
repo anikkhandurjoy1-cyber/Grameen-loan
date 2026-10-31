@@ -344,3 +344,33 @@ table.sheet td{height:24px;}
 .db-l{font-size:12px}.db-v{font-size:20px;font-weight:600}
 .db-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.db-bottom{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:4px}
 @media(max-width:900px){.db-grid{grid-template-columns:1fr}.db-cards{grid-template-columns:repeat(2,1fr)}.db-two,.db-bottom{grid-template-columns:1fr}}
+
+/* সদস্য পিকার ড্রপডাউন */
+.mpick{position:relative}
+.mpick input{width:100%}
+.mpick-list{position:absolute;left:0;right:0;top:100%;z-index:60;background:#fff;border:1px solid #cbd5e1;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.15);max-height:320px;overflow:auto;margin-top:2px}
+.mpick-it{padding:8px 10px;border-bottom:1px solid #f1f5f9;cursor:pointer;font-size:14px;line-height:1.3}
+.mpick-it:hover,.mpick-it:active{background:#e0f2fe}
+.mpick-it b{color:#0f4c81;margin-right:4px}
+.mpick-it small{color:#64748b;margin-left:4px}
+.mpick-more{padding:8px 10px;color:#64748b;font-size:13px}
+tr.row-cancel td{background:#fef2f2;color:#991b1b;text-decoration:line-through}
+tr.row-cancel td:last-child,tr.row-cancel td:nth-last-child(2){text-decoration:none}
+
+/* eKisti হোম আইকন টাইল */
+.home-card{padding:14px}
+.home-search{display:flex;align-items:center;gap:10px;max-width:720px;margin:0 auto 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px}
+.home-search>span{white-space:nowrap;color:#334155}
+.hs-wrap{position:relative;flex:1}
+.hs-inp{width:100%;border:0;background:transparent;padding:6px 4px;font-size:15px;outline:none}
+.hs-list{position:absolute;left:0;right:0;top:100%;z-index:70;background:#fff;border:1px solid #cbd5e1;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.15);max-height:360px;overflow:auto}
+.hs-it{padding:8px 10px;border-bottom:1px solid #f1f5f9;cursor:pointer}
+.hs-it:hover{background:#e0f2fe}.hs-it small{color:#64748b;margin-left:6px}
+.home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.home-tile{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 6px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;cursor:pointer;text-align:center;text-decoration:none;color:#1e293b;transition:box-shadow .15s,transform .15s}
+.home-tile:hover{box-shadow:0 4px 14px rgba(15,76,129,.18);transform:translateY(-2px);color:#0f4c81}
+.ht-ic{width:62px;height:62px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px}
+.ht-l{font-size:13.5px;line-height:1.25}
+@media(max-width:600px){.home-grid{grid-template-columns:repeat(3,1fr);gap:6px}.ht-ic{width:48px;height:48px;font-size:26px}.ht-l{font-size:12px}.home-tile{padding:10px 4px}}
+.member-form .card-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card-title-act{margin-left:auto}

@@ -1,6 +1,12 @@
 // ═══════════════════════════════════════════════════════════════
 // সদস্য পরিচালনা — ভর্তি, তালিকা, ক্লোজিং, সমিতি স্থানান্তর
 // ═══════════════════════════════════════════════════════════════
+const MEMBER_DOC_FIELDS = [{ k: 'photo', l: 'Profile Pic:', t: 'file' }, { k: 'signature', l: 'Signature Pic:', t: 'file' }];
+const MEMBER_NOM_FIELDS = [
+  { k: 'nomName', l: 'নমিনি নাম' }, { k: 'nomFather', l: 'পিতার নাম' }, { k: 'nomMother', l: 'মাতার নাম' }, { k: 'nomPhone', l: 'মোবাইল' },
+  { k: 'nomRelation', l: 'সম্পর্ক' }, { k: 'nomNid', l: 'জাতীয় পরিচয় পত্র' }, { k: 'nomAddr', l: 'ঠিকানা', t: 'textarea' },
+];
+const MEMBER_NOMDOC_FIELDS = [{ k: 'nomPhoto', l: 'Profile Pic:', t: 'file' }, { k: 'nomSignature', l: 'Signature Pic:', t: 'file' }, { k: 'document', l: 'Upload Documents', t: 'file' }];
 const MEMBER_FIELDS = [
   { k: 'branch', l: 'শাখা নাম', t: 'select', req: 1 }, { k: 'name', l: 'সদস্য নাম', req: 1 }, { k: 'samity', l: 'সমিতি নাম', t: 'select', req: 1 },
   { k: 'father', l: 'পিতার নাম' }, { k: 'mother', l: 'মাতার নাম' }, { k: 'spouse', l: 'স্বামী / স্ত্রী' },
@@ -10,18 +16,18 @@ const MEMBER_FIELDS = [
   { k: 'blood', l: 'রক্তের গ্রুপ', t: 'select', opts: BLOOD }, { k: 'sex', l: 'লিঙ্গ', t: 'select', opts: GENDER }, { k: 'religion', l: 'ধর্ম', t: 'select', opts: RELIGION },
   { k: 'marital', l: 'বৈবাহিক অবস্থা', t: 'select', opts: MARITAL }, { k: 'dob', l: 'জন্ম তারিখ', t: 'date' }, { k: 'income', l: 'মাসিক আয়', t: 'number' },
   { k: 'profession', l: 'পেশা' }, { k: 'admitFee', l: 'ভর্তি ফি', t: 'number' }, { k: 'passbookFee', l: 'পাসবই ফি', t: 'number' },
-  { k: 'photo', l: 'সদস্যের ছবি', t: 'file' }, { k: 'signature', l: 'স্বাক্ষর', t: 'file' }, { k: 'document', l: 'Upload Documents', t: 'file' },
-  { t: 'hr', l: '👤 নমিনির তথ্য' },
-  { k: 'nomName', l: 'নমিনি নাম' }, { k: 'nomFather', l: 'পিতার নাম' }, { k: 'nomMother', l: 'মাতার নাম' }, { k: 'nomPhone', l: 'মোবাইল' },
-  { k: 'nomRelation', l: 'সম্পর্ক' }, { k: 'nomNid', l: 'জাতীয় পরিচয় পত্র' }, { k: 'nomAddr', l: 'ঠিকানা', t: 'textarea' },
   { k: 'lat', l: 'Latitude', ro: 1 }, { k: 'lng', l: 'Longitude', ro: 1 },
 ];
 App.page('memberAdd', {
   title: 'সদস্য ভর্তি', icon: '➕',
-  render: p => UI.card(p.edit ? '✏️ সদস্য এডিট — ' + esc(p.edit) : '', UI.grid(MEMBER_FIELDS, 3) + `<div class="actions">
-      ${UI.btn('📍 Set Map Location', 'Member.geo()', 'btn-outline')}
+  render: p => `<div class="member-form">`
+    + UI.card(`<span>👤 ${p.edit ? 'সদস্য এডিট — ' + esc(p.edit) : 'সদস্য তথ্য'}</span>`, UI.grid(MEMBER_FIELDS, 3), `<span class="card-title-act">${UI.btn('📍 Set Map Location', 'Member.geo()', 'btn-success btn-sm')}</span>`)
+    + UI.card('<span>📎 সদস্য নথি</span>', UI.grid(MEMBER_DOC_FIELDS, 3))
+    + UI.card('<span>👥 নমিনির তথ্য</span>', UI.grid(MEMBER_NOM_FIELDS, 3))
+    + UI.card('<span>📎 নমিনির নথি</span>', UI.grid(MEMBER_NOMDOC_FIELDS, 3))
+    + `<div class="card"><div class="actions" style="justify-content:center">
       ${UI.btn(p.edit ? '💾 আপডেট' : '✅ সদস্য তৈরি', 'Member.save(this)', 'btn-success')}
-      ${UI.btn('🔍 সদস্য সার্চ', "App.go('memberList')", 'btn-secondary')}</div>`),
+      ${UI.btn('🔍 সদস্য সার্চ', "App.go('memberList')", 'btn-info')}</div></div></div>`,
   init: async (el, p) => {
     await Pick.branch(el, 'branch'); await Pick.samity(el, 'samity', 'branch', { all: false });
     UI.el(el, 'joinDate').value = await businessDate();
@@ -49,7 +55,7 @@ const Member = {
       busy(true, 'সংরক্ষণ হচ্ছে...');
       try {
         const up = {};
-        for (const k of ['photo', 'signature', 'document']) if (f[k]) up[k + 'Url'] = await uploadImage(f[k]);
+        for (const k of ['photo', 'signature', 'document', 'nomPhoto', 'nomSignature']) if (f[k]) up[k + 'Url'] = await uploadImage(f[k]);
         const data = {
           name: f.name, father: f.father, mother: f.mother, spouse: f.spouse, mobile: f.mobile, joinDate: f.joinDate, presentAddr: f.presentAddr, permAddr: f.permAddr,
           reference: f.reference, nid: f.nid, birthId: f.birthId, email: f.email, blood: f.blood, sex: f.sex, religion: f.religion, marital: f.marital, dob: f.dob,
@@ -66,13 +72,14 @@ const Member = {
         const idx = await Data.members(f.branch);
         const dupM = idx.find(x => x.status !== 'closed' && ((f.nid && x.nid === f.nid) || x.mobile === f.mobile));
         if (dupM && !confirm(`সতর্কতা: ${dupM.id} - ${dupM.name} এর সাথে মোবাইল/NID মিলে যাচ্ছে। তবুও ভর্তি করবেন?`)) return;
-        const seq = await nextSeq('member_' + f.branch);
+        const seq = await Member.nextId(f.branch);
         const memberId = f.branch + pad(seq, 6); // eKisti: শাখা + ৬ ডিজিট (101000001)
         const pending = !isBM();
         const sam = await Data.samity(f.samity);
         const mdoc = { memberId, branch: f.branch, samity: f.samity, ...data, status: pending ? 'pending' : 'active', shareAdmit: num(f.share), admitFee: num(f.admitFee), passbookFee: num(f.passbookFee), createdBy: App.user.userId, createdAt: FV.serverTimestamp() };
         const share = num(f.share), fee = num(f.admitFee), pbf = num(f.passbookFee);
         const shareAcc = 'S' + memberId;
+        try {
         await Eng.post({
           branch: f.branch, date: f.joinDate, type: 'MEMBER_ADMISSION', narration: 'সদস্য ভর্তি ' + memberId + ' - ' + f.name, status: pending ? 'pending' : 'posted', authType: 'Member Admission', ref: { memberId },
           lines: [Eng.cashLine(share + fee + pbf, 0), { gl: REF.GL.share, cr: share, accNo: shareAcc }, { gl: REF.GL.admission, cr: fee }, { gl: REF.GL.passbook, cr: pbf }],
@@ -89,12 +96,32 @@ const Member = {
             batch.set(db.collection('snap').doc(f.samity), { a: { [shareAcc]: { m: memberId, k: 'share', t: 'share', b: 0, st: 'active', od: f.joinDate } } }, { merge: true });
           },
         });
+        } catch (e) { await db.collection('counters').doc('member_' + f.branch).set({ at: 0 }, { merge: true }).catch(() => {}); throw e; }
         toast(pending ? `✅ সদস্য ${memberId} তৈরি হয়েছে — অনুমোদনের অপেক্ষায়` : `✅ সদস্য তৈরি হয়েছে — আইডি: ${memberId}`);
         UI.reset(el, ['branch', 'samity', 'joinDate']);
         UI.modal('✅ সদস্য ভর্তি সম্পন্ন', UI.info([['সদস্য আইডি', `<b style="font-size:18px">${memberId}</b>`], ['নাম', esc(f.name)], ['সমিতি', esc(f.samity)], ['শেয়ার', tk(share)], ['ভর্তি ফি', tk(fee)], ['পাসবই ফি', tk(pbf)]]),
           UI.btn('💰 ডিপোজিট একাউন্ট খুলুন', `this.closest('.modal').remove();App.go('depOpen',{member:'${memberId}'})`, 'btn-success') + UI.btn('🖨️ ভর্তি ফর্ম', `Member.printForm('${memberId}')`, 'btn-outline'));
       } finally { busy(false); }
     });
+  },
+  // নতুন সদস্য আইডি: শাখার সর্বশেষ আইডি + ১ (১ থেকে শুরু, ফাঁক থাকবে না)
+  async nextId(branch) {
+    const d = await db.collection('idx').doc('mem_' + branch).get();
+    const ids = Object.keys((d.exists && d.data().rows) || {}).filter(id => id.startsWith(branch)).map(id => Number(id.slice(branch.length)) || 0);
+    const maxIdx = ids.length ? Math.max(...ids) : 0;
+    const ref = db.collection('counters').doc('member_' + branch);
+    return db.runTransaction(async tx => {
+      const c = await tx.get(ref); const cur = c.exists ? (c.data().v || 0) : 0;
+      const recent = c.exists && c.data().at && (Date.now() - c.data().at) < 120000; // অন্য কেউ এইমাত্র আইডি নিয়েছে
+      const v = Math.max(maxIdx, recent ? cur : 0) + 1;
+      tx.set(ref, { v, at: Date.now() }, { merge: true });
+      return v;
+    });
+  },
+  async syncCounter(branch) {
+    const d = await db.collection('idx').doc('mem_' + branch).get();
+    const ids = Object.keys((d.exists && d.data().rows) || {}).filter(id => id.startsWith(branch)).map(id => Number(id.slice(branch.length)) || 0);
+    await db.collection('counters').doc('member_' + branch).set({ v: ids.length ? Math.max(...ids) : 0, at: 0 }, { merge: true });
   },
   async printForm(id) {
     const m = await Data.member(id); if (!m) return;
@@ -192,16 +219,21 @@ const MemberClose = {
     const el = $('#page-memberClosing');
     return guard(btn, async () => {
       const f = UI.get(el); if (!f.member) fail('সদস্য বাছাই করুন'); if (!isBM()) fail('অনুমতি নেই');
-      const tx = await db.collection('txns').where('memberId', '==', f.member).limit(5).get();
-      if (tx.docs.some(d => !d.data().cancelled)) fail('এই সদস্যের লেনদেন আছে — মুছা যাবে না, ক্লোজ করুন');
-      if (!confirm('সদস্য ' + f.member + ' সম্পূর্ণ মুছে ফেলবেন?')) return;
       const m = await Data.member(f.member);
+      const own = await DelHelp.ownVouchers('memberId', f.member, t => t.memberId === f.member);
+      if (own.bad.length) fail('এই ভাউচারগুলোতে অন্য সদস্যের লেনদেনও আছে — আগে সেগুলো বাতিল করুন: ' + own.bad.join(', '));
+      if (own.vnos.length && !isAdmin()) fail('এই সদস্যের লেনদেন আছে — শুধু Super Admin লেনদেন সহ মুছতে পারবেন, অথবা ক্লোজ করুন');
+      if (!confirm('সদস্য ' + f.member + ' সম্পূর্ণ মুছে ফেলবেন?' + (own.vnos.length ? `\n${own.cnt} টি লেনদেন (${own.vnos.length} ভাউচার) বাতিল হবে।` : ''))) return;
+      for (const vno of own.vnos) await Eng.cancel(vno, 'Member delete: ' + (f.reason || ''));
       const accs = (await db.collection('accounts').where('memberId', '==', f.member).get()).docs;
       const b = db.batch();
       accs.forEach(d => { b.delete(d.ref); Idx.delAccount(b, m.branch, d.id); if (d.data().samity) b.update(db.collection('snap').doc(d.data().samity), { ['a.' + d.id]: FV.delete() }); });
       b.delete(db.collection('members').doc(f.member)); Idx.delMember(b, m.branch, f.member);
       b.set(db.collection('memberClosings').doc(), { branch: m.branch, memberId: f.member, date: f.date, reason: f.reason || 'Deleted', kind: 'Delete', by: App.user.userId, on: FV.serverTimestamp() });
-      await b.commit(); toast('🗑️ সদস্য মুছে ফেলা হয়েছে'); MemberClose.list();
+      await DelHelp.log(b, { kind: 'member', branch: m.branch, memberId: f.member, title: m.name || '', accType: accs.length + ' টি একাউন্ট', balance: 0, vouchers: own.vnos, reason: f.reason || '' });
+      await b.commit();
+      await Member.syncCounter(m.branch);
+      Cache.drop(); toast('🗑️ সদস্য মুছে ফেলা হয়েছে'); MemberClose.list();
     });
   },
   async list() {

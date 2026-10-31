@@ -313,7 +313,7 @@ const Profile = {
       const u = auth.currentUser;
       if (firebase.auth.EmailAuthProvider && u.reauthenticateWithCredential) await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, f.old));
       await u.updatePassword(f.p1);
-      await db.collection('users').doc(u.uid).update({ passwordChangedAt: FV.serverTimestamp() });
+      await db.collection('users').doc(u.uid).update({ passwordChangedAt: FV.serverTimestamp(), mustChangePass: false }); App.user.mustChangePass = false;
       toast('✅ পাসওয়ার্ড পরিবর্তন হয়েছে'); UI.reset(el);
     });
   },

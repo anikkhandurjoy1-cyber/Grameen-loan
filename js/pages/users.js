@@ -48,12 +48,23 @@ const Users = {
       await db.collection('users').doc(uid).set({
         uid, userId, email, name: f.name, empId: f.empId || '', branch: f.branch, branches, group: f.group, mobile: f.mobile, contactEmail: f.email,
         limits: { withdraw: num(f.withdraw), deposit: num(f.deposit), vrcv: num(f.vrcv), vpay: num(f.vpay), cash: num(f.cash) },
-        flags: { hideBal: f.hideBal, controlling: f.controlling, bm: f.bm, backDate: f.backDate }, status: 'active', pages: [],
+        flags: { hideBal: f.hideBal, controlling: f.controlling, bm: f.bm, backDate: f.backDate }, status: 'active', pages: [], mustChangePass: true,
         createdBy: App.user.userId, createdAt: FV.serverTimestamp(),
       });
-      $('.newcred', el).innerHTML = `<div class="alert alert-success" style="margin-top:10px">✅ ইউজার তৈরি হয়েছে — <b>User ID: ${esc(userId)}</b> &nbsp; <b>Password: ${esc(pass)}</b> (কপি করে রাখুন)</div>`;
+      $('.newcred', el).innerHTML = Users.credBox(userId, pass, f.name, f.mobile);
       UI.reset(el, ['branch']);
     });
+  },
+  // ইউজার কোন লিংকে গিয়ে লগইন করবে — লিংক + আইডি + পাসওয়ার্ড (কপি / WhatsApp)
+  loginUrl() { return location.origin + location.pathname.replace(/index\.html$/, ''); },
+  credBox(userId, pass, name, mobile) {
+    const url = Users.loginUrl();
+    const msg = `${App.org.name}\nসফটওয়্যারে লগইন করুন:\nলিংক: ${url}\nUser ID: ${userId}\nPassword: ${pass}\n(প্রথম লগইনের পর "আমার প্রোফাইল" থেকে পাসওয়ার্ড পরিবর্তন করুন)`;
+    const wa = 'https://wa.me/' + (mobile ? '88' + String(mobile).replace(/^\+?88/, '') : '') + '?text=' + encodeURIComponent(msg);
+    return `<div class="alert alert-success" style="margin-top:10px;line-height:1.9">✅ ইউজার ${name ? esc(name) + ' ' : ''}তৈরি হয়েছে। এই তথ্য ইউজারকে দিন:<br>
+      🌐 লগইন লিংক: <b><a href="${esc(url)}" target="_blank">${esc(url)}</a></b><br>👤 User ID: <b>${esc(userId)}</b><br>🔑 Password: <b>${esc(pass)}</b>
+      <div class="actions" style="margin-top:6px">${UI.btn('📋 কপি করুন', `navigator.clipboard.writeText(${esc(JSON.stringify(msg))}).then(()=>toast('✅ কপি হয়েছে'))`, 'btn-outline btn-sm')}<a class="btn btn-success btn-sm" href="${esc(wa)}" target="_blank">WhatsApp এ পাঠান</a></div>
+      <div class="mini">ইউজার মোবাইল/কম্পিউটারের ব্রাউজারে এই লিংক খুলে User ID ও Password দিয়ে লগইন করবেন। প্রথম লগইনে পাসওয়ার্ড পরিবর্তন করতে বলা হবে।</div></div>`;
   },
   async resetPass(uid, userId) {
     if (!confirm(userId + ' এর পাসওয়ার্ড রিসেট করবেন?')) return;
@@ -64,7 +75,8 @@ const Users = {
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.success) throw new Error(j.error || 'API কাজ করছে না');
       await db.collection('users').doc(uid).update({ passwordResetAt: FV.serverTimestamp(), passwordResetBy: App.user.userId });
-      UI.modal('🔑 নতুন পাসওয়ার্ড', `<div class="alert alert-success">User ID: <b>${esc(userId)}</b><br>নতুন Password: <b>${esc(pass)}</b></div>`);
+      await db.collection('users').doc(uid).update({ mustChangePass: true });
+      UI.modal('🔑 নতুন পাসওয়ার্ড', Users.credBox(userId, pass));
     } catch (e) { toast('রিসেট ব্যর্থ: ' + e.message, 'error'); }
   },
   async toggle(uid, st) {
@@ -106,7 +118,7 @@ App.page('userList', {
     if (f.q) rows = rows.filter(r => (r.userId + ' ' + r.name).toLowerCase().includes(f.q.toLowerCase()));
     $('.ul', el).innerHTML = UI.table([
       { h: 'Branch Code', f: r => r.branch || 'সব' }, { h: 'Employee ID', f: r => r.empId || '' }, { h: 'Name', f: r => esc(r.name || '') }, { h: 'User Name', f: r => esc(r.userId || r.email) },
-      { h: 'Group', f: r => esc(r.group || '') }, { h: 'User Status', f: r => r.status === 'inactive' ? '<span class="tag red">Inactive</span>' : '<span class="tag green">Active</span>' }, { h: 'Last Activity', f: r => tsStr(r.lastActivity) },
+      { h: 'Group', f: r => esc(r.group || '') }, { h: 'Password Status', f: r => r.mustChangePass ? '<span class="tag orange">Default</span>' : '<span class="tag green">Changed</span>' }, { h: 'User Status', f: r => r.status === 'inactive' ? '<span class="tag red">Inactive</span>' : '<span class="tag green">Active</span>' }, { h: 'Last Activity', f: r => tsStr(r.lastActivity) },
       { h: 'Action', f: r => `<span class="list-actions">${UI.btn('✏️', `Users.edit('${r.id}')`, 'btn-outline btn-sm')}${UI.btn('🔑', `Users.resetPass('${r.id}','${esc(r.userId)}')`, 'btn-warning btn-sm')}${r.id !== App.user.uid ? UI.btn(r.status === 'inactive' ? '✅' : '⛔', `Users.toggle('${r.id}','${r.status || 'active'}')`, 'btn-secondary btn-sm') : ''}</span>` },
     ], rows);
   },

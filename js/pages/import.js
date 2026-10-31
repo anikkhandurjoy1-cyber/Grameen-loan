@@ -42,6 +42,8 @@ const Imp = {
         x.n = num(a.n) || 1; x.instAmount = num(a.instAmount) || Math.ceil(x.totalRepay / x.n); x.actualN = num(a.actualN) || Math.floor(x.totalRepay / x.instAmount); x.lastInst = a.lastInst != null ? num(a.lastInst) : r2(x.totalRepay - x.actualN * x.instAmount);
         x.freq = a.freq || 'W'; x.firstDate = a.firstDate || x.openDate; x.expDate = a.expDate || Loan.expiry(x.firstDate, x.freq, x.actualN);
         x.paidPen = 0; x.penDue = 0; x.wvP = 0; x.wvPr = 0; x.wvC = 0; x.base = 0; x.purposeName = a.purposeName || ''; x.isStaff = !!a.isStaff;
+        // eKisti-তে সম্পূর্ণ পরিশোধিত ঋণ অনেক সময় "active" থাকে — এখানে ক্লোজড
+        if (x.status !== 'closed' && x.balance <= 0) { x.status = 'closed'; x.closeDate = x.closeDate || (x.expDate && x.expDate <= asOf ? x.expDate : asOf); }
         if (!REF.LOAN[x.type]) issues.push(`ঋণ ${x.accNo}: অজানা প্রোডাক্ট ${x.type}`);
         if (Math.abs(x.balance - r2(x.totalRepay - x.paidTotal)) > 1) issues.push(`ঋণ ${x.accNo}: স্থিতি (${x.balance}) ≠ মোট (${x.totalRepay}) − আদায় (${x.paidTotal})`);
       } else {

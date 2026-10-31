@@ -417,9 +417,48 @@ ReportPage({
     const snaps = {}; (await Data.snaps(f.branch, f.samity)).forEach(s => snaps[s.accNo] = s);
     const mem = await Data.memberIdx(f.branch);
     if (f.phone) accs = accs.filter(a => ((mem[a.memberId] || [])[2] || '').includes(f.phone));
-    return { landscape: true, html: UI.table([{ h: 'Branch', f: () => f.branch }, { h: 'Phone', f: a => esc((mem[a.memberId] || [])[2] || '') }, { h: 'Member ID', f: a => a.memberId }, { h: 'AC Type', f: a => typeFull(a.kind, a.type) }, { h: 'Account Number', f: a => a.accNo }, { h: 'Account Name', f: a => esc(a.title) }, { h: 'Total Credit', f: a => amt((snaps[a.accNo] || {}).tc || (snaps[a.accNo] || {}).pt), r: 1 }, { h: 'Total Debit', f: a => amt((snaps[a.accNo] || {}).td || (a.kind === 'loan' ? (snaps[a.accNo] || {}).tr : 0)), r: 1 }, { h: 'Current Balance', f: a => amt((snaps[a.accNo] || {}).b), r: 1, sum: 1, v: a => (snaps[a.accNo] || {}).b }, { h: 'Is Active', f: a => a.status === 'closed' ? 'No' : 'Yes' }, { h: 'Opening Date', f: a => fmtD((snaps[a.accNo] || {}).od) }, { h: 'Closing Date', f: a => fmtD((snaps[a.accNo] || {}).cd) }], accs) };
+    return { landscape: true, html: UI.table([{ h: 'Branch', f: () => f.branch }, { h: 'Phone', f: a => esc((mem[a.memberId] || [])[2] || '') }, { h: 'Member ID', f: a => a.memberId }, { h: 'AC Type', f: a => typeFull(a.kind, a.type) }, { h: 'Account Number', f: a => a.accNo }, { h: 'Account Name', f: a => esc(a.title) }, { h: 'Total Credit', f: a => amt((snaps[a.accNo] || {}).tc || (snaps[a.accNo] || {}).pt), r: 1 }, { h: 'Total Debit', f: a => amt((snaps[a.accNo] || {}).td || (a.kind === 'loan' ? (snaps[a.accNo] || {}).tr : 0)), r: 1 }, { h: 'Current Balance', f: a => amt((snaps[a.accNo] || {}).b), r: 1, sum: 1, v: a => (snaps[a.accNo] || {}).b }, { h: 'Is Active', f: a => a.status === 'closed' ? 'No' : 'Yes' }, { h: 'Opening Date', f: a => fmtD((snaps[a.accNo] || {}).od) }, { h: 'Closing Date', f: a => fmtD((snaps[a.accNo] || {}).cd) }, ...(isBM() ? [{ h: 'Action', f: a => UI.btn('🗑️ ডিলিট', `AccDelete.run('${a.accNo}',this)`, 'btn-danger btn-sm'), noPrint: 1 }] : [])], accs) + await AccDelete.logHtml(f.branch) };
   },
 });
+
+// ── একাউন্ট ডিলিট (লেনদেন সহ বাতিল) + কে ডিলিট করেছে তার লগ ──
+const DelHelp = {
+  // field==value এর সব সক্রিয় লেনদেনের ভাউচার; প্রতিটি ভাউচার কি শুধু এই একাউন্ট/সদস্যের?
+  async ownVouchers(field, value, ok) {
+    const ts = (await db.collection('txns').where(field, '==', value).get()).docs.map(d => d.data()).filter(t => !t.cancelled);
+    const vnos = [...new Set(ts.map(t => t.vno).filter(Boolean))]; const bad = [];
+    for (const vno of vnos) {
+      const all = (await db.collection('txns').where('vno', '==', vno).get()).docs.map(d => d.data()).filter(t => !t.cancelled);
+      if (!all.every(ok)) bad.push(vno);
+    }
+    return { vnos, bad, cnt: ts.length };
+  },
+  async log(b, d) { b.set(db.collection('deleteLog').doc(), { ...d, by: App.user.userId || App.user.uid, byName: App.user.name || '', on: FV.serverTimestamp(), date: today() }); },
+};
+const AccDelete = {
+  run(accNo, btn) {
+    return guard(btn, async () => {
+      if (!isBM()) fail('ডিলিটের অনুমতি শুধু Branch Manager/Admin এর');
+      const a = await Tx.acc(accNo);
+      const own = await DelHelp.ownVouchers('accNo', accNo, t => t.accNo === accNo || (!t.accNo && t.memberId === a.memberId));
+      if (own.bad.length) fail('এই ভাউচারগুলোতে অন্য একাউন্টের লেনদেনও আছে — আগে সেগুলো বাতিল করুন: ' + own.bad.join(', '));
+      if (!confirm(`একাউন্ট ${accNo} (${typeName(a.kind, a.type)} — ${a.title || ''}) ডিলিট করবেন?` + (own.vnos.length ? `\n${own.cnt} টি লেনদেন (${own.vnos.length} ভাউচার) বাতিল হবে।` : ''))) return;
+      const reason = prompt('ডিলিটের কারণ লিখুন:', ''); if (reason === null) return;
+      for (const vno of own.vnos) await Eng.cancel(vno, 'Account delete: ' + reason);
+      const b = db.batch();
+      b.delete(db.collection('accounts').doc(accNo)); Idx.delAccount(b, a.branch, accNo);
+      if (a.samity) b.update(db.collection('snap').doc(a.samity), { ['a.' + accNo]: FV.delete() });
+      await DelHelp.log(b, { kind: 'account', branch: a.branch, accNo, memberId: a.memberId || '', accType: typeName(a.kind, a.type), title: a.title || '', balance: num(a.balance), vouchers: own.vnos, reason });
+      await b.commit(); Cache.drop(); toast('🗑️ একাউন্ট ' + accNo + ' ডিলিট হয়েছে');
+      const el = btn.closest('.page'); if (el && el.id === 'page-accList') ReportPage.run('accList');
+    });
+  },
+  async logHtml(branch) {
+    const rows = (await db.collection('deleteLog').where('branch', '==', branch).get()).docs.map(d => d.data()).sort((a, b) => ((b.on && b.on.seconds) || 0) - ((a.on && a.on.seconds) || 0)).slice(0, 100);
+    if (!rows.length) return '';
+    return '<h4 style="margin:18px 0 6px">🗑️ ডিলিট করা তালিকা (কে ডিলিট করেছে)</h4>' + UI.table([{ h: 'তারিখ/সময়', f: r => r.on && r.on.toDate ? fmtDT(r.on.toDate()) : fmtD(r.date) }, { h: 'ধরন', f: r => r.kind === 'member' ? 'সদস্য' : 'একাউন্ট' }, { h: 'সদস্য আইডি', f: r => r.memberId || '' }, { h: 'একাউন্ট', f: r => r.accNo || '' }, { h: 'নাম', f: r => esc(r.title || '') }, { h: 'একাউন্টের ধরন', f: r => esc(r.accType || '') }, { h: 'ব্যালেন্স', f: r => amt(r.balance), r: 1 }, { h: 'বাতিল ভাউচার', f: r => (r.vouchers || []).length }, { h: 'কারণ', f: r => esc(r.reason || '') }, { h: 'ডিলিট করেছেন', f: r => '<b>' + esc(r.by || '') + '</b>' + (r.byName ? ' (' + esc(r.byName) + ')' : '') }], rows);
+  },
+};
 
 // ── লেনদেন প্রোফাইল সেটআপ ──
 const TRAN_FREQ = [['D', 'D-Daily'], ['W', 'W-Weekly'], ['M', 'M-Monthly'], ['Q', 'Q-Quarterly'], ['H', 'H-Half Yearly'], ['Y', 'Y-Yearly'], ['N', 'N-Not Applicable']];

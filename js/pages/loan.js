@@ -23,7 +23,8 @@ async function loanReceiptList(el, accNo, cancelMode) {
   const rows = (await db.collection('txns').where('accNo', '==', accNo).get()).docs.map(d => ({ id: d.id, ...d.data() })).filter(t => ['EMI_RCV', 'EMI_MANUAL', 'EMI_TRF', 'EMI_SHEET'].includes(t.tt)).sort((a, b) => (a.date + a.vno).localeCompare(b.date + b.vno));
   rows.forEach((r, i) => r.serial = i + 1);
   box.innerHTML = UI.table([{ h: 'Branch Code', f: r => r.branch }, { h: 'Member ID', f: r => r.memberId }, { h: 'Member Account', f: r => r.accNo }, { h: 'Installment Date', f: r => fmtD(r.date) }, { h: 'Installment Serial', f: r => r.serial }, { h: 'Installment Amount', f: r => amt(r.amount), r: 1, sum: 1, v: r => r.cancelled ? 0 : r.amount }, { h: 'আসল', f: r => amt(r.principal), r: 1 }, { h: 'মুনাফা', f: r => amt(r.profit), r: 1 }, { h: 'জরিমানা', f: r => amt(r.penalty), r: 1 }, { h: 'Document Number', f: r => esc(r.docNo || r.vno) }, { h: 'Entry By', f: r => r.byName || '' }, { h: 'Entry On', f: r => tsStr(r.on) }, { h: 'Cancel By', f: r => r.cancelBy || '' }, { h: 'Cancel On', f: r => tsStr(r.cancelOn) },
-    { h: 'Action', f: r => r.cancelled ? '<span class="tag red">বাতিল</span>' : (cancelMode ? UI.btn('✖ বাতিল', `EmiCancel.run('${r.vno}',this)`, 'btn-danger btn-sm') : UI.btn('🧾', `Receipt.print('${r.vno}')`, 'btn-outline btn-sm')) }], rows);
+    { h: 'জমাকারী', f: r => esc(r.byName || '') },
+    { h: 'Action', f: r => r.cancelled ? `<span class="tag red">ডিলিট</span> <small>${esc(r.cancelBy || '')}${r.cancelOn && r.cancelOn.toDate ? ' • ' + fmtDT(r.cancelOn.toDate()) : ''}</small>` : UI.btn('🧾', `Receipt.print('${r.vno}')`, 'btn-outline btn-sm') + (isBM() ? ' ' + UI.btn(cancelMode ? '✖ বাতিল' : '🗑️', `EmiCancel.run('${r.vno}',this)`, 'btn-danger btn-sm') : '') }], rows, { rowCls: r => r.cancelled ? 'row-cancel' : '' });
 }
 // রসিদ প্রিন্ট
 // রসিদ প্রিন্ট: js/pages/receipts.js (Receipt / Voucher)
@@ -125,11 +126,13 @@ EmiCancelPage('emiCancel', 'কিস্তি জমা বাতিল');
 EmiCancelPage('staffEmiCancel', 'কর্মী ঋণের কিস্তি বাতিল', true);
 const EmiCancel = {
   run(vno, btn) {
-    const reason = prompt('বাতিলের কারণ লিখুন:'); if (reason === null) return;
+    if (!confirm('এই কিস্তি জমা ডিলিট করবেন? (ভাউচার ' + vno + ')')) return; const reason = prompt('ডিলিটের কারণ লিখুন:', ''); if (reason === null) return;
     return guard(btn, async () => {
       if (!isBM()) fail('কিস্তি বাতিলের অনুমতি শুধু Branch Manager/Admin এর');
-      await Eng.cancel(vno, reason); toast('✅ কিস্তি বাতিল হয়েছে'); Cache.drop('aidx_');
-      const el = btn.closest('.page'); loanReceiptList(el, UI.el(el, 'account').value, true);
+      await Eng.cancel(vno, reason); toast('🗑️ কিস্তি ডিলিট হয়েছে — ' + (App.user.userId || '')); Cache.drop('aidx_');
+      const el = btn.closest('.page'); const acc = UI.el(el, 'account').value;
+      if (el.id === 'page-emiCancel' || el.id === 'page-staffEmiCancel') loanReceiptList(el, acc, true);
+      else { if (window.LoanInfo) await LoanInfo.load(el, acc, UI.el(el, 'date').value); loanReceiptList(el, acc); }
     });
   },
 };

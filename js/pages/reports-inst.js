@@ -55,7 +55,7 @@ const R = {
     const mem = {}; for (const b of branches) Object.assign(mem, await Data.memberIdx(b));
     return k => grp === 'branch' ? k + ' - ' + esc(bm[k] || '') : grp === 'center' ? k + ' - ' + esc((sm[k] || {}).name || '') : grp === 'employee' ? en(k) : k + ' - ' + R.name(mem, k);
   },
-  userOpts: async (el, f) => { const e = UI.el(f, 'user'); if (!e) return; const us = (await db.collection('users').get()).docs.map(d => ({ id: d.id, ...d.data() })); UI.fill(e, us, u => u.id, u => u.userId || u.email, '— সব —'); },
+  userOpts: async (el, f) => { const e = UI.el(f, 'user'); if (!e) return; const us = (await db.collection('users').get()).docs.map(d => ({ id: d.id, ...d.data() })); UI.fill(e, us, u => u.id, u => (u.userId || u.email) + (u.name ? ' - ' + u.name : ''), '— সব —'); if (!isBM() && App.user) { e.value = App.user.uid; e.disabled = true; } },
 };
 const USER_F = { k: 'user', l: 'User Name', t: 'select', opts: [['', '— সব —']] };
 const TRF_F = { k: 'trf', l: 'Show Transfer Transaction', t: 'select', opts: [['yes', 'Yes'], ['no', 'No']] };

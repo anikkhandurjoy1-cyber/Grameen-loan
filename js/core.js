@@ -33,6 +33,7 @@ const addDays = (s, n) => { const d = parseD(s); d.setDate(d.getDate() + n); ret
 const addMonths = (s, n) => { const d = parseD(s); const day = d.getDate(); d.setDate(1); d.setMonth(d.getMonth() + n); const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); d.setDate(Math.min(day, last)); return ymd(d); };
 const daysBetween = (a, b) => Math.round((parseD(b) - parseD(a)) / 86400000);
 const fmtD = s => { if (!s) return ''; const [y, m, d] = String(s).split('-'); return d + '-' + m + '-' + y; };
+const fmtDT = d => { if (!d) return ''; const p = n => String(n).padStart(2, '0'); return p(d.getDate()) + '-' + p(d.getMonth() + 1) + '-' + d.getFullYear() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); };
 const tsStr = t => { if (!t) return ''; const d = t.toDate ? t.toDate() : new Date(t); return isNaN(d) ? '' : fmtD(ymd(d)) + ' ' + pad(d.getHours(), 2) + ':' + pad(d.getMinutes(), 2); };
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const WEEKDAYS_BN = { Sunday: 'রবিবার', Monday: 'সোমবার', Tuesday: 'মঙ্গলবার', Wednesday: 'বুধবার', Thursday: 'বৃহস্পতিবার', Friday: 'শুক্রবার', Saturday: 'শনিবার' };
@@ -174,6 +175,7 @@ async function isHoliday(date, branch, samity) {
 }
 
 // ─────────────── UI হেল্পার ───────────────
+const isPickInp = e => !!(e && (e.list || (e.parentElement && e.parentElement.classList.contains("mpick"))));
 const UI = {
   // field spec: {k, l(label), t(type), req, ro, opts:[[v,t]], v(value), ph, span, attrs, hint}
   field(f) {
@@ -188,7 +190,7 @@ const UI = {
       case 'textarea': inp = `<textarea ${common} rows="${f.rows || 2}" placeholder="${esc(f.ph || '')}">${esc(f.v || '')}</textarea>`; break;
       case 'checkbox': return `<div class="form-group check" style="${f.span ? 'grid-column:span ' + f.span : ''}"><label><input type="checkbox" ${common} ${f.v ? 'checked' : ''}> ${esc(f.l)}</label></div>`;
       case 'file': inp = `<input type="file" ${common} accept="${f.accept || 'image/*'}">`; break;
-      case 'member': inp = `<input type="text" ${common} list="${id}_dl" placeholder="${esc(f.ph || 'আইডি / নাম / মোবাইল লিখুন')}" autocomplete="off"><datalist id="${id}_dl"></datalist>`; break;
+      case 'member': inp = `<div class="mpick"><input type="search" ${common} placeholder="${esc(f.ph || 'আইডি / নাম / মোবাইল লিখুন')}" autocomplete="off"><div class="mpick-list" hidden></div></div>`; break;
       default: inp = `<input type="${f.t || 'text'}" ${common} value="${esc(f.v == null ? '' : f.v)}" placeholder="${esc(f.ph || '')}" ${f.t === 'number' ? 'step="any"' : ''}>`;
     }
     return `<div class="form-group" style="${f.span ? 'grid-column:span ' + f.span : ''}"><label for="${id}">${esc(f.l)}${req}</label>${inp}${f.hint ? `<div class="hint">${esc(f.hint)}</div>` : ''}</div>`;
@@ -202,7 +204,7 @@ const UI = {
       if (e.type === 'checkbox') o[k] = e.checked;
       else if (e.type === 'number') o[k] = e.value === '' ? '' : num(e.value);
       else if (e.type === 'file') o[k] = e.files && e.files[0];
-      else if (e.list) o[k] = (e.dataset.val || '').trim();
+      else if (isPickInp(e)) o[k] = (e.dataset.val || '').trim();
       else o[k] = (e.value || '').trim();
     });
     return o;
@@ -211,13 +213,13 @@ const UI = {
     Object.entries(obj).forEach(([k, v]) => {
       const e = UI.el(root, k); if (!e) return;
       if (e.type === 'checkbox') e.checked = !!v;
-      else if (e.list) { e.dataset.val = v || ''; e.value = v || ''; }
+      else if (isPickInp(e)) { e.dataset.val = v || ''; e.value = v || ''; }
       else e.value = v == null ? '' : v;
     });
   },
   validate(root) {
     for (const e of $$('[data-req="1"]', root)) {
-      const v = e.list ? e.dataset.val : e.value;
+      const v = isPickInp(e) ? e.dataset.val : e.value;
       if (e.offsetParent !== null && (v == null || String(v).trim() === '' || (e.type === 'number' && num(v) <= 0 && !e.readOnly))) {
         const lab = e.closest('.form-group')?.querySelector('label')?.textContent.replace('*', '').trim();
         e.focus(); fail(`"${lab}" দিন!`);
@@ -230,7 +232,7 @@ const UI = {
       if (e.type === 'checkbox') e.checked = false;
       else if (e.tagName === 'SELECT') { if (!e.disabled) e.selectedIndex = 0; }
       else if (e.type === 'date') { /* তারিখ রেখে দাও */ }
-      else { e.value = ''; if (e.list) e.dataset.val = ''; }
+      else { e.value = ''; if (isPickInp(e)) e.dataset.val = ''; }
     });
   },
   opts(list, vf, tf, blank = '------------') { return (blank !== null ? `<option value="">${blank}</option>` : '') + list.map(x => `<option value="${esc(vf(x))}">${esc(tf(x))}</option>`).join(''); },
@@ -303,29 +305,58 @@ const Pick = {
     };
     if (bsel) bsel.addEventListener('change', load); await load();
   },
-  // সদস্য পিকার: datalist সার্চ (আইডি/নাম/মোবাইল)
+  // সদস্য পিকার: ট্যাপ করলে সব সদস্যের তালিকা; আইডি লিখলে ঠিক ১টি; নাম/মোবাইল দিয়ে খোঁজা
   async member(root, k = 'member', bk = 'branch', opts = {}) {
     const inp = UI.el(root, k), bsel = UI.el(root, bk), ssel = opts.samityKey ? UI.el(root, opts.samityKey) : null; if (!inp) return;
-    const dl = inp.list;
+    const box = inp.parentElement.querySelector('.mpick-list');
     let members = [];
     const load = async () => {
       members = bsel && bsel.value ? await Data.members(bsel.value, ssel && ssel.value) : [];
       if (!opts.closed) members = members.filter(m => m.status !== 'closed');
-      dl.innerHTML = members.slice(0, 5000).map(m => `<option value="${esc(m.id)} - ${esc(m.name)}${m.mobile ? ' (' + esc(m.mobile) + ')' : ''}">`).join('');
-      inp.value = ''; inp.dataset.val = '';
+      members.sort((a, b) => a.id.localeCompare(b.id));
+      inp.value = ''; inp.dataset.val = ''; if (box) box.hidden = true;
     };
-    const resolve = () => {
-      const v = inp.value.trim(); if (!v) { inp.dataset.val = ''; return; }
-      const id = v.split(' - ')[0].trim();
-      let m = members.find(x => x.id === id) || members.find(x => x.mobile && x.mobile === v);
-      if (!m && v.length >= 3) { const c = members.filter(x => x.name.toLowerCase().includes(v.toLowerCase())); if (c.length === 1) m = c[0]; }
+    const br = () => (bsel && bsel.value) || '';
+    const search = v => {
+      v = String(v || '').trim(); if (!v) return members;
+      const q = v.split(' - ')[0].trim();
+      if (/^\d+$/.test(q)) {
+        const ex = members.filter(m => m.id === q || (q.length < m.id.length && m.id.startsWith(br()) && Number(m.id.slice(br().length)) === Number(q)));
+        if (ex.length) return ex;
+        const mob = members.filter(m => m.mobile && m.mobile.includes(q)); if (q.length >= 5 && mob.length) return mob;
+        return members.filter(m => m.id.startsWith(q) || m.id.endsWith(q));
+      }
+      const lq = v.toLowerCase();
+      return members.filter(m => (m.name || '').toLowerCase().includes(lq) || (m.father || '').toLowerCase().includes(lq));
+    };
+    const pick = m => {
       const prev = inp.dataset.val;
       inp.dataset.val = m ? m.id : '';
       if (m) inp.value = `${m.id} - ${m.name}`;
+      if (box) box.hidden = true;
       if (prev !== inp.dataset.val) inp.dispatchEvent(new CustomEvent('picked', { detail: m || null }));
     };
+    const draw = () => {
+      if (!box) return;
+      const list = search(inp.dataset.val && inp.value.startsWith(inp.dataset.val + ' - ') ? '' : inp.value);
+      box.innerHTML = list.length ? list.slice(0, 300).map((m, i) => `<div class="mpick-it" data-i="${i}"><b>${esc(m.id)}</b> ${esc(m.name)}${m.mobile ? ' <small>' + esc(m.mobile) + '</small>' : ''}</div>`).join('') + (list.length > 300 ? `<div class="mpick-more">আরো ${list.length - 300} জন — আইডি/নাম লিখে খুঁজুন</div>` : '') : '<div class="mpick-more">কোন সদস্য পাওয়া যায়নি</div>';
+      box._list = list; box.hidden = false;
+    };
+    const resolve = () => {
+      const v = inp.value.trim(); if (!v) { pick(null); return; }
+      if (inp.dataset.val && v === `${inp.dataset.val} - ${(members.find(m => m.id === inp.dataset.val) || {}).name}`) return;
+      const list = search(v);
+      pick(list.length === 1 ? list[0] : members.find(x => x.id === v.split(' - ')[0].trim()) || null);
+    };
+    if (box) {
+      box.addEventListener('pointerdown', e => { const it = e.target.closest('.mpick-it'); if (!it) return; e.preventDefault(); pick(box._list[Number(it.dataset.i)]); });
+      inp.addEventListener('focus', draw);
+      inp.addEventListener('click', draw);
+      inp.addEventListener('input', draw);
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); const l = box._list || []; if (l.length) pick(l[0]); } if (e.key === 'Escape') box.hidden = true; });
+      inp.addEventListener('blur', () => setTimeout(() => { box.hidden = true; resolve(); }, 150));
+    } else inp.addEventListener('blur', resolve);
     inp.addEventListener('change', resolve);
-    inp.addEventListener('blur', resolve);
     if (bsel) bsel.addEventListener('change', load);
     if (ssel) ssel.addEventListener('change', load);
     await load();
@@ -368,7 +399,8 @@ function typeFull(kind, type) {
 // ─────────────── প্রিন্ট ───────────────
 // eKisti এর রিপোর্ট প্রিন্ট ভিউ: লোগো + প্রতিষ্ঠানের নাম + রিপোর্টের নাম + তথ্য গ্রিড + টেবিল + স্বাক্ষর
 // opts: {landscape, sub, branchName, branchAddr, info:[[label,value]], noSig, addr(true হলে ঠিকানা লাইন), sigs:[...], auto(সাথে সাথে প্রিন্ট)}
-const PRINT_CSS = `body{font-family:'Hind Siliguri',Arial,sans-serif;color:#000;margin:0;background:#fff}
+const PRINT_CSS = `td .btn,td button{display:none!important}
+body{font-family:'Hind Siliguri',Arial,sans-serif;color:#000;margin:0;background:#fff}
   #wrap{max-width:96%;margin:0 auto;padding-top:10px}
   .tb{text-align:right;padding:8px}.tb button{background:#333;color:#fff;border:0;padding:6px 12px;font-size:14px;cursor:pointer;margin-left:2px}
   .ph{display:flex;align-items:center;border-bottom:1px solid #2E71B8;padding-bottom:6px;margin-bottom:8px}
@@ -529,6 +561,7 @@ async function startApp() {
   buildSidebar();
   loadNotice();
   if (window.innerWidth >= 768) { sidebarOpen = false; toggleSidebar(); }
+  if (App.user.mustChangePass) { App.render('profile'); toast('🔑 নিরাপত্তার জন্য প্রথমে আপনার পাসওয়ার্ড পরিবর্তন করুন', 'info'); return; }
   App.render(location.hash.slice(1) || 'dashboard');
 }
 async function refreshBranchBadge() {
@@ -673,7 +706,7 @@ ReportPage.run = function (id, btn, print, mode) {
   const o = ReportPage.defs[id], el = $('#page-' + id);
   return guard(btn, async () => {
     const f = UI.get($('.report-filter', el));
-    $$('[data-req="1"]', $('.report-filter', el)).forEach(e => { if (!(e.list ? e.dataset.val : e.value)) fail('"' + e.closest('.form-group').querySelector('label').textContent.replace('*', '').trim() + '" দিন'); });
+    $$('[data-req="1"]', $('.report-filter', el)).forEach(e => { if (!(isPickInp(e) ? e.dataset.val : e.value)) fail('"' + e.closest('.form-group').querySelector('label').textContent.replace('*', '').trim() + '" দিন'); });
     busy(true, 'রিপোর্ট তৈরি হচ্ছে...');
     let res; try { res = await o.run(f, mode); } finally { busy(false); }
     const b = f.branch ? await Data.branch(f.branch) : null;
