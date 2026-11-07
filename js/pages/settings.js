@@ -35,7 +35,7 @@ const SystemSetup = {
       };
       const typeOf = code => ({ '1': 'A', '2': 'L', '3': 'I', '4': 'E' }[code[0]]);
       await writeAll('ledgers', REF.COA, x => x[0], x => ({ code: x[0], name: x[1], parent: x[2], leaf: !!x[3], type: typeOf(x[0]), cashBank: x[2] === '11100000', system: true, active: true }));
-      await writeAll('emiInstSettings', REF.INST_SET, x => x.id, x => ({ type: x.type, freq: x.freq, n: x.n, rate: x.rate, active: true }));
+      // কিস্তির সংখ্যা ও মুনাফার হার (%) — Admin নিজে "ঋণের কিস্তি সেটিংস" থেকে বসাবেন (eKisti এর মতো, অটো নয়)
       await writeAll('loanPurposes', REF.PURPOSES, x => x.code, x => ({ code: x.code, cat: x.cat, name: x.name, active: true }));
       await writeAll('depSchedules', REF.SCHED, x => x[0], x => ({ code: x[0], type: x[1], name: x[2], n: x[3], inst: x[4], rate: x[5], months: x[6], active: true }));
       await writeAll('permGroups', Object.keys(DEFAULT_GROUPS), x => x, x => ({ name: x, pages: DEFAULT_GROUPS[x] || [] }));
@@ -102,6 +102,16 @@ CrudPage({
   ],
   init: async el => { await Pick.branch(el, 'branch'); const es = await Data.employees(''); UI.fill(UI.el(el, 'managerId'), es, e => e.empId, e => e.empId + '-' + e.name, '- Select an option -'); },
   autoId: async () => pad(await nextSeq('employee'), 6),
+  canDelete: () => isAdmin(),
+  beforeDelete: async id => {
+    if (!isAdmin()) fail('শুধু Super Admin কর্মচারী মুছতে পারবেন');
+    const sam = (await db.collection('samities').where('foId', '==', id).get()).docs.filter(d => d.data().status !== 'closed');
+    if (sam.length) fail('এই কর্মচারীর অধীনে ' + sam.length + ' টি সমিতি আছে (' + sam.slice(0, 3).map(d => d.id).join(', ') + ') — আগে অন্য মাঠকর্মীকে দিন');
+    const accs = (await db.collection('accounts').where('memberId', '==', 'E' + id).get()).docs;
+    const bal = accs.filter(d => num(d.data().balance));
+    if (bal.length) fail('এই কর্মচারীর একাউন্টে ব্যালেন্স আছে (' + bal.map(d => d.id + ': ' + tk(d.data().balance)).join(', ') + ') — আগে শূন্য করুন');
+    const b = db.batch(); accs.forEach(d => { b.delete(d.ref); Idx.delAccount(b, d.data().branch, d.id); }); await b.commit(); Cache.drop('aidx_');
+  },
   after: async (d, isEdit) => { Cache.drop('emp_'); if (!isEdit) await EmpAccounts.create(d.empId || d.id, d.branch, d.name, d.mobile, d.presentAddr); },
   list: {
     filter: [{ k: 'fbranch', l: 'শাখা', t: 'select' }, { k: 'q', l: 'নাম/আইডি/মোবাইল' }],

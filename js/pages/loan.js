@@ -22,8 +22,7 @@ async function loanReceiptList(el, accNo, cancelMode) {
   if (!accNo) { box.innerHTML = ''; return; }
   const rows = (await db.collection('txns').where('accNo', '==', accNo).get()).docs.map(d => ({ id: d.id, ...d.data() })).filter(t => ['EMI_RCV', 'EMI_MANUAL', 'EMI_TRF', 'EMI_SHEET'].includes(t.tt)).sort((a, b) => (a.date + a.vno).localeCompare(b.date + b.vno));
   rows.forEach((r, i) => r.serial = i + 1);
-  box.innerHTML = UI.table([{ h: 'Branch Code', f: r => r.branch }, { h: 'Member ID', f: r => r.memberId }, { h: 'Member Account', f: r => r.accNo }, { h: 'Installment Date', f: r => fmtD(r.date) }, { h: 'Installment Serial', f: r => r.serial }, { h: 'Installment Amount', f: r => amt(r.amount), r: 1, sum: 1, v: r => r.cancelled ? 0 : r.amount }, { h: 'আসল', f: r => amt(r.principal), r: 1 }, { h: 'মুনাফা', f: r => amt(r.profit), r: 1 }, { h: 'জরিমানা', f: r => amt(r.penalty), r: 1 }, { h: 'Document Number', f: r => esc(r.docNo || r.vno) }, { h: 'Entry By', f: r => r.byName || '' }, { h: 'Entry On', f: r => tsStr(r.on) }, { h: 'Cancel By', f: r => r.cancelBy || '' }, { h: 'Cancel On', f: r => tsStr(r.cancelOn) },
-    { h: 'জমাকারী', f: r => esc(r.byName || '') },
+  box.innerHTML = UI.table([{ h: 'Branch Code', f: r => r.branch }, { h: 'Member ID', f: r => r.memberId }, { h: 'Member Account', f: r => r.accNo }, { h: 'Installment Date', f: r => fmtD(r.date) }, { h: 'Installment Serial', f: r => r.serial }, { h: 'Installment Amount', f: r => amt(r.amount), r: 1, sum: 1, v: r => r.cancelled ? 0 : r.amount }, { h: 'আসল', f: r => amt(r.principal), r: 1 }, { h: 'মুনাফা', f: r => amt(r.profit), r: 1 }, { h: 'জরিমানা', f: r => amt(r.penalty), r: 1 }, { h: 'Document Number', f: r => esc(r.docNo || r.vno) }, { h: 'Comments', f: r => esc(r.narration || '') }, { h: 'Entry By', f: r => r.byName || '' }, { h: 'Entry On', f: r => tsStr(r.on) }, { h: 'Cancel By', f: r => r.cancelBy || '' }, { h: 'Cancel On', f: r => tsStr(r.cancelOn) },
     { h: 'Action', f: r => r.cancelled ? `<span class="tag red">ডিলিট</span> <small>${esc(r.cancelBy || '')}${r.cancelOn && r.cancelOn.toDate ? ' • ' + fmtDT(r.cancelOn.toDate()) : ''}</small>` : UI.btn('🧾', `Receipt.print('${r.vno}')`, 'btn-outline btn-sm') + (isBM() ? ' ' + UI.btn(cancelMode ? '✖ বাতিল' : '🗑️', `EmiCancel.run('${r.vno}',this)`, 'btn-danger btn-sm') : '') }], rows, { rowCls: r => r.cancelled ? 'row-cancel' : '' });
 }
 // রসিদ প্রিন্ট
@@ -31,6 +30,12 @@ async function loanReceiptList(el, accNo, cancelMode) {
 const TT_NAME = { EMI_RCV: 'ঋণের কিস্তি জমা', EMI_MANUAL: 'ম্যানুয়াল কিস্তি', EMI_TRF: 'সঞ্চয় থেকে কিস্তি', EMI_SHEET: 'শীট কিস্তি', DEP_RCV: 'সঞ্চয় জমা', DEP_PAY: 'সঞ্চয় ফেরত', DPS_RCV: 'ডিপিএস জমা', SAV_RCV: 'সেভিংস জমা', SHARE_RCV: 'শেয়ার জমা', SHARE_PAY: 'শেয়ার ফেরত', LOAN_DISB: 'ঋণ বিতরণ', DEP_TRF_IN: 'স্থানান্তর জমা', DEP_TRF_OUT: 'স্থানান্তর উত্তোলন', DEP_CLOSE: 'হিসাব ক্লোজিং', PROFIT_POST: 'মুনাফা জমা', PROFIT_PAY: 'মুনাফা প্রদান', ADMISSION_FEE: 'ভর্তি ফি', PASSBOOK_FEE: 'পাসবই ফি', LOAN_DISB_TRF: 'ঋণ বিতরণ (জমা)', EMI_WAIVE: 'ঋণ মওকুফ', OTHER_RCV: 'জমা', OTHER_PAY: 'প্রদান', OPEN_BAL: 'ওপেনিং ব্যালেন্স', OPEN_PAID: 'পুরোনো আদায় (ওপেনিং)' };
 
 // ── কিস্তি জমা পেজ (সাধারণ / ম্যানুয়াল / কর্মী) ──
+// eKisti: "ঋণের কিস্তি জমা" বাংলা লেবেল, ম্যানুয়াল ও কর্মী কিস্তি ইংরেজি
+function EMI_LBL(id, fields) {
+  if (id === 'emiRcv') return fields;
+  const EN = { branch: 'Branch Name', account: 'Member Account', amount: 'Installment Amount', principal: 'Investment Amount', profit: 'Profit Amount', penaltyRcv: 'Penalty Charge', date: 'Installment Date', asonDue: 'Todays Due', penalty: 'Penalty Charge', totalN: 'Total Installment', paidN: 'Total Installment Paid', totalLoan: 'Total Loan Amount', totalPaid: 'Total Loan Paid', totalDue: 'Total Loan Due', expDate: 'Installment Expire Date', depAcc: 'Deposit Account', docNo: 'Document Number', comments: 'Comments', duePrincipal: 'Due Principal', dueProfit: 'Due Profit' };
+  return fields.map(f => f && f.k && EN[f.k] ? { ...f, l: EN[f.k] } : f).map(f => f && f.k === 'member' && f.t === 'member' ? { ...f, l: 'Member ID' } : f);
+}
 function EmiPage(id, title, o = {}) {
   const memberField = o.staff ? { k: 'member', l: 'Employee Name', t: 'select', req: 1 } : { k: 'member', l: 'সদস্য আইডি', t: 'member', req: 1 };
   const amountFields = o.manual
@@ -38,9 +43,9 @@ function EmiPage(id, title, o = {}) {
     : [{ k: 'amount', l: 'জমার পরিমাণ', t: 'number', req: 1 }];
   App.page(id, {
     title, icon: '💵',
-    render: () => UI.card('', UI.grid([F.branch, memberField, { k: 'account', l: 'সদস্য অ্যাকাউন্ট', t: 'select', req: 1 }, ...amountFields, { k: 'date', l: 'কিস্তির তারিখ', t: 'date', req: 1 },
+    render: () => UI.card('', UI.grid(EMI_LBL(id, [{ ...F.branch, l: 'শাখা নাম' }, memberField, { k: 'account', l: 'সদস্য অ্যাকাউন্ট', t: 'select', req: 1 }, ...amountFields, { k: 'date', l: 'কিস্তির তারিখ', t: 'date', req: 1 },
       ...LoanInfo.fields, { k: 'duePrincipal', l: 'আসল বকেয়া', ro: 1 }, { k: 'dueProfit', l: 'মুনাফা বকেয়া', ro: 1 },
-      { k: 'fromDep', l: 'Transfer From Same Customer Deposit', t: 'checkbox' }, { k: 'depAcc', l: 'সঞ্চয় অ্যাকাউন্ট', t: 'select' }, { k: 'docNo', l: 'ডকুমেন্ট নাম্বার' }, { k: 'comments', l: 'মন্তব্য' }], 4)
+      { k: 'fromDep', l: 'Transfer From Same Customer Deposit', t: 'checkbox' }, { k: 'depAcc', l: 'সঞ্চয় অ্যাকাউন্ট', t: 'select' }, { k: 'docNo', l: 'ডকুমেন্ট নাম্বার' }, { k: 'comments', l: 'মন্তব্য' }]), 4)
       + (o.staff ? '' : MemberCard.html()) + `<div class="actions">${UI.btn('✅ Receive Installment', `EmiRcv.save('${id}',this)`, 'btn-success')}</div>`) + UI.card('Search Receive Installment', '<div class="rl"></div>'),
     init: async (el, p) => {
       await Pick.branch(el, 'branch');

@@ -279,6 +279,18 @@ const UI = {
 };
 
 // ─────────────── পিকার বাইন্ডিং (শাখা → সমিতি → কর্মী → সদস্য → একাউন্ট) ───────────────
+// সিলেক্টের উপরে খোঁজার ঘর — নাম/কোড লিখলে মিলে যাওয়া অপশনগুলোই দেখাবে, ১টি মিললে নিজে বাছাই
+UI.selSearch = (sel, ph) => {
+  if (!sel || sel._srch) return;
+  const inp = document.createElement('input'); inp.type = 'search'; inp.className = 'sel-search'; inp.placeholder = ph || 'খুঁজুন...'; inp.autocomplete = 'off';
+  sel.parentNode.insertBefore(inp, sel); sel._srch = inp;
+  inp.addEventListener('input', () => {
+    const q = inp.value.trim().toLowerCase(); let hit = [];
+    [...sel.options].forEach(o => { const ok = !o.value || !q || o.text.toLowerCase().includes(q); o.hidden = !ok; if (ok && o.value) hit.push(o); });
+    if (q && hit.length === 1 && sel.value !== hit[0].value) { sel.value = hit[0].value; sel.dispatchEvent(new Event('change', { bubbles: true })); }
+    if (q && hit.length > 1 && hit.every(o => o.value !== sel.value)) { sel.value = ''; }
+  });
+};
 // ── সদস্য তথ্য কার্ড (eKisti লোন ফর্মের মতো): ছবি, নাম, মোবাইল, ঠিকানা, সঞ্চয় ও ঋণ হিসাব ──
 const MemberCard = {
   html: () => '<div class="mcard" hidden></div>',
@@ -314,9 +326,10 @@ const Pick = {
     const load = async () => {
       const list = bsel.value ? await Data.samities(bsel.value) : [];
       UI.fill(sel, list.filter(s => opts.closed || s.status !== 'closed'), s => s.code, s => s.code + ' - ' + s.name, opts.all === false ? '------------' : '— সব সমিতি —');
+      if (sel._srch) sel._srch.value = '';
       sel.dispatchEvent(new Event('change'));
     };
-    bsel.addEventListener('change', load); await load();
+    bsel.addEventListener('change', load); await load(); UI.selSearch(sel, 'সমিতির নাম/কোড লিখে খুঁজুন');
   },
   async employee(root, k = 'employee', bk = 'branch', opts = {}) {
     const sel = UI.el(root, k), bsel = UI.el(root, bk); if (!sel) return;
@@ -677,7 +690,7 @@ CrudPage.search = async function (id, btn) {
     if (o.list.post) rows = o.list.post(rows, f);
     el._rows = rows;
     const cols = [...o.list.cols];
-    if (o.list.actions !== false) cols.push({ h: 'Action', f: r => `<span class="list-actions">${UI.btn('✏️', `CrudPage.edit('${id}','${esc(r.id)}')`, 'btn-outline btn-sm')}${o.canDelete ? UI.btn('🗑️', `CrudPage.del('${id}','${esc(r.id)}',this)`, 'btn-danger btn-sm') : ''}${o.list.rowActions ? o.list.rowActions(r) : ''}</span>` });
+    if (o.list.actions !== false) cols.push({ h: 'Action', f: r => `<span class="list-actions">${UI.btn('✏️', `CrudPage.edit('${id}','${esc(r.id)}')`, 'btn-outline btn-sm')}${(typeof o.canDelete === 'function' ? o.canDelete(r) : o.canDelete) ? UI.btn('🗑️', `CrudPage.del('${id}','${esc(r.id)}',this)`, 'btn-danger btn-sm') : ''}${o.list.rowActions ? o.list.rowActions(r) : ''}</span>` });
     box.innerHTML = `<div class="mini">মোট: ${rows.length}</div>` + UI.table(cols, rows);
   });
 };
@@ -753,13 +766,13 @@ ReportPage.info = async function (o, f, el) {
 };
 ReportPage.excel = function (id) { const el = $('#page-' + id); if (!el._last) return toast('আগে "দেখুন" চাপুন', 'error'); downloadExcel(ReportPage.defs[id].title, el._last.html); };
 const F = { // সাধারণ ফিল্টার স্পেক
-  branch: { k: 'branch', l: 'শাখার নাম', t: 'select' },
-  samity: { k: 'samity', l: 'সমিতির নাম', t: 'select' },
-  employee: { k: 'employee', l: 'ফিল্ড অফিসার', t: 'select' },
-  member: { k: 'member', l: 'সদস্য আইডি', t: 'member' },
-  from: { k: 'from', l: 'তারিখ হতে', t: 'date' },
-  upto: { k: 'upto', l: 'তারিখ পর্যন্ত', t: 'date' },
-  date: { k: 'date', l: 'রিপোর্টের তারিখ', t: 'date' },
+  branch: { k: 'branch', l: 'Branch Name', t: 'select' },
+  samity: { k: 'samity', l: 'Samity Name', t: 'select' },
+  employee: { k: 'employee', l: 'Employee Name', t: 'select' },
+  member: { k: 'member', l: 'Member ID', t: 'member' },
+  from: { k: 'from', l: 'From Date', t: 'date' },
+  upto: { k: 'upto', l: 'Upto Date', t: 'date' },
+  date: { k: 'date', l: 'Report Date', t: 'date' },
   btype: { k: 'btype', l: 'Branch Type', t: 'select', opts: [['me', 'Only Me'], ['all', 'All Branch'], ['others', 'All Others Branch']] },
-  user: { k: 'user', l: 'ইউজার', t: 'select', opts: [['', '— সব —']] },
+  user: { k: 'user', l: 'User Name', t: 'select', opts: [['', '— সব —']] },
 };

@@ -71,6 +71,7 @@ ReportPage({
   id: 'rptMemberBalance', title: 'সদস্য ব্যালেন্স রিপোর্ট', landscape: true,
   filters: [F.branch, F.samity, F.employee, F.member, { k: 'bt', l: 'Balance Report Type', t: 'select', opts: [['all', 'All'], ['loan', 'Loan Member Only'], ['sav', 'Saving Member Only'], ['exp', 'Expired Loan Member Only']] }, { ...F.date, l: 'Report Date' }],
   run: async f => {
+    if (!f.samity && !f.member && !f.employee) fail('সমিতির নাম লিখে খুঁজে বাছাই করুন (অথবা সদস্য / মাঠকর্মী দিন)');
     const c = await R.snaps(f, f.date); const en = await R.empName();
     const rows = memberBalances(c.list, f.date).filter(r => f.bt === 'loan' ? r.loanCnt : f.bt === 'sav' ? !r.loanCnt : f.bt === 'exp' ? r.expired : true).sort((a, b) => a.samity.localeCompare(b.samity) || a.m.localeCompare(b.m));
     return { title: 'Member Balance Report', html: UI.table([SL, { g: 'সমিতি ডিটেল', h: 'কোড', f: r => shortSam(c.sm, r.samity) }, { g: 'সমিতি ডিটেল', h: 'নাম', f: r => esc((c.sm[r.samity] || {}).name || '') }, { g: 'সমিতি ডিটেল', h: 'আফিসার', f: r => officer(en, c.fo(r.samity)) }, { g: 'সদস্য ডিটেল', h: 'আইডি', f: r => r.m }, { g: 'সদস্য ডিটেল', h: 'নাম', f: r => R.name(c.mem, r.m) },

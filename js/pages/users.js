@@ -85,6 +85,20 @@ const Users = {
     try { const token = await auth.currentUser.getIdToken(); await fetch(USER_API, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ action: st === 'active' ? 'disable' : 'enable', uid }) }); } catch (e) {}
     toast('✅ পরিবর্তন হয়েছে'); App.render('userList');
   },
+  // Super Admin: ইউজার মুছে ফেলা (প্রোফাইল মুছলে আর লগইন করতে পারবে না)
+  async del(uid, userId, btn) {
+    if (!isAdmin()) return toast('শুধু Super Admin ইউজার মুছতে পারবেন', 'error');
+    if (uid === App.user.uid) return toast('নিজেকে মুছতে পারবেন না', 'error');
+    if (!confirm('ইউজার "' + userId + '" সম্পূর্ণ মুছে ফেলবেন? সে আর লগইন করতে পারবে না।')) return;
+    return guard(btn, async () => {
+      const d = (await db.collection('users').doc(uid).get()).data() || {};
+      const b = db.batch(); b.delete(db.collection('users').doc(uid));
+      b.set(db.collection('deleteLog').doc(), { kind: 'user', branch: d.branch || '', title: (d.userId || '') + ' - ' + (d.name || ''), accType: d.group || '', balance: 0, vouchers: [], reason: 'User delete', by: App.user.userId, byName: App.user.name || '', on: FV.serverTimestamp(), date: today() });
+      await b.commit();
+      try { const token = await auth.currentUser.getIdToken(); await fetch(USER_API, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ action: 'delete', uid }) }); } catch (e) {}
+      toast('🗑️ ইউজার মুছে ফেলা হয়েছে — ' + userId); App.render('userList');
+    });
+  },
   async edit(uid) {
     const d = (await db.collection('users').doc(uid).get()).data();
     const fields = USER_FIELDS.filter(f => !['userId', 'password', 'empId'].includes(f.k));
@@ -119,7 +133,7 @@ App.page('userList', {
     $('.ul', el).innerHTML = UI.table([
       { h: 'Branch Code', f: r => r.branch || 'সব' }, { h: 'Employee ID', f: r => r.empId || '' }, { h: 'Name', f: r => esc(r.name || '') }, { h: 'User Name', f: r => esc(r.userId || r.email) },
       { h: 'Group', f: r => esc(r.group || '') }, { h: 'Password Status', f: r => r.mustChangePass ? '<span class="tag orange">Default</span>' : '<span class="tag green">Changed</span>' }, { h: 'User Status', f: r => r.status === 'inactive' ? '<span class="tag red">Inactive</span>' : '<span class="tag green">Active</span>' }, { h: 'Last Activity', f: r => tsStr(r.lastActivity) },
-      { h: 'Action', f: r => `<span class="list-actions">${UI.btn('✏️', `Users.edit('${r.id}')`, 'btn-outline btn-sm')}${UI.btn('🔑', `Users.resetPass('${r.id}','${esc(r.userId)}')`, 'btn-warning btn-sm')}${r.id !== App.user.uid ? UI.btn(r.status === 'inactive' ? '✅' : '⛔', `Users.toggle('${r.id}','${r.status || 'active'}')`, 'btn-secondary btn-sm') : ''}</span>` },
+      { h: 'Action', f: r => `<span class="list-actions">${UI.btn('✏️', `Users.edit('${r.id}')`, 'btn-outline btn-sm')}${UI.btn('🔑', `Users.resetPass('${r.id}','${esc(r.userId)}')`, 'btn-warning btn-sm')}${r.id !== App.user.uid ? UI.btn(r.status === 'inactive' ? '✅' : '⛔', `Users.toggle('${r.id}','${r.status || 'active'}')`, 'btn-secondary btn-sm') : ''}${isAdmin() && r.id !== App.user.uid ? UI.btn('🗑️', `Users.del('${r.id}','${esc(r.userId || r.email || '')}',this)`, 'btn-danger btn-sm') : ''}</span>` },
     ], rows);
   },
 });

@@ -396,3 +396,4 @@ tr.row-cancel td:last-child,tr.row-cancel td:nth-last-child(2){text-decoration:n
 .loan-side .mcard{margin:0;max-width:none}
 .loan-main .form-sep{margin-top:6px}
 @media(max-width:900px){.loan-wrap{grid-template-columns:1fr}.loan-side{position:static}}
+.sel-search{width:100%;margin-bottom:4px;padding:6px 8px;border:1px dashed #94a3b8;border-radius:6px;font-size:13px;background:#f8fafc}

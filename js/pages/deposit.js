@@ -7,7 +7,9 @@ async function accTxnList(el, accNo, tts, cancel = true) {
   const box = $('.tl', el); if (!box) return;
   if (!accNo) { box.innerHTML = ''; return; }
   const rows = (await db.collection('txns').where('accNo', '==', accNo).get()).docs.map(d => d.data()).filter(t => !tts || tts.includes(t.tt)).sort((a, b) => (b.date + b.vno).localeCompare(a.date + a.vno)).slice(0, 100);
-  box.innerHTML = UI.table([{ h: 'Branch Code', f: r => r.branch }, { h: 'Member ID', f: r => r.memberId }, { h: 'Date', f: r => fmtD(r.date) }, { h: 'বিবরণ', f: r => TT_NAME[r.tt] || r.tt }, { h: 'Amount', f: r => amt(r.amount), r: 1 }, { h: 'Memo Number', f: r => esc(r.docNo || r.vno) }, { h: 'Entry By', f: r => r.byName || '' }, { h: 'Cancel By', f: r => r.cancelBy || '' }, { h: 'Cancel On', f: r => tsStr(r.cancelOn) }, { h: 'Narration', f: r => esc(r.narration || '') },
+  const pid = (el.id || '').replace('page-', ''); const pay = /Pay$|Closing$/.test(pid), shr = /^share/.test(pid);
+  const dH = shr ? (pay ? 'Payment Date' : 'Receive Date') : pay ? 'Payment Date' : 'Deposit Date', aH = shr ? (pay ? 'Payment Amount' : 'Receive Amount') : pay ? 'Payment Amount' : 'Deposit Amount';
+  box.innerHTML = UI.table([{ h: 'Branch Code', f: r => r.branch }, { h: 'Member ID', f: r => r.memberId }, { h: dH, f: r => fmtD(r.date) }, { h: aH, f: r => amt(r.amount), r: 1 }, { h: 'Memo Number', f: r => esc(r.docNo || r.vno) }, { h: 'Entry By', f: r => r.byName || '' }, { h: 'Cancel By', f: r => r.cancelBy || '' }, { h: 'Cancel On', f: r => tsStr(r.cancelOn) }, { h: 'Narration', f: r => esc(r.narration || '') },
     { h: 'Action', f: r => r.cancelled ? '<span class="tag red">বাতিল</span>' : `${UI.btn('🧾', `Receipt.print('${r.vno}')`, 'btn-outline btn-sm')}${cancel ? UI.btn('✖', `DepTx.cancel('${r.vno}',this)`, 'btn-danger btn-sm') : ''}` }], rows);
 }
 // একাউন্ট বাছাই হলে ব্যালেন্স দেখানো
@@ -19,14 +21,21 @@ async function showBal(el, accNo, key = 'balance') {
 }
 
 // ── জমা / উত্তোলন পেজ ফ্যাক্টরি ──
+// eKisti এর হুবহু লেবেল (কিছু পেজ বাংলা, কিছু ইংরেজি)
+function DEP_LBL(id, o) {
+  if (id === 'depRcv') return { branch: 'শাখা নাম', member: 'সদস্য আইডি', account: 'জমা হিসাব', amount: 'জমার পরিমাণ', date: 'জমার তারিখ', balance: 'অ্যাকাউন্ট ব্যালেন্স', ledger: 'নগদ/ব্যাংক', doc: 'ডকুমেন্ট নাম্বার', comments: 'মন্তব্য' };
+  if (id === 'depPay') return { branch: 'শাখা নাম', member: 'সদস্যের নাম', account: 'জমা হিসাব', amount: 'ফেরতের পরিমাণ', date: 'তারিখ', balance: 'অ্যাকাউন্ট ব্যালেন্স', ledger: 'নগদ/ব্যাংক', doc: 'ডকুমেন্ট নাম্বার', comments: 'মন্তব্য' };
+  if (o.share) return { branch: 'Branch Name', member: 'Member Name', account: 'Share Account', amount: 'Share Amount', date: 'Purchase Date', balance: 'Share Balance', ledger: 'Cash/Bank', doc: 'Document Number', comments: 'Comments' };
+  return { branch: 'Branch Name', member: 'Member ID', account: 'Deposit Account', amount: o.dir === 'C' ? 'Deposit Amount' : 'Payment Amount', date: o.dir === 'C' ? 'Deposit Date' : 'Payment Date', balance: 'Account Balance', ledger: 'Cash/Bank', doc: 'Document Number', comments: 'Comments' };
+}
 function DepTxPage(id, title, o) {
   App.page(id, {
     title, icon: o.dir === 'C' ? '📥' : '📤',
-    render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: o.share ? 'Member Name' : 'সদস্য আইডি', t: 'member', req: 1 }, { k: 'account', l: o.share ? 'শেয়ার একাউন্ট' : 'জমা হিসাব', t: 'select', req: 1 },
-      { k: 'amount', l: o.dir === 'C' ? 'জমার পরিমাণ' : 'ফেরতের পরিমাণ', t: 'number', req: 1 }, { k: 'date', l: o.dir === 'C' ? 'জমার তারিখ' : 'তারিখ', t: 'date', req: 1 },
-      { k: 'balance', l: 'অ্যাকাউন্ট ব্যালেন্স', ro: 1 }, o.dir === 'D' ? { k: 'blocked', l: 'ব্লক পরিমাণ', ro: 1 } : null, o.dps ? { k: 'inst', l: 'মাসিক কিস্তি', ro: 1 } : null, o.dps ? { k: 'dueInfo', l: 'বকেয়া কিস্তি', ro: 1 } : null,
-      { k: 'ledger', l: 'নগদ/ব্যাংক', t: 'select' }, { k: 'docNo', l: 'ডকুমেন্ট নাম্বার' }, { k: 'narration', l: 'মন্তব্য', t: 'textarea', req: o.dir === 'D' && o.share }], 4)
-      + MemberCard.html() + `<div class="actions">${UI.btn(o.btn, `DepTx.save('${id}',this)`, o.dir === 'C' ? 'btn-success' : 'btn-warning')}</div>`) + UI.card('🔍 লেনদেন তালিকা', '<div class="tl"></div>'),
+    render: () => { const L = DEP_LBL(id, o); return UI.card('', UI.grid([{ ...F.branch, l: L.branch }, { k: 'member', l: L.member, t: 'member', req: 1 }, { k: 'account', l: L.account, t: 'select', req: 1 },
+      { k: 'amount', l: L.amount, t: 'number', req: 1 }, { k: 'date', l: L.date, t: 'date', req: 1 },
+      { k: 'balance', l: L.balance, ro: 1 }, o.dir === 'D' ? { k: 'blocked', l: 'ব্লক পরিমাণ', ro: 1 } : null, o.dps ? { k: 'inst', l: 'মাসিক কিস্তি', ro: 1 } : null, o.dps ? { k: 'dueInfo', l: 'বকেয়া কিস্তি', ro: 1 } : null,
+      { k: 'ledger', l: L.ledger, t: 'select' }, { k: 'docNo', l: L.doc }, { k: 'narration', l: L.comments, t: 'textarea', req: o.dir === 'D' && o.share }], 4)
+      + MemberCard.html() + `<div class="actions">${UI.btn(o.btn, `DepTx.save('${id}',this)`, o.dir === 'C' ? 'btn-success' : 'btn-warning')}</div>`) + UI.card(o.dir === 'C' ? (o.share ? 'Share Receive List' : 'Deposit Receive List') : (o.share ? 'Share Payment List' : 'Deposit Payment List'), '<div class="tl"></div>'); },
     init: async (el, p) => {
       await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch');
       await Pick.ledger(UI.el(el, 'ledger'), l => l.cashBank && l.leaf, null); UI.el(el, 'ledger').value = REF.GL.cash;

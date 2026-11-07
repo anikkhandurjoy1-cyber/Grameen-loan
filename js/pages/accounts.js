@@ -139,7 +139,15 @@ const LoanForm = {
       { t: 'hr', l: 'ফি সমূহ' },
       { k: 'formFee', l: 'ফরম ফি', t: 'number', ro: o.proposal }, { k: 'healthFee', l: 'স্বাস্থ্য সেবা ফি', t: 'number', ro: o.proposal }, { k: 'riskFee', l: 'ঝুকি তহবিল', t: 'number', ro: o.proposal },
       { k: 'docFee', l: 'ডকুমেন্ট ফি', t: 'number', ro: o.proposal }, { k: 'lockerFee', l: 'EMI Locker Fee', t: 'number', ro: o.proposal }, { k: 'othersFee', l: 'অন্যান্য ফি', t: 'number', ro: o.proposal },
-    ];
+    ].map(f => {
+      if (!f || !f.k) return f;
+      if (f.k === 'blockAcc') return { ...f, l: o.proposal ? 'FDR Account' : 'Block Account' };
+      if (!(o.proposal || o.staff)) return f;
+      // eKisti: ঋণ আবেদন ও কর্মী ঋণ ফর্ম ইংরেজি লেবেলে
+      const EN = { branch: 'Branch Name', type: 'Account Type', samityName: 'Samity Name', openDate: o.proposal ? 'Proposal Date' : 'Account Opening Date', purpose: 'Loan Purpose', principal: 'Loan Amount', freq: 'Installment Frequency', setting: 'No of Installment', calcInst: 'Actual Installment Amount', instAmount: 'Installment Amount', extra: 'Extra of Installment Amount', lastInst: 'Last Installment Amount', actualN: 'Actual Number of Installment', rate: 'Profit Rate', profit: 'Profit Amount', totalRepay: 'Total Repayment Amount', firstDate: 'Installment Form Date', expDate: 'Installment Expire Date', payLedger: 'Payment Type', formFee: 'Form Fee', healthFee: 'Health Service Fee', riskFee: 'Risk Insurance', docFee: 'Document Fee', othersFee: 'Others Fee' };
+      if (f.k === 'member' && !o.staff) return { ...f, l: 'Member ID' };
+      return EN[f.k] ? { ...f, l: EN[f.k] } : f;
+    });
   },
   async bind(el, o = {}) {
     await Pick.branch(el, 'branch');
@@ -362,7 +370,7 @@ ReportPage({
       if (r.status === 'Approved') b.push(UI.btn('💳 বিতরণ', `App.go('loanOpen',{proposal:'${r.id}'})`, 'btn-primary btn-sm'));
       return `<span class="list-actions no-print">${b.join('')}</span>`;
     };
-    return { landscape: true, html: UI.table([{ h: 'Branch Code', f: r => r.branch }, { h: 'Somity Code', f: r => r.samity }, { h: 'Member ID', f: r => r.member }, { h: 'Member Name', f: r => esc(r.memberName) }, { h: 'Account Type', f: r => r.type }, { h: 'Profit Rate', f: r => r.rate }, { h: 'Proposal Date', f: r => fmtD(r.openDate) }, { h: 'Loan Purpose', f: r => esc(r.purposeName || '') }, { h: 'Proposal Amount', f: r => amt(r.principal), r: 1, sum: 1, v: r => r.principal }, { h: 'Inst. Frequency', f: r => r.freq }, { h: 'Inst. Amount', f: r => amt(r.instAmount), r: 1 }, { h: 'Repay From', f: r => fmtD(r.firstDate) }, { h: 'No. of Inst.', f: r => r.totalN }, { h: 'Loan Exp date', f: r => fmtD(r.expDate) }, { h: 'Status', f: r => `<span class="tag">${r.status}</span>` }, { h: 'Action', f: act }], rows) };
+    return { landscape: true, html: UI.table([{ h: 'Branch Code', f: r => r.branch }, { h: 'Somity Code', f: r => r.samity }, { h: 'Member ID', f: r => r.member }, { h: 'Member Name', f: r => esc(r.memberName) }, { h: 'Account Type', f: r => r.type }, { h: 'Profit Rate', f: r => r.rate }, { h: 'Proposal Date', f: r => fmtD(r.openDate) }, { h: 'Loan Purpose', f: r => esc(r.purposeName || '') }, { h: 'Proposal Amount', f: r => amt(r.principal), r: 1, sum: 1, v: r => r.principal }, { h: 'Installment Frequency', f: r => r.freq }, { h: 'Inst. Amount', f: r => amt(r.instAmount), r: 1 }, { h: 'Repay From date', f: r => fmtD(r.firstDate) }, { h: 'Number of Installment', f: r => r.totalN }, { h: 'Loan Exp date', f: r => fmtD(r.expDate) }, { h: 'Status', f: r => `<span class="tag">${r.status}</span>` }, { h: 'Action', f: act }], rows) };
   },
 });
 
@@ -425,7 +433,7 @@ ReportPage({
     const snaps = (await Data.snaps(f.branch, f.samity)).filter(s => s.k === 'loan' && s.st !== 'cancelled' && (!f.member || s.m === f.member) && s.od >= f.from && s.od <= f.upto).map(Loan.fromSnap);
     const mem = await Data.memberIdx(f.branch);
     snaps.sort((a, b) => a.openDate.localeCompare(b.openDate));
-    return { landscape: true, html: UI.table([{ h: 'Samity', f: r => r.samity }, { h: 'Member ID', f: r => r.memberId }, { h: 'Member Name', f: r => esc((mem[r.memberId] || [])[0] || '') }, { h: 'Account', f: r => r.accNo }, { h: 'Disburse Date', f: r => fmtD(r.openDate) }, { h: 'Loan Amount', f: r => amt(r.principal), r: 1, sum: 1, v: r => r.principal }, { h: 'Repay Amount', f: r => amt(r.totalRepay), r: 1, sum: 1, v: r => r.totalRepay }, { h: 'Profit Rate', f: r => r.rate }, { h: 'Repayment Start', f: r => fmtD(r.firstDate) }, { h: 'Inst NO', f: r => r.actualN + (r.lastInst ? 1 : 0) }, { h: 'Actions', f: r => `<span class="no-print">${UI.btn('📅', `Data.account('${r.accNo}').then(loanSchedulePrint)`, 'btn-outline btn-sm')}</span>` }], snaps) };
+    return { landscape: true, html: UI.table([{ h: 'Samity Name', f: r => r.samity }, { h: 'Member ID', f: r => r.memberId }, { h: 'Member Name', f: r => esc((mem[r.memberId] || [])[0] || '') }, { h: 'Account', f: r => r.accNo }, { h: 'Disburse Date', f: r => fmtD(r.openDate) }, { h: 'Loan Amount', f: r => amt(r.principal), r: 1, sum: 1, v: r => r.principal }, { h: 'Repay Amount', f: r => amt(r.totalRepay), r: 1, sum: 1, v: r => r.totalRepay }, { h: 'Profit Rate', f: r => r.rate }, { h: 'Repayment Start', f: r => fmtD(r.firstDate) }, { h: 'Inst NO', f: r => r.actualN + (r.lastInst ? 1 : 0) }, { h: 'Actions', f: r => `<span class="no-print">${UI.btn('📅', `Data.account('${r.accNo}').then(loanSchedulePrint)`, 'btn-outline btn-sm')}</span>` }], snaps) };
   },
 });
 
@@ -441,7 +449,7 @@ ReportPage({
     const snaps = {}; (await Data.snaps(f.branch, f.samity)).forEach(s => snaps[s.accNo] = s);
     const mem = await Data.memberIdx(f.branch);
     if (f.phone) accs = accs.filter(a => ((mem[a.memberId] || [])[2] || '').includes(f.phone));
-    return { landscape: true, html: UI.table([{ h: 'Branch', f: () => f.branch }, { h: 'Phone', f: a => esc((mem[a.memberId] || [])[2] || '') }, { h: 'Member ID', f: a => a.memberId }, { h: 'AC Type', f: a => typeFull(a.kind, a.type) }, { h: 'Account Number', f: a => a.accNo }, { h: 'Account Name', f: a => esc(a.title) }, { h: 'Total Credit', f: a => amt((snaps[a.accNo] || {}).tc || (snaps[a.accNo] || {}).pt), r: 1 }, { h: 'Total Debit', f: a => amt((snaps[a.accNo] || {}).td || (a.kind === 'loan' ? (snaps[a.accNo] || {}).tr : 0)), r: 1 }, { h: 'Current Balance', f: a => amt((snaps[a.accNo] || {}).b), r: 1, sum: 1, v: a => (snaps[a.accNo] || {}).b }, { h: 'Is Active', f: a => a.status === 'closed' ? 'No' : 'Yes' }, { h: 'Opening Date', f: a => fmtD((snaps[a.accNo] || {}).od) }, { h: 'Closing Date', f: a => fmtD((snaps[a.accNo] || {}).cd) }, ...(isBM() ? [{ h: 'Action', f: a => UI.btn('🗑️ ডিলিট', `AccDelete.run('${a.accNo}',this)`, 'btn-danger btn-sm'), noPrint: 1 }] : [])], accs) + await AccDelete.logHtml(f.branch) };
+    return { landscape: true, html: UI.table([{ h: 'Branch Code', f: () => f.branch }, { h: 'Phone Number', f: a => esc((mem[a.memberId] || [])[2] || '') }, { h: 'Member ID', f: a => a.memberId }, { h: 'AC Type', f: a => typeFull(a.kind, a.type) }, { h: 'Account Number', f: a => a.accNo }, { h: 'Account Name', f: a => esc(a.title) }, { h: 'Address', f: a => esc(a.address || (mem[a.memberId] || [])[6] || '') }, { h: 'Total Credit', f: a => amt((snaps[a.accNo] || {}).tc || (snaps[a.accNo] || {}).pt), r: 1 }, { h: 'Total Debit', f: a => amt((snaps[a.accNo] || {}).td || (a.kind === 'loan' ? (snaps[a.accNo] || {}).tr : 0)), r: 1 }, { h: 'Current Balance', f: a => amt((snaps[a.accNo] || {}).b), r: 1, sum: 1, v: a => (snaps[a.accNo] || {}).b }, { h: 'Credit Limit', f: a => amt(a.creditLimit || 0), r: 1 }, { h: 'Is Active', f: a => a.status === 'closed' ? 'No' : 'Yes' }, { h: 'Opening Date', f: a => fmtD((snaps[a.accNo] || {}).od) }, { h: 'Closing Date', f: a => fmtD((snaps[a.accNo] || {}).cd) }, ...(isBM() ? [{ h: 'Action', f: a => UI.btn('🗑️ ডিলিট', `AccDelete.run('${a.accNo}',this)`, 'btn-danger btn-sm'), noPrint: 1 }] : [])], accs) + await AccDelete.logHtml(f.branch) };
   },
 });
 

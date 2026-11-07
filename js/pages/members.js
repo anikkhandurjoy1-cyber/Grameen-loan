@@ -138,7 +138,7 @@ const Member = {
 // ── সদস্য তালিকা ──
 App.page('memberList', {
   title: 'সদস্য তালিকা', icon: '📋',
-  render: () => `<div class="report-filter">${UI.grid([F.branch, { ...F.samity }, { k: 'name', l: 'সদস্যের নাম' }, { k: 'mobile', l: 'সদস্যের ফোন' }, { k: 'id', l: 'সদস্য আইডি' }, { k: 'nid', l: 'সদস্যের এনআইডি' }, { k: 'status', l: 'সদস্যের অবস্থা', t: 'select', opts: [['', 'All'], ['active', 'Active'], ['pending', 'Pending'], ['closed', 'Closed']] }], 4)}
+  render: () => `<div class="report-filter">${UI.grid([{ ...F.branch, l: 'শাখার নাম' }, { ...F.samity, l: 'সমিতির নাম' }, { k: 'name', l: 'সদস্যের নাম' }, { k: 'mobile', l: 'সদস্যের ফোন' }, { k: 'id', l: 'সদস্য আইডি' }, { k: 'nid', l: 'সদস্যের এনআইডি' }, { k: 'status', l: 'সদস্যের অবস্থা', t: 'select', opts: [['', 'All'], ['active', 'Active'], ['pending', 'Pending'], ['closed', 'Closed']] }], 4)}
     <div class="filter-actions">${UI.btn('🔍 সদস্য খুঁজুন', 'MemberList.search(this)')}${UI.btn('🖨️ প্রিন্ট', 'MemberList.print()', 'btn-outline')}${UI.btn('📥 Excel', 'MemberList.excel()', 'btn-outline')}</div></div><div class="card ml"></div>`,
   init: async el => { await Pick.branch(el, 'branch'); await Pick.samity(el, 'samity', 'branch'); MemberList.search(); },
 });
@@ -150,8 +150,10 @@ const MemberList = {
     ];
     if (full) c.push({ h: 'মাতার নাম', f: r => esc(r.mother || '') }, { h: 'রক্তের গ্রুপ', f: r => r.blood || '' }, { h: 'লিঙ্গ', f: r => r.sex || '' }, { h: 'ধর্ম', f: r => r.religion || '' }, { h: 'বৈবাহিক অবস্থা', f: r => r.marital || '' });
     c.push({ h: 'জাতীয় পরিচয়পত্র', f: r => esc(r.nid || '') });
-    if (full) c.push({ h: 'বর্তমান ঠিকানা', f: r => esc(r.presentAddr || '') }, { h: 'খোলার তারিখ', f: r => fmtD(r.joinDate) }, { h: 'জন্ম তারিখ', f: r => fmtD(r.dob) }, { h: 'ইউজার নাম', f: r => r.createdBy || '' });
-    c.push({ h: 'মোবাইল', f: r => esc(r.mobile || '') }, { h: 'অবস্থা', f: r => r.status === 'closed' ? '<span class="tag red">Closed</span>' : r.status === 'pending' ? '<span class="tag orange">Pending</span>' : '<span class="tag green">Active</span>' });
+    if (full) c.push({ h: 'বর্তমান ঠিকানা', f: r => esc(r.presentAddr || '') }, { h: 'স্থায়ী ঠিকানা', f: r => esc(r.permAddr || '') });
+    c.push({ h: 'মোবাইল', f: r => esc(r.mobile || '') });
+    if (full) c.push({ h: 'ইমেইল ঠিকানা', f: r => esc(r.email || '') }, { h: 'খোলার তারিখ', f: r => fmtD(r.joinDate) }, { h: 'জন্ম তারিখ', f: r => fmtD(r.dob) }, { h: 'ইউজার নাম', f: r => esc(r.createdBy || '') });
+    c.push({ h: 'অবস্থা', f: r => r.status === 'closed' ? '<span class="tag red">Closed</span>' : r.status === 'pending' ? '<span class="tag orange">Pending</span>' : '<span class="tag green">Active</span>' });
     return c;
   },
   search(btn) {
@@ -184,7 +186,7 @@ const MemberList = {
 // ── সদস্য ক্লোজিং ──
 App.page('memberClosing', {
   title: 'সদস্য ক্লোজিং', icon: '🚪',
-  render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'সদস্য আইডি', t: 'member', req: 1 }, { k: 'date', l: 'ক্লোজিং তারিখ', t: 'date', req: 1 }, { k: 'reason', l: 'ক্লোজিং মন্তব্য', req: 1 }], 4) + '<div class="maccs"></div>'
+  render: () => UI.card('', UI.grid([{ ...F.branch, l: 'শাখার নাম' }, { k: 'member', l: 'সদস্য আইডি', t: 'member', req: 1 }, { k: 'date', l: 'ক্লোজিং তারিখ', t: 'date', req: 1 }, { k: 'reason', l: 'ক্লোজিং মন্তব্য', req: 1 }], 4) + '<div class="maccs"></div>'
     + `<div class="actions">${UI.btn('✅ Submit Closing', 'MemberClose.save(this)', 'btn-danger')}${UI.btn('🗑️ Delete Member', 'MemberClose.del(this)', 'btn-outline')}</div>`)
     + UI.card('🔍 Search Closing', '<div class="cl"></div>'),
   init: async el => {
