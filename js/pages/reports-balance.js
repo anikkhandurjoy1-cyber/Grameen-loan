@@ -22,10 +22,26 @@ ReportPage({
     const from = f.alld === 'no' ? f.from : '2000-01-01', upto = f.alld === 'no' ? f.upto : '2999-12-31';
     const sam = await Data.samity(m.samity);
     let html = `<h4 style="margin:4px 0">Member Details</h4>` + UI.info([['Member ID', esc(m.memberId)], ['Member Name', esc(m.name)], ['Father Name', esc(m.father || m.spouse || '')], ['Phone Number', esc(m.mobile || '')], ['Samity Name', esc((m.samity || '').slice(-4) + ' - ' + ((sam || {}).name || ''))], ['Present Address', esc(m.presentAddr || '')], ['Permanent Address', esc(m.permAddr || '')], ['Admission Date', fmtD(m.joinDate)]]);
-    for (const a of accs) html += `<h4 style="margin:12px 0 4px">${a.accNo} — ${typeFull(a.kind, a.type)}${a.status === 'closed' ? ' (Closed)' : ''}</h4>` + await accStatementHTML(a.accNo, from, upto);
+    for (const a of accs) html += await passbookAccHTML(a.accNo, from, upto);
     return { title: 'Member Passbook', info: [], noSig: true, html };
   },
 });
+
+// eKisti পাসবুক: একাউন্টের তথ্য ব্লক + ক্রমিক নং | Date | Comments | Deposit Amount | Withdraw Amount | Balance | Posted By
+async function passbookAccHTML(accNo, from, upto) {
+  const { a, isLoan, rows } = await accRows(accNo, from, upto);
+  const last = rows.filter(r => !r.open).slice(-1)[0];
+  const dep = t => !t.open && (isLoan ? t.delta < 0 : t.delta > 0);
+  const com = t => t.open ? 'Opening Balance' : t.hist ? esc(t.narration) : esc((TT_EN[t.tt] || TT_NAME[t.tt] || t.tt) + ' ' + (a.memberId || '') + (t.narration && !/^Opening/.test(t.narration) ? ' ' + t.narration : ''));
+  const info = isLoan
+    ? [['Account Type', esc(typeFull(a.kind, a.type))], ['Open Date', fmtD(a.openDate)], ['Loan Amount', amt(a.principal)], ['Total Repay', amt(a.totalRepay)], ['Account Number', esc(a.accNo)], ['Installment', amt(a.instAmount) + ' × ' + (a.n || '') + ' (' + (FREQ_EN[a.freq] || a.freq || '') + ')'], ['Outstanding', amt(a.balance)], ['Last Transaction Date', last ? fmtD(last.date) : ''], ['Profit Rate', n2(a.rate)], ['Expire Date', fmtD(a.expDate)], ['Closing Date', fmtD(a.closeDate)]]
+    : [['Account Type', esc(typeFull(a.kind, a.type))], ['Open Date', fmtD(a.openDate)], ['Account Balance', amt(a.balance)], ['Last Transaction Date', last ? fmtD(last.date) : ''], ['Account Number', esc(a.accNo)], ['Profit Rate', n2(a.rate)], ['Maturity Date', fmtD(a.maturityDate)], ['Closing Date', fmtD(a.closeDate)]];
+  const cols = [SL, { h: 'Date', f: t => fmtD(t.date) }, { h: 'Comments', f: com },
+    { h: isLoan ? 'Installment Amount' : 'Deposit Amount', f: t => t.open ? '0.00' : dep(t) ? amt(Math.abs(t.delta)) : '0.00', r: 1, sum: 1, v: t => dep(t) ? Math.abs(t.delta) : 0 },
+    { h: isLoan ? 'Disburse Amount' : 'Withdraw Amount', f: t => t.open ? '0.00' : !dep(t) ? amt(Math.abs(t.delta)) : '0.00', r: 1, sum: 1, v: t => !t.open && !dep(t) ? Math.abs(t.delta) : 0 },
+    { h: 'Balance', f: t => amt(t.bal), r: 1 }, { h: 'Posted By', f: t => esc(t.byName || '') }];
+  return `<div class="pb-acc" style="margin-top:14px">${UI.info(info)}</div>` + UI.table(cols, rows);
+}
 
 // সদস্যভিত্তিক সঞ্চয়/ঋণ ব্যালেন্স (eKisti: সিকিউরিটি, সাধারণ, শেয়ার, ডিপিএস, এফডিআর / মেয়াদী, এককালীন)
 function memberBalances(list, date) {

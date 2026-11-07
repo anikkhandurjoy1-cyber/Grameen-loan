@@ -57,10 +57,22 @@ const Imp = {
       return x;
     });
     const dupAcc = accounts.map(a => a.accNo).filter((v, i, s) => s.indexOf(v) !== i); if (dupAcc.length) issues.push('ডুপ্লিকেট একাউন্ট নং: ' + [...new Set(dupAcc)].slice(0, 10).join(', '));
-    return { asOf, branches, employees, samities, members, accounts, glOpening: D.glOpening || [], issues };
+    return { asOf, glMode: D.glMode || '', branches, employees, samities, members, accounts, glOpening: D.glOpening || [], issues };
   },
   // শাখাভিত্তিক ওপেনিং GL লাইন
+  // eKisti ট্রায়াল ব্যালেন্সের লিফ লেজার (প্যারেন্ট বাদ)
+  tbLeaves(P, branch) {
+    const parents = new Set(REF.COA.map(c => c[2]).filter(Boolean)); const coa = {}; REF.COA.forEach(c => coa[c[0]] = c);
+    return (P.glOpening || []).filter(g => (!g.branch || String(g.branch) === branch) && !parents.has(String(g.gl)) && (coa[g.gl] ? !!coa[g.gl][3] : !/0000$/.test(String(g.gl))));
+  },
+  glParent(code) { const has = c => REF.COA.some(x => x[0] === c && !x[3]); for (const c of [code.slice(0, 4) + '0000', code.slice(0, 3) + '00000', code.slice(0, 2) + '000000', code[0] + '0000000']) if (has(c)) return c; return code[0] + '0000000'; },
   glLines(P, branch) {
+    if (P.glMode === 'tb') { // eKisti TB হুবহু — সাবসিডিয়ারি একাউন্ট আলাদা, GL = eKisti
+      const lines = Imp.tbLeaves(P, branch).map(g => ({ gl: String(g.gl), v: r2(num(g.dr) - num(g.cr)) })).filter(x => x.v).map(x => x.v > 0 ? { gl: x.gl, dr: x.v, cr: 0 } : { gl: x.gl, dr: 0, cr: -x.v });
+      const net = r2(sum(lines, l => l.dr) - sum(lines, l => l.cr));
+      if (net) lines.push(net > 0 ? { gl: '20010000', dr: 0, cr: net, memo: 'Opening Adjustment' } : { gl: '20010000', dr: -net, cr: 0, memo: 'Opening Adjustment' });
+      return { lines, adj: net };
+    }
     const by = {}; const add = (gl, d) => { by[gl] = r2((by[gl] || 0) + d); };   // d>0 = Dr
     P.accounts.filter(a => a.branch === branch && a.status !== 'closed').forEach(a => {
       if (a.kind === 'loan') { const pr = REF.LOAN[a.type] || REF.LOAN['3001']; add(pr.gl, r2(a.balance)); add(pr.recGl, -r2(a.profit - a.paidPr)); }
@@ -103,11 +115,11 @@ const Imp = {
         for (const s of P.samities) await put(db.collection('samities').doc(s.code), { ...s, ...meta }, true);
         await flush(); Imp.log('✓ কর্মী ' + P.employees.length + ', সমিতি ' + P.samities.length);
         const midx = {}, aidx = {}, snaps = {};
-        for (const m of P.members) { await put(db.collection('members').doc(m.memberId), { ...m, ...meta }, true); (midx[m.branch] = midx[m.branch] || {})[m.memberId] = Idx.memberRow(m); }
+        for (const m of P.members) { await put(db.collection('members').doc(m.memberId), { ...m, ...meta }, true); (midx[m.branch] = midx[m.branch] || {})[m.memberId] = Idx.enc(Idx.memberRow(m)); }
         await flush(); Imp.log('✓ সদস্য ' + P.members.length);
         for (const a of P.accounts) {
           await put(db.collection('accounts').doc(a.accNo), { ...a, lastTxnDate: P.asOf, ...meta });
-          (aidx[a.branch] = aidx[a.branch] || {})[a.accNo] = Idx.accRow(a);
+          (aidx[a.branch] = aidx[a.branch] || {})[a.accNo] = Idx.enc(Idx.accRow(a));
           if (a.samity) { const s = a.kind === 'loan' ? Loan.snapOf(a) : a.kind === 'share' ? { m: a.memberId, k: 'share', t: 'share', b: a.balance, st: a.status, od: a.openDate } : DepSnap(a); if (a.status === 'closed' && a.closeDate) s.cd = a.closeDate; (snaps[a.samity] = snaps[a.samity] || {})[a.accNo] = s; }
         }
         await flush(); Imp.log('✓ একাউন্ট ' + P.accounts.length);
@@ -120,6 +132,13 @@ const Imp = {
         const sv = maxN(P.samities, s => s.code); if (sv) { const cur = await db.collection('counters').doc('samity').get(); if (!cur.exists || (cur.data().v || 0) < sv) await put(db.collection('counters').doc('samity'), { v: sv }, true); }
         const ev = maxN(P.employees, e => e.empId); if (ev) { const cur = await db.collection('counters').doc('employee').get(); if (!cur.exists || (cur.data().v || 0) < ev) await put(db.collection('counters').doc('employee'), { v: ev }, true); }
         await flush(); Cache.drop(); Imp.log('✓ ইনডেক্স, snapshot ও কাউন্টার');
+        // eKisti তে থাকা কিন্তু এখানে নেই এমন লেজার তৈরি
+        if (P.glMode === 'tb') {
+          const have = new Set((await db.collection('ledgers').get()).docs.map(d => d.id)); const mk = {};
+          for (const b of P.branches.map(x => x.code)) Imp.tbLeaves(P, b).forEach(g => { if (!have.has(String(g.gl))) mk[g.gl] = g.name || g.gl; });
+          for (const [code, name] of Object.entries(mk)) { const type = { '1': 'A', '2': 'L', '3': 'I', '4': 'E' }[code[0]]; const parent = Imp.glParent(code); await put(db.collection('ledgers').doc(code), { code, name, parent, leaf: true, type, cashBank: parent === '11100000', system: false, active: true, source: 'ekisti' }); }
+          await flush(); if (Object.keys(mk).length) { Cache.drop(); Imp.log('✓ নতুন লেজার ' + Object.keys(mk).length + ': ' + Object.entries(mk).map(([c, n]) => c + ' ' + n).join(', ')); }
+        }
         // ওপেনিং GL ভাউচার (শাখাভিত্তিক)
         const reGl = UI.el(el, 'reGl').checked;
         for (const b of [...new Set(P.accounts.map(a => a.branch).concat(P.branches.map(x => x.code)))]) {

@@ -45,11 +45,12 @@ const Home = {
     const inp = $('.hs-inp', el), box = $('.hs-list', el); if (!inp) return;
     const draw = () => {
       const q = inp.value.trim().toLowerCase();
+      if (!q) { box.hidden = true; return; }
       const list = Home.all().filter(([l, p, s]) => !q || l.toLowerCase().includes(q) || p.toLowerCase().includes(q) || (App.pages[p].title || '').toLowerCase().includes(q) || s.toLowerCase().includes(q)).slice(0, 60);
       box.innerHTML = list.length ? list.map(([l, p, s]) => `<div class="hs-it" data-p="${p}">${esc(l)} <small>${esc(s)}</small></div>`).join('') : '<div class="hs-it">কিছু পাওয়া যায়নি</div>';
       box.hidden = false;
     };
-    inp.addEventListener('focus', draw); inp.addEventListener('input', draw);
+    inp.addEventListener('input', draw);
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') { const f = $('.hs-it[data-p]', box); if (f) App.go(f.dataset.p); } });
     inp.addEventListener('blur', () => setTimeout(() => box.hidden = true, 150));
     box.addEventListener('pointerdown', e => { const it = e.target.closest('.hs-it[data-p]'); if (it) { e.preventDefault(); App.go(it.dataset.p); } });

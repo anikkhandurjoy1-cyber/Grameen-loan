@@ -63,6 +63,26 @@ CrudPage({
   list: { cols: [{ h: 'Branch Code', f: r => r.code }, { h: 'Branch Name', f: r => esc(r.name) }, { h: 'Type', f: r => r.type }, { h: 'Manager Phone', f: r => esc(r.phone || '') }, { h: 'Address', f: r => esc(r.address || '') }, { h: 'Business Date', f: r => fmtD(r.businessDate) }, { h: 'Status', f: r => r.status }] },
 });
 
+// ── নতুন কর্মচারীর ৪টি একাউন্ট (eKisti এর মতো স্বয়ংক্রিয়): বেতন, প্রভিডেন্ট ফান্ড, গ্র্যাচুইটি, স্টাফ সিকিউরিটি ──
+const EmpAccounts = {
+  TYPES: ['5002', '5004', '5006', '5003'],
+  async create(empId, branch, name, mobile, address) {
+    if (!empId || !branch) return;
+    const have = (await db.collection('accounts').where('memberId', '==', 'E' + empId).get()).docs.map(d => d.data()).filter(a => a.kind === 'other' && a.status !== 'closed').map(a => a.type);
+    const b = db.batch(); const made = [];
+    for (const type of EmpAccounts.TYPES) {
+      if (have.includes(type)) continue;
+      const seq = await nextSeq('other_' + branch);
+      const accNo = 'O' + branch + type + pad(seq, 4);
+      const acc = { accNo, kind: 'other', type, branch, memberId: 'E' + empId, samity: '', title: name || '', phone: mobile || '', address: address || '', creditLimit: 0, openDate: await businessDate(branch), status: 'active', balance: 0, totCr: 0, totDr: 0, auto: true, createdBy: App.user.userId, createdAt: FV.serverTimestamp() };
+      b.set(db.collection('accounts').doc(accNo), acc); Idx.setAccount(b, branch, acc); made.push(accNo + ' (' + REF.OTHER[type].name + ')');
+    }
+    if (!made.length) return;
+    await b.commit(); Cache.drop('aidx_');
+    toast('✅ কর্মীর একাউন্ট তৈরি: ' + made.join(', '), 'info');
+  },
+};
+
 // ── কর্মচারী নিবন্ধন ──
 CrudPage({
   id: 'employeeReg', title: 'কর্মচারী নিবন্ধন রেজিঃ', icon: '🧑‍💼', coll: 'employees', key: 'empId', cacheKey: 'emp_', cols: 3,
@@ -82,7 +102,7 @@ CrudPage({
   ],
   init: async el => { await Pick.branch(el, 'branch'); const es = await Data.employees(''); UI.fill(UI.el(el, 'managerId'), es, e => e.empId, e => e.empId + '-' + e.name, '- Select an option -'); },
   autoId: async () => pad(await nextSeq('employee'), 6),
-  after: () => Cache.drop('emp_'),
+  after: async (d, isEdit) => { Cache.drop('emp_'); if (!isEdit) await EmpAccounts.create(d.empId || d.id, d.branch, d.name, d.mobile, d.presentAddr); },
   list: {
     filter: [{ k: 'fbranch', l: 'শাখা', t: 'select' }, { k: 'q', l: 'নাম/আইডি/মোবাইল' }],
     query: async f => (f.fbranch ? db.collection('employees').where('branch', '==', f.fbranch) : db.collection('employees')).get(),

@@ -139,7 +139,7 @@ const Member = {
 App.page('memberList', {
   title: 'সদস্য তালিকা', icon: '📋',
   render: () => `<div class="report-filter">${UI.grid([F.branch, { ...F.samity }, { k: 'name', l: 'সদস্যের নাম' }, { k: 'mobile', l: 'সদস্যের ফোন' }, { k: 'id', l: 'সদস্য আইডি' }, { k: 'nid', l: 'সদস্যের এনআইডি' }, { k: 'status', l: 'সদস্যের অবস্থা', t: 'select', opts: [['', 'All'], ['active', 'Active'], ['pending', 'Pending'], ['closed', 'Closed']] }], 4)}
-    <div class="filter-actions">${UI.btn('🔍 সদস্য খুঁজুন', 'MemberList.search(this)')}${UI.btn('🖨️ প্রিন্ট', 'MemberList.print()', 'btn-outline')}${UI.btn('📥 Excel', 'MemberList.excel()', 'btn-outline')}${UI.btn('+ নতুন সদস্য', "App.go('memberAdd')", 'btn-success')}</div></div><div class="card ml"></div>`,
+    <div class="filter-actions">${UI.btn('🔍 সদস্য খুঁজুন', 'MemberList.search(this)')}${UI.btn('🖨️ প্রিন্ট', 'MemberList.print()', 'btn-outline')}${UI.btn('📥 Excel', 'MemberList.excel()', 'btn-outline')}</div></div><div class="card ml"></div>`,
   init: async el => { await Pick.branch(el, 'branch'); await Pick.samity(el, 'samity', 'branch'); MemberList.search(); },
 });
 const MemberList = {

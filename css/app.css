@@ -374,3 +374,25 @@ tr.row-cancel td:last-child,tr.row-cancel td:nth-last-child(2){text-decoration:n
 @media(max-width:600px){.home-grid{grid-template-columns:repeat(3,1fr);gap:6px}.ht-ic{width:48px;height:48px;font-size:26px}.ht-l{font-size:12px}.home-tile{padding:10px 4px}}
 .member-form .card-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .card-title-act{margin-left:auto}
+
+/* সদস্য তথ্য কার্ড */
+.mcard{border:1px solid #dbe4ef;border-radius:10px;padding:10px 12px;margin:10px 0;background:#f8fbff;max-width:720px}
+.mc-top{display:flex;gap:12px;align-items:flex-start}
+.mc-top img{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.mc-top img.mc-sig{width:auto;height:40px;border-radius:4px;margin-left:auto;box-shadow:none}
+.mc-ph{width:64px;height:64px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:30px;flex:none}
+.mc-name{font-weight:700;font-size:16px;color:#0f4c81}
+.mc-badges{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0;font-size:13px}
+.mc-badges i{font-style:normal;padding:1px 8px;border-radius:10px;margin-left:4px}
+.mc-badges i.on{background:#dcfce7;color:#166534}.mc-badges i.off{background:#fee2e2;color:#991b1b}
+.mc-sec{font-weight:600;margin:6px 0 2px;color:#334155}
+.mc-acc{display:flex;justify-content:space-between;gap:8px;padding:4px 6px;border-bottom:1px dashed #e2e8f0;font-size:13.5px}
+.mc-acc.off{opacity:.55}
+.og-it{display:flex;gap:8px;align-items:center;padding:4px 0}
+
+/* লোন ফর্ম — eKisti এর মতো ডানে সদস্য প্রোফাইল */
+.loan-wrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+.loan-side{position:sticky;top:70px}
+.loan-side .mcard{margin:0;max-width:none}
+.loan-main .form-sep{margin-top:6px}
+@media(max-width:900px){.loan-wrap{grid-template-columns:1fr}.loan-side{position:static}}

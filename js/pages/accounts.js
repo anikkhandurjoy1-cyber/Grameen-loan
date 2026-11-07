@@ -51,7 +51,7 @@ App.page('depOpen', {
     { k: 'openDate', l: 'হিসাব খোলার তারিখ', t: 'date', req: 1 }, { k: 'rate', l: 'Profit Rate', t: 'number', ro: 1 }, { k: 'sched', l: 'Deposit Type', t: 'select', opts: [['', '------------']] },
     { k: 'months', l: 'মেয়াদ (মাস)', t: 'number', hint: 'FDR/DPS এর মেয়াদ' }, { k: 'maturityDate', l: 'মেয়াদপূর্তির তারিখ', t: 'date', ro: 1 },
     { k: 'autoRenew', l: 'Auto Renew', t: 'checkbox' }, { k: 'renewProfit', l: 'Auto Renew With Profit', t: 'checkbox' },
-  ], 3) + SubList.render('nominee', '👤 Nominee') + `<div class="actions">${UI.btn('✅ Open Deposit Account', 'DepOpen.save(this)', 'btn-success')}</div>`) + UI.card('এই সদস্যের একাউন্টসমূহ', '<div class="macc"></div>'),
+  ], 3) + MemberCard.html() + SubList.render('nominee', '👤 Nominee') + `<div class="actions">${UI.btn('✅ Open Deposit Account', 'DepOpen.save(this)', 'btn-success')}</div>`) + UI.card('এই সদস্যের একাউন্টসমূহ', '<div class="macc"></div>'),
   init: async (el, p) => {
     await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch');
     UI.el(el, 'openDate').value = await businessDate();
@@ -130,12 +130,12 @@ const LoanForm = {
       o.staff ? { k: 'member', l: 'Employee Name', t: 'select', req: 1 } : { k: 'member', l: 'সদস্য আইডি', t: 'member', req: 1 }, { k: 'samityName', l: 'সমিতি নাম', ro: 1 },
       { k: 'openDate', l: o.proposal ? 'Proposal Date' : 'হিসাব খোলার তারিখ', t: 'date', req: 1 }, { k: 'purpose', l: 'ঋণের উদ্দেশ্য', t: 'select', req: 1 },
       { k: 'principal', l: 'ঋণের পরিমাণ', t: 'number', req: 1 }, { k: 'blockAcc', l: 'Block Account (সঞ্চয়)', t: 'select', opts: [['', '------------']] }, { k: 'blockAmt', l: 'ব্লক পরিমাণ', t: 'number' },
-      { k: 'freq', l: 'কিস্তির ধরন (দৈনিক/সপ্তাহিক/মাসিক)', t: 'select', req: 1, opts: [['', '------------']] }, { k: 'setting', l: 'কিস্তির সংখ্যা ও ঋন হার (%)', t: 'select', req: 1, opts: [['', '-- Select --']] },
+      { t: 'hr', l: '📅 কিস্তির তথ্য' }, { k: 'freq', l: 'কিস্তির ধরন (দৈনিক/সপ্তাহিক/মাসিক)', t: 'select', req: 1, opts: [['', '------------']] }, { k: 'setting', l: 'কিস্তির সংখ্যা ও ঋন হার (%)', t: 'select', req: 1, opts: [['', '-- Select --']] },
       { k: 'calcInst', l: 'প্রকৃত কিস্তির পরিমাণ', t: 'number', ro: 1 }, { k: 'instAmount', l: 'মূল কিস্তির পরিমাণ (টাকা)', t: 'number', req: 1 },
       { k: 'extra', l: 'অতিরিক্ত টাকা ( প্রকৃত কিস্তির)', t: 'number', ro: 1 }, { k: 'lastInst', l: 'সর্বশেষ কিস্তির পরিমাণ (টাকা)', t: 'number', ro: 1 }, { k: 'actualN', l: 'প্রকৃত কিস্তি সংখ্যা', t: 'number', ro: 1 },
       { k: 'rate', l: 'মুনাফার হার (%)', t: 'number', ro: 1 }, { k: 'profit', l: 'মুনাফার পরিমাণ', t: 'number', ro: 1 }, { k: 'totalRepay', l: 'সর্বমোট প্রদেয় টাকার পরিমাণ', t: 'number', ro: 1 },
       { k: 'firstDate', l: 'কিস্তি শুরুর তারিখ', t: 'date', req: 1 }, { k: 'expDate', l: 'মেয়াদ উত্তীর্নের তারিখ', t: 'date', ro: 1 },
-      o.proposal ? null : { k: 'payLedger', l: 'টাকা প্রদানের ধরন', t: 'select', req: 1 }, o.proposal ? null : { k: 'trfAcc', l: o.staff ? 'Payment to Account' : 'গ্রাহকের হিসাবে স্থানান্তর ( অপশনাল)', t: 'select', opts: [['', '------------']] },
+      o.proposal ? null : { t: 'hr', l: '💵 টাকা প্রদান' }, o.proposal ? null : { k: 'payLedger', l: 'টাকা প্রদানের ধরন', t: 'select', req: 1 }, (o.proposal || o.staff) ? null : { k: 'openPaid', l: 'পুরোনো ঋণ: এ পর্যন্ত আদায় (শুধু ওপেনিং)', t: 'number', ph: 'নতুন ঋণে খালি রাখুন' }, o.proposal ? null : { k: 'trfAcc', l: o.staff ? 'Payment to Account' : 'গ্রাহকের হিসাবে স্থানান্তর ( অপশনাল)', t: 'select', opts: [['', '------------']] },
       { t: 'hr', l: 'ফি সমূহ' },
       { k: 'formFee', l: 'ফরম ফি', t: 'number', ro: o.proposal }, { k: 'healthFee', l: 'স্বাস্থ্য সেবা ফি', t: 'number', ro: o.proposal }, { k: 'riskFee', l: 'ঝুকি তহবিল', t: 'number', ro: o.proposal },
       { k: 'docFee', l: 'ডকুমেন্ট ফি', t: 'number', ro: o.proposal }, { k: 'lockerFee', l: 'EMI Locker Fee', t: 'number', ro: o.proposal }, { k: 'othersFee', l: 'অন্যান্য ফি', t: 'number', ro: o.proposal },
@@ -150,6 +150,9 @@ const LoanForm = {
     UI.fill(UI.el(el, 'purpose'), purs, p => p.code, p => p.name); if (purs.length) UI.el(el, 'purpose').value = purs[0].code;
     if (UI.el(el, 'payLedger')) await Pick.ledger(UI.el(el, 'payLedger'), l => l.cashBank && l.leaf);
     if (UI.el(el, 'payLedger')) UI.el(el, 'payLedger').value = REF.GL.cash;
+    // Super Admin: পুরোনো ঋণ ওপেনিং — ক্যাশ নয়, Adjustment লেজারের বিপরীতে
+    if (UI.el(el, 'payLedger') && isAdmin()) { const s = UI.el(el, 'payLedger'); const op = document.createElement('option'); op.value = '20010000'; op.textContent = '20010000 — ওপেনিং ব্যালেন্স (পুরোনো ঋণ, ক্যাশ নয়)'; s.appendChild(op); }
+    if (UI.el(el, 'openPaid')) { const w = UI.el(el, 'openPaid').closest('.form-group'); const sync = () => { const on = UI.el(el, 'payLedger') && UI.el(el, 'payLedger').value === '20010000'; w.style.display = on ? '' : 'none'; if (!on) UI.el(el, 'openPaid').value = ''; }; if (UI.el(el, 'payLedger')) UI.el(el, 'payLedger').addEventListener('change', sync); sync(); }
     const T = UI.el(el, 'type'), FQ = UI.el(el, 'freq'), ST = UI.el(el, 'setting');
     const loadFreq = async () => {
       const sets = (await Data.instSettings()).filter(s => s.type === (o.staff ? '3001' : T.value) && s.active !== false);
@@ -171,10 +174,24 @@ const LoanForm = {
       UI.fill(UI.el(el, 'blockAcc'), accs.filter(a => a.status !== 'closed' && a.kind === 'dep'), a => a.accNo, a => a.accNo + ' - ' + typeName(a.kind, a.type));
       if (UI.el(el, 'trfAcc')) UI.fill(UI.el(el, 'trfAcc'), accs.filter(a => a.status !== 'closed' && (a.kind === 'dep' && REF.DEP[a.type] && REF.DEP[a.type].dtype === 'SB' || a.kind === 'other')), a => a.accNo, a => a.accNo + ' - ' + typeName(a.kind, a.type));
       if (o.onMember) o.onMember(el, mid);
+      if (!o.staff) LoanForm.oldGuarantors(el, mid);
       LoanForm.firstDate(el);
     };
     M.addEventListener(o.staff ? 'change' : 'picked', e => onMember(o.staff ? M.value : (e.detail && e.detail.id)));
     UI.el(el, 'blockAcc').addEventListener('change', async () => { const a = await Data.account(UI.el(el, 'blockAcc').value); UI.el(el, 'blockAmt').value = a ? r2(num(a.balance) - num(a.block && a.block.amount)) : ''; });
+  },
+  // এই সদস্যের আগের ঋণের জামিনদার — eKisti এর মতো "Add" করে আবার ব্যবহার
+  async oldGuarantors(el, mid) {
+    const box = $('.oldguar', el); if (!box) return; box.innerHTML = '';
+    const accs = (await db.collection('accounts').where('memberId', '==', mid).get()).docs.map(d => d.data()).filter(a => a.kind === 'loan');
+    const seen = new Set(); const gs = [];
+    accs.forEach(a => (a.guarantors || []).forEach(g => { const k = (g.name || '') + '|' + (g.mobile || g.phone || ''); if (!seen.has(k)) { seen.add(k); gs.push({ ...g, ref: a.accNo }); } }));
+    el._oldG = gs; if (!gs.length) return;
+    box.innerHTML = `<div class="alert alert-info" style="margin-top:8px">🤝 এই সদস্যের আগের জামিনদার আছে — এই একাউন্টে যোগ করবেন?${gs.map((g, i) => `<div class="og-it"><b>${esc(g.name || '')}</b> <small>📞 ${esc(g.mobile || g.phone || '-')} • ${esc(g.ref)}</small> ${UI.btn('➕ Add', `LoanForm.addOldG(this,${i})`, 'btn-success btn-sm')}</div>`).join('')}</div>`;
+  },
+  addOldG(btn, i) {
+    const el = btn.closest('.page'); const g = { ...el._oldG[i] }; delete g.ref; const sl = $('[data-sub="guarantor"]', el);
+    sl._items = [...(sl._items || []), g]; SubList.draw(sl); btn.disabled = true; btn.textContent = '✓ যোগ হয়েছে';
   },
   // প্রথম কিস্তির তারিখ: সাপ্তাহিক হলে পরের সপ্তাহের সমিতি বার; মাসিক হলে ১ মাস পর; দৈনিক হলে পরদিন
   firstDate(el) {
@@ -258,6 +275,13 @@ const LoanForm = {
         blocks.forEach(([a, amtv]) => batch.set(db.collection('liens').doc(), { branch: d.branch, accNo: a, kind: 'add', date: d.openDate, amount: amtv, dep: false, wd: false, reason: 'ঋণ ' + accNo + ' এর জামানত', loanAcc: accNo, by: App.user.userId, on: FV.serverTimestamp() }));
       },
     });
+    // পুরোনো ঋণের এ পর্যন্ত আদায় — Adjustment এর বিপরীতে (ক্যাশ নয়)
+    const op = num(d.openPaid);
+    if (op > 0) {
+      if (d.payLedger !== '20010000') fail('পুরোনো আদায় দিতে "টাকা প্রদানের ধরন" এ ওপেনিং ব্যালেন্স বাছাই করুন');
+      const l = await Tx.acc(accNo);
+      await Tx.post(d.branch, d.openDate, 'EMI_RCV', 'পুরোনো আদায় (ওপেনিং) ' + accNo, [await Tx.loanReceive(l, op, { contraGl: '20010000', tt: 'OPEN_PAID', narration: 'Opening Paid', date: d.openDate })]);
+    }
     return { accNo, vno, acc };
   },
 };
@@ -269,7 +293,7 @@ function loanSchedulePrint(acc) {
 
 App.page('loanOpen', {
   title: 'লোন এ্যাকাউন্ট ওপেনিং', icon: '💳',
-  render: () => UI.card('', UI.grid(LoanForm.fields(), 3) + SubList.render('guarantor', '🤝 জামিনদার') + `<div class="actions">${UI.btn('✅ Open Loan Account', 'LoanOpen.save(this)', 'btn-success')}${UI.btn('📅 কিস্তি সূচী দেখুন', 'LoanOpen.preview()', 'btn-outline')}</div>`),
+  render: () => { const fs = LoanForm.fields().filter(Boolean); const i = fs.findIndex(f => f.t === 'hr' && f.l.includes('টাকা প্রদান')); return UI.card('', '<div class="loan-wrap"><div class="loan-main"><div class="form-sep">👤 সদস্য ও ঋণের তথ্য</div>' + UI.grid(fs.slice(0, i), 3) + SubList.render('guarantor', '🤝 জামিনদার') + '<div class="oldguar"></div>' + UI.grid(fs.slice(i), 3) + '</div><div class="loan-side">' + MemberCard.html() + '</div></div>' + `<div class="actions">${UI.btn('✅ Open Loan Account', 'LoanOpen.save(this)', 'btn-success')}${UI.btn('📅 কিস্তি সূচী দেখুন', 'LoanOpen.preview()', 'btn-outline')}</div>`); },
   init: async (el, p) => {
     await LoanForm.bind(el);
     if (p.proposal) {
@@ -305,7 +329,7 @@ const LoanOpen = {
 // ── ঋণ আবেদন / প্রস্তাব ──
 App.page('loanProposal', {
   title: 'ঋন আবেদন', icon: '📝',
-  render: () => UI.card('', UI.grid(LoanForm.fields({ proposal: true }), 3) + SubList.render('guarantor', '🤝 জামিনদার') + `<div class="actions">${UI.btn('✅ Submit Application', 'Proposal.save(this)', 'btn-success')}</div>`),
+  render: () => UI.card('', UI.grid(LoanForm.fields({ proposal: true }), 3) + MemberCard.html() + SubList.render('guarantor', '🤝 জামিনদার') + '<div class="oldguar"></div>' + `<div class="actions">${UI.btn('✅ Submit Application', 'Proposal.save(this)', 'btn-success')}</div>`),
   init: el => LoanForm.bind(el, { proposal: true }),
 });
 const PROPOSAL_ST = ['Pending Review', 'Review Completed', 'Approved', 'Disbursed', 'Reject', 'Disbursed Cancel'];
@@ -457,6 +481,40 @@ const AccDelete = {
     const rows = (await db.collection('deleteLog').where('branch', '==', branch).get()).docs.map(d => d.data()).sort((a, b) => ((b.on && b.on.seconds) || 0) - ((a.on && a.on.seconds) || 0)).slice(0, 100);
     if (!rows.length) return '';
     return '<h4 style="margin:18px 0 6px">🗑️ ডিলিট করা তালিকা (কে ডিলিট করেছে)</h4>' + UI.table([{ h: 'তারিখ/সময়', f: r => r.on && r.on.toDate ? fmtDT(r.on.toDate()) : fmtD(r.date) }, { h: 'ধরন', f: r => r.kind === 'member' ? 'সদস্য' : 'একাউন্ট' }, { h: 'সদস্য আইডি', f: r => r.memberId || '' }, { h: 'একাউন্ট', f: r => r.accNo || '' }, { h: 'নাম', f: r => esc(r.title || '') }, { h: 'একাউন্টের ধরন', f: r => esc(r.accType || '') }, { h: 'ব্যালেন্স', f: r => amt(r.balance), r: 1 }, { h: 'বাতিল ভাউচার', f: r => (r.vouchers || []).length }, { h: 'কারণ', f: r => esc(r.reason || '') }, { h: 'ডিলিট করেছেন', f: r => '<b>' + esc(r.by || '') + '</b>' + (r.byName ? ' (' + esc(r.byName) + ')' : '') }], rows);
+  },
+};
+
+// ── ওপেনিং ব্যালেন্স এন্ট্রি (Super Admin) — পুরোনো সঞ্চয়/ডিপিএস/শেয়ার/কর্মী একাউন্টের ব্যালেন্স, ক্যাশ নয় (Adjustment এর বিপরীতে) ──
+App.page('openBal', {
+  title: 'ওপেনিং ব্যালেন্স এন্ট্রি', icon: '🧾',
+  render: () => UI.card('', `<div class="alert alert-info">পুরোনো হিসাবের ব্যালেন্স বসান। ক্যাশে কোনো লেনদেন হবে না — টাকা "Adjustment (20010000)" লেজারের বিপরীতে বসবে। ঋণের জন্য "লোন এ্যাকাউন্ট ওপেনিং" এ "টাকা প্রদানের ধরন" = ওপেনিং ব্যালেন্স বাছাই করুন।</div>`
+    + UI.grid([F.branch, { k: 'member', l: 'সদস্য', t: 'member' }, { k: 'kind', l: 'একাউন্টের ধরন', t: 'select', opts: [['', '— সদস্যের একাউন্ট —'], ['other', 'কর্মী / অন্যান্য একাউন্ট']] }, { k: 'account', l: 'একাউন্ট', t: 'select', req: 1 }, { k: 'balance', l: 'ওপেনিং ব্যালেন্স (টাকা)', t: 'number', req: 1 }, { k: 'date', l: 'তারিখ', t: 'date', req: 1 }], 3)
+    + MemberCard.html() + `<div class="actions">${UI.btn('✅ ব্যালেন্স বসান', 'OpenBal.save(this)', 'btn-success')}</div><div class="ob-log"></div>`),
+  async init(el) {
+    if (!isAdmin()) { el.querySelector('.card').innerHTML = '<div class="alert alert-danger">শুধু Super Admin ওপেনিং ব্যালেন্স বসাতে পারবেন।</div>'; return; }
+    await Pick.branch(el); await Pick.member(el);
+    const load = async () => {
+      const b = UI.el(el, 'branch').value, mid = UI.el(el, 'member').dataset.val, kind = UI.el(el, 'kind').value;
+      const list = kind === 'other' ? await Data.accountsOf(b, null, 'other') : (mid ? (await Data.accountsOf(b, mid)).filter(a => a.kind !== 'loan') : []);
+      UI.fill(UI.el(el, 'account'), list.filter(a => a.status !== 'closed'), a => a.accNo, a => a.accNo + ' - ' + typeName(a.kind, a.type) + (a.title ? ' - ' + a.title : '') + ' (ব্যালেন্স ' + amt(a.balance) + ')', '— বাছুন —');
+      UI.el(el, 'date').value = await businessDate(b);
+    };
+    UI.el(el, 'member').addEventListener('picked', load); UI.el(el, 'kind').addEventListener('change', load); UI.el(el, 'branch').addEventListener('change', load); await load();
+  },
+});
+const OpenBal = {
+  save(btn) {
+    const el = $('#page-openBal');
+    return guard(btn, async () => {
+      if (!isAdmin()) fail('শুধু Super Admin');
+      UI.validate(el); const f = UI.get(el); const a = await Tx.acc(f.account); const v = r2(num(f.balance));
+      if (v <= 0) fail('ব্যালেন্স দিন');
+      if (num(a.balance)) { if (!confirm(`এই একাউন্টে ইতিমধ্যে ব্যালেন্স ${tk(a.balance)} আছে। আরো ${tk(v)} যোগ হবে। চালিয়ে যাবেন?`)) return; }
+      const vno = await Tx.post(f.branch, f.date, 'OPENING_ACC', 'ওপেনিং ব্যালেন্স ' + a.accNo + ' - ' + (a.title || ''), [await Tx.credit(a, v, { contraGl: '20010000', tt: 'OPEN_BAL', narration: 'Opening Balance', skipProfile: true })]);
+      toast('✅ ওপেনিং ব্যালেন্স বসানো হয়েছে — ' + a.accNo + ': ' + tk(v));
+      $('.ob-log', el).insertAdjacentHTML('afterbegin', `<div class="mini">✓ ${esc(a.accNo)} ${esc(typeName(a.kind, a.type))} — ${tk(v)} (ভাউচার ${vno})</div>`);
+      UI.el(el, 'balance').value = ''; UI.el(el, 'member').dispatchEvent(new CustomEvent('picked'));
+    });
   },
 };
 

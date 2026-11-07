@@ -47,15 +47,37 @@ ReportPage({
 });
 
 // ── এ্যাকাউন্ট স্টেটমেন্ট ──
-async function accStatementHTML(accNo, from, upto) {
+// eKisti থেকে আনা পুরোনো লেনদেন (hist/{memberId}: a.{accNo} = "date\tdetails\tdeposit\twithdraw\tbalance\n...")
+const EkHist = {
+  _c: {},
+  async rows(memberId, accNo) {
+    if (!memberId) return [];
+    if (!(memberId in EkHist._c)) { const d = await db.collection('hist').doc(String(memberId)).get(); EkHist._c[memberId] = d.exists ? d.data() : null; setTimeout(() => delete EkHist._c[memberId], 60000); }
+    const h = EkHist._c[memberId]; const str = h && h.a && h.a[accNo]; if (!str) return [];
+    return str.split('\n').filter(Boolean).map(l => { const [date, narr, dep, wd, bal] = l.split('\t'); return { date, narr, dep: num(dep), wd: num(wd), ekBal: num(bal) }; });
+  },
+};
+// একাউন্টের লেনদেন সারি (eKisti পুরোনো + অ্যাপ) — স্টেটমেন্ট ও পাসবুক দুটোতেই
+async function accRows(accNo, from, upto) {
   const a = await Tx.acc(accNo);
-  const ts = (await db.collection('txns').where('accNo', '==', accNo).get()).docs.map(d => d.data()).filter(t => !t.cancelled).sort((x, y) => (x.date + x.vno).localeCompare(y.date + y.vno));
+  const isLoan = a.kind === 'loan';
+  let ts = (await db.collection('txns').where('accNo', '==', accNo).get()).docs.map(d => d.data()).filter(t => !t.cancelled);
+  // eKisti এর পুরোনো লেনদেন (ইমপোর্টের আগের) — একই কলামে
+  const hist = (await EkHist.rows(a.memberId, accNo)).filter(h => !/^Opening Balance/i.test(h.narr) || h.dep || h.wd).map((h, i) => {
+    const amtv = r2(h.dep || h.wd); const delta = isLoan ? r2(h.wd - h.dep) : r2(h.dep - h.wd);
+    const isPr = /profit|interest|সার্ভিস|মুনাফা/i.test(h.narr);
+    return { date: h.date, vno: 'H' + String(i).padStart(6, '0'), hist: 1, narration: h.narr, delta, amount: amtv, principal: isLoan && h.dep ? (isPr ? 0 : h.dep) : 0, profit: isLoan && h.dep ? (isPr ? h.dep : 0) : 0, penalty: 0 };
+  });
+  ts = hist.concat(ts).sort((x, y) => (x.date + (x.hist ? '0' : '1') + x.vno).localeCompare(y.date + (y.hist ? '0' : '1') + y.vno));
   const after = sum(ts.filter(t => t.date >= from), t => t.delta);
   let bal = r2(num(a.balance) - after);
-  const isLoan = a.kind === 'loan';
   const rows = [{ date: from > '2000-01-01' ? addDays(from, -1) : (a.openDate || from), open: 1, bal }].concat(ts.filter(t => t.date >= from && t.date <= upto).map(t => { bal = r2(bal + num(t.delta)); return { ...t, bal }; }));
+  return { a, isLoan, rows };
+}
+async function accStatementHTML(accNo, from, upto) {
+  const { a, isLoan, rows } = await accRows(accNo, from, upto);
   const inc = t => !t.open && (isLoan ? t.delta < 0 : t.delta > 0), dec = t => !t.open && !inc(t);
-  const det = t => t.open ? 'Opening Balance' : esc((TT_EN[t.tt] || TT_NAME[t.tt] || t.tt) + ' ' + (a.accNo) + (t.narration ? ' — ' + t.narration : ''));
+  const det = t => t.open ? 'Opening Balance' : t.hist ? esc(t.narration) : esc((TT_EN[t.tt] || TT_NAME[t.tt] || t.tt) + ' ' + (a.accNo) + (t.narration ? ' — ' + t.narration : ''));
   const cols = isLoan
     ? [SL, { h: 'Date', f: t => fmtD(t.date).replace(/-/g, '/') }, { h: 'Transaction Details', f: det }, { h: 'Disburse', f: t => dec(t) && t.delta ? amt(Math.abs(t.delta)) : '', r: 1, sum: 1, v: t => dec(t) ? Math.abs(t.delta || 0) : 0 }, { h: 'Principal', f: t => inc(t) ? amt(t.principal) : '', r: 1, sum: 1, v: t => inc(t) ? t.principal : 0 }, { h: 'Profit', f: t => inc(t) ? amt(t.profit) : '', r: 1, sum: 1, v: t => inc(t) ? t.profit : 0 }, { h: 'Receive', f: t => inc(t) ? amt(Math.abs(t.delta)) : '', r: 1, sum: 1, v: t => inc(t) ? Math.abs(t.delta) : 0 }, { h: 'Balance', f: t => amt(t.bal), r: 1 }]
     : [SL, { h: 'Date', f: t => fmtD(t.date).replace(/-/g, '/') }, { h: 'Transaction Details', f: det }, { h: 'Deposit', f: t => inc(t) ? amt(Math.abs(t.delta)) : '', r: 1, sum: 1, v: t => inc(t) ? Math.abs(t.delta) : 0 }, { h: 'Withdraw', f: t => dec(t) && t.delta ? amt(Math.abs(t.delta)) : '', r: 1, sum: 1, v: t => dec(t) ? Math.abs(t.delta || 0) : 0 }, { h: 'Balance', f: t => amt(t.bal), r: 1 }];

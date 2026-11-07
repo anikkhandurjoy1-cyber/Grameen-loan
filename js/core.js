@@ -122,9 +122,9 @@ const Data = {
   instSettings: () => Cache.get('instset', async () => (await db.collection('emiInstSettings').get()).docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.id.localeCompare(b.id))),
   holidays: () => Cache.get('holidays', async () => (await db.collection('holidays').get()).docs.map(d => ({ id: d.id, ...d.data() }))),
   // সদস্য ইনডেক্স: idx/mem_{branch} → {rows:{memberId:[name,samity,mobile,status,father,nid]}}
-  memberIdx: (branch) => Cache.get('midx_' + branch, async () => { const d = await db.collection('idx').doc('mem_' + branch).get(); return (d.exists && d.data().rows) || {}; }, 60000),
+  memberIdx: (branch) => Cache.get('midx_' + branch, async () => { const d = await db.collection('idx').doc('mem_' + branch).get(); return Idx.dec((d.exists && d.data().rows) || {}); }, 60000),
   // একাউন্ট ইনডেক্স: idx/acc_{branch} → {rows:{accNo:[memberId,kind,type,status,samity,title]}}
-  accIdx: (branch) => Cache.get('aidx_' + branch, async () => { const d = await db.collection('idx').doc('acc_' + branch).get(); return (d.exists && d.data().rows) || {}; }, 60000),
+  accIdx: (branch) => Cache.get('aidx_' + branch, async () => { const d = await db.collection('idx').doc('acc_' + branch).get(); return Idx.dec((d.exists && d.data().rows) || {}); }, 60000),
   async members(branch, samity) {
     const rows = await Data.memberIdx(branch);
     return Object.entries(rows).map(([id, r]) => ({ id, name: r[0], samity: r[1], mobile: r[2], status: r[3], father: r[4], nid: r[5] }))
@@ -148,10 +148,13 @@ const Data = {
   },
 };
 const Idx = {
+  // প্রতিটি সারি একটি স্ট্রিং (Firestore এ ১ ইনডেক্স এন্ট্রি) — বড় শাখায় 'too many index entries' এড়াতে
+  enc: a => a.map(x => String(x == null ? '' : x).replace(/\u0001/g, ' ')).join('\u0001'),
+  dec: rows => { const o = {}; for (const [k, v] of Object.entries(rows)) o[k] = typeof v === 'string' ? v.split('\u0001') : v; return o; },
   memberRow: m => [m.name || '', m.samity || '', m.mobile || '', m.status || 'active', m.father || '', m.nid || '', m.presentAddr || ''],
   accRow: a => [a.memberId || '', a.kind, a.type, a.status || 'active', a.samity || '', a.title || ''],
-  setMember(batch, branch, m) { batch.set(db.collection('idx').doc('mem_' + branch), { rows: { [m.memberId]: Idx.memberRow(m) } }, { merge: true }); Cache.drop('midx_' + branch); },
-  setAccount(batch, branch, a) { batch.set(db.collection('idx').doc('acc_' + branch), { rows: { [a.accNo]: Idx.accRow(a) } }, { merge: true }); Cache.drop('aidx_' + branch); },
+  setMember(batch, branch, m) { batch.set(db.collection('idx').doc('mem_' + branch), { rows: { [m.memberId]: Idx.enc(Idx.memberRow(m)) } }, { merge: true }); Cache.drop('midx_' + branch); },
+  setAccount(batch, branch, a) { batch.set(db.collection('idx').doc('acc_' + branch), { rows: { [a.accNo]: Idx.enc(Idx.accRow(a)) } }, { merge: true }); Cache.drop('aidx_' + branch); },
   delMember(batch, branch, id) { batch.update(db.collection('idx').doc('mem_' + branch), { ['rows.' + id]: FV.delete() }); Cache.drop('midx_' + branch); },
   delAccount(batch, branch, accNo) { batch.update(db.collection('idx').doc('acc_' + branch), { ['rows.' + accNo]: FV.delete() }); Cache.drop('aidx_' + branch); },
 };
@@ -276,6 +279,24 @@ const UI = {
 };
 
 // ─────────────── পিকার বাইন্ডিং (শাখা → সমিতি → কর্মী → সদস্য → একাউন্ট) ───────────────
+// ── সদস্য তথ্য কার্ড (eKisti লোন ফর্মের মতো): ছবি, নাম, মোবাইল, ঠিকানা, সঞ্চয় ও ঋণ হিসাব ──
+const MemberCard = {
+  html: () => '<div class="mcard" hidden></div>',
+  async show(card, mid, branch) {
+    if (!mid) { card.hidden = true; card.innerHTML = ''; return; }
+    card.hidden = false; card.innerHTML = '<div class="mini">লোড হচ্ছে...</div>';
+    const m = await Data.member(mid); if (!m) { card.hidden = true; return; }
+    const sam = m.samity ? await Data.samity(m.samity) : null;
+    const snaps = (await Data.snaps(branch || m.branch, m.samity)).filter(s => s.m === mid);
+    const dep = snaps.filter(s => s.k !== 'loan'), ln = snaps.filter(s => s.k === 'loan');
+    const on = l => l.filter(s => s.st !== 'closed').length, off = l => l.filter(s => s.st === 'closed').length;
+    const accRow = s => { let extra = ''; if (s.k === 'loan' && s.st !== 'closed') { try { const l = Loan.fromSnap(s); l.base = num(s.bs); const st = Loan.status(l, today()); extra = ` <small>কিস্তি ${amt(s.ia)} • বকেয়া ${amt(st.overdue)}</small>`; } catch (e) {} } return `<div class="mc-acc${s.st === 'closed' ? ' off' : ''}"><span>${esc(typeName(s.k, s.t))} <b>${esc(s.accNo)}</b>${extra}</span><b>${amt(s.b)}</b></div>`; };
+    card.innerHTML = `<div class="mc-top">${m.photoUrl ? `<img src="${esc(m.photoUrl)}">` : '<span class="mc-ph">👤</span>'}<div><div class="mc-name">${esc(m.name)} <small>(${esc(mid)})</small></div>
+      <div>📞 ${esc(m.mobile || '-')}</div><div>📍 ${esc(m.presentAddr || '-')}</div><div class="mini">পিতা/স্বামী: ${esc(m.father || m.spouse || '-')} • সমিতি: ${esc(sam ? sam.code + ' - ' + sam.name : m.samity || '')}</div></div>${m.signatureUrl ? `<img class="mc-sig" src="${esc(m.signatureUrl)}">` : ''}</div>
+      <div class="mc-badges"><span>Savings AC <i class="on">Active ${on(dep)}</i><i class="off">Close ${off(dep)}</i></span><span>Loan AC <i class="on">Active ${on(ln)}</i><i class="off">Close ${off(ln)}</i></span></div>
+      <div class="mc-sec">🐷 সঞ্চয় হিসাব</div>${dep.map(accRow).join('') || '<div class="mini">নেই</div>'}<div class="mc-sec">💳 ঋণ হিসাব</div>${ln.map(accRow).join('') || '<div class="mini">নেই</div>'}`;
+  },
+};
 const Pick = {
   async branch(root, k = 'branch', opts = {}) {
     const sel = UI.el(root, k); if (!sel) return;
@@ -334,14 +355,17 @@ const Pick = {
       inp.dataset.val = m ? m.id : '';
       if (m) inp.value = `${m.id} - ${m.name}`;
       if (box) box.hidden = true;
-      if (prev !== inp.dataset.val) inp.dispatchEvent(new CustomEvent('picked', { detail: m || null }));
+      if (prev !== inp.dataset.val) { inp.dispatchEvent(new CustomEvent('picked', { detail: m || null })); const card = root.querySelector('.mcard') || (root.closest && root.closest('.page') && root.closest('.page').querySelector('.mcard')); if (card) MemberCard.show(card, m ? m.id : '', br()); }
     };
     const draw = () => {
       if (!box) return;
-      const list = search(inp.dataset.val && inp.value.startsWith(inp.dataset.val + ' - ') ? '' : inp.value);
-      box.innerHTML = list.length ? list.slice(0, 300).map((m, i) => `<div class="mpick-it" data-i="${i}"><b>${esc(m.id)}</b> ${esc(m.name)}${m.mobile ? ' <small>' + esc(m.mobile) + '</small>' : ''}</div>`).join('') + (list.length > 300 ? `<div class="mpick-more">আরো ${list.length - 300} জন — আইডি/নাম লিখে খুঁজুন</div>` : '') : '<div class="mpick-more">কোন সদস্য পাওয়া যায়নি</div>';
+      const q = inp.value.trim();
+      if (!q || (inp.dataset.val && q.startsWith(inp.dataset.val + ' - '))) { box.hidden = true; box._list = []; return; } // খালি থাকলে তালিকা দেখাবে না
+      const list = search(q);
+      box.innerHTML = list.length ? list.slice(0, 30).map((m, i) => `<div class="mpick-it" data-i="${i}"><b>${esc(m.id)}</b> ${esc(m.name)}${m.mobile ? ' <small>' + esc(m.mobile) + '</small>' : ''}</div>`).join('') + (list.length > 30 ? `<div class="mpick-more">আরো ${list.length - 30} জন — আরো লিখে খুঁজুন</div>` : '') : '<div class="mpick-more">কোন সদস্য পাওয়া যায়নি</div>';
       box._list = list; box.hidden = false;
     };
+    let tmr = null; const drawSoon = () => { clearTimeout(tmr); tmr = setTimeout(draw, 80); };
     const resolve = () => {
       const v = inp.value.trim(); if (!v) { pick(null); return; }
       if (inp.dataset.val && v === `${inp.dataset.val} - ${(members.find(m => m.id === inp.dataset.val) || {}).name}`) return;
@@ -350,9 +374,8 @@ const Pick = {
     };
     if (box) {
       box.addEventListener('pointerdown', e => { const it = e.target.closest('.mpick-it'); if (!it) return; e.preventDefault(); pick(box._list[Number(it.dataset.i)]); });
-      inp.addEventListener('focus', draw);
-      inp.addEventListener('click', draw);
-      inp.addEventListener('input', draw);
+      inp.addEventListener('focus', () => { if (inp.dataset.val) inp.select(); });
+      inp.addEventListener('input', drawSoon);
       inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); const l = box._list || []; if (l.length) pick(l[0]); } if (e.key === 'Escape') box.hidden = true; });
       inp.addEventListener('blur', () => setTimeout(() => { box.hidden = true; resolve(); }, 150));
     } else inp.addEventListener('blur', resolve);

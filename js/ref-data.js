@@ -78,6 +78,7 @@ window.REF = (function () {
     '5003': { name:'Staff Security Deposit', gl:'21910004' },
     '5004': { name:'Provident Fund', gl:'21910002' },
     '5005': { name:'হাওলাদ হিসাব', gl:'28000002' },
+    '5006': { name:'Employee Gratuity Account', gl:'21910003' },
   };
   // একাউন্ট লেনদেন (finance-account-transaction) ধরন: [code, name, otherType, direction]
   const ACC_TT = [
@@ -86,6 +87,7 @@ window.REF = (function () {
     ['000022','Staff Security Receive','5003','R'], ['000023','Staff Security Payment','5003','P'],
     ['000024','Provident Fund Receive','5004','R'], ['000025','Provident Fund Payment','5004','P'],
     ['000020','হাওলাদ গ্রহন','5005','R'], ['000021','হাওলাদ প্রদান/ফেরত','5005','P'],
+    ['000026','Gratuity Receive','5006','R'], ['000027','Gratuity Payment','5006','P'],
   ];
   // লেজার লেনদেন ধরন: [code, name, kind]  kind: BD=bank deposit, BW=bank withdraw, EXP, INC
   const LEDGER_TT = [['000003','Bank Deposit','BD'],['000004','Bank Widthwral','BW'],['000013','Expense Entry','EXP'],['000018','Income Entry','INC']];

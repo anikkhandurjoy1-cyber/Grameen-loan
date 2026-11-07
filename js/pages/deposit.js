@@ -26,7 +26,7 @@ function DepTxPage(id, title, o) {
       { k: 'amount', l: o.dir === 'C' ? 'জমার পরিমাণ' : 'ফেরতের পরিমাণ', t: 'number', req: 1 }, { k: 'date', l: o.dir === 'C' ? 'জমার তারিখ' : 'তারিখ', t: 'date', req: 1 },
       { k: 'balance', l: 'অ্যাকাউন্ট ব্যালেন্স', ro: 1 }, o.dir === 'D' ? { k: 'blocked', l: 'ব্লক পরিমাণ', ro: 1 } : null, o.dps ? { k: 'inst', l: 'মাসিক কিস্তি', ro: 1 } : null, o.dps ? { k: 'dueInfo', l: 'বকেয়া কিস্তি', ro: 1 } : null,
       { k: 'ledger', l: 'নগদ/ব্যাংক', t: 'select' }, { k: 'docNo', l: 'ডকুমেন্ট নাম্বার' }, { k: 'narration', l: 'মন্তব্য', t: 'textarea', req: o.dir === 'D' && o.share }], 4)
-      + `<div class="actions">${UI.btn(o.btn, `DepTx.save('${id}',this)`, o.dir === 'C' ? 'btn-success' : 'btn-warning')}</div>`) + UI.card('🔍 লেনদেন তালিকা', '<div class="tl"></div>'),
+      + MemberCard.html() + `<div class="actions">${UI.btn(o.btn, `DepTx.save('${id}',this)`, o.dir === 'C' ? 'btn-success' : 'btn-warning')}</div>`) + UI.card('🔍 লেনদেন তালিকা', '<div class="tl"></div>'),
     init: async (el, p) => {
       await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch');
       await Pick.ledger(UI.el(el, 'ledger'), l => l.cashBank && l.leaf, null); UI.el(el, 'ledger').value = REF.GL.cash;

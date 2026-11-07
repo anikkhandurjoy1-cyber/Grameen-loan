@@ -14,7 +14,7 @@ service cloud.firestore {
       allow read: if signedIn();
       // প্রথম ইউজার (সেটআপ) — শুধু একবার, নিজেকে Super Admin হিসেবে
       allow create: if superAdmin() || (signedIn() && request.auth.uid == uid && !exists(/databases/$(database)/documents/config/bootstrap) && request.resource.data.group == 'Super Admin');
-      allow update: if superAdmin() || (active() && request.auth.uid == uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastActivity', 'passwordChangedAt']));
+      allow update: if superAdmin() || (active() && request.auth.uid == uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastActivity', 'passwordChangedAt', 'mustChangePass']));
       allow delete: if superAdmin();
     }
     match /config/{id} {
