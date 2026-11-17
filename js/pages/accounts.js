@@ -241,14 +241,14 @@ const LoanForm = {
     else { const m = await Data.member(d.member); if (!m || m.status !== 'active') fail('সদস্য সক্রিয় নয়'); samity = m.samity; title = m.name; phone = m.mobile; }
     const prod = REF.LOAN[d.type]; if (!prod) fail('ঋণের ধরন সঠিক নয়');
     const active = (await Data.accountsOf(d.branch, memberId, 'loan')).filter(a => a.status === 'active');
-    if (active.length && !confirm(`এই ${staff ? 'কর্মীর' : 'সদস্যের'} চলমান ঋণ আছে (${active.map(a => a.accNo).join(', ')})। তবুও নতুন ঋণ দেবেন?`)) fail('বাতিল করা হয়েছে');
+    if (active.length && !opts.noConfirm && !confirm(`এই ${staff ? 'কর্মীর' : 'সদস্যের'} চলমান ঋণ আছে (${active.map(a => a.accNo).join(', ')})। তবুও নতুন ঋণ দেবেন?`)) fail('বাতিল করা হয়েছে');
     const accNo = staff ? 'SL' + d.member + pad((active.length + 1 + Math.floor(Math.random() * 90)), 2) : await newAccNo(d.branch, memberId);
     const sam = samity ? await Data.samity(samity) : null;
     const acc = {
       accNo, kind: 'loan', type: d.type, branch: d.branch, memberId, samity, title, phone, isStaff: staff, empId: staff ? d.member : '',
       openDate: d.openDate, purpose: d.purpose, purposeName: d.purposeName, principal: d.principal, rate: d.rate, profit: d.profit, totalRepay: d.totalRepay,
       n: d.n, actualN: d.actualN, instAmount: d.instAmount, calcInst: d.calcInst, lastInst: d.lastInst, freq: d.freq, firstDate: d.firstDate, expDate: d.expDate, settingId: d.settingId,
-      fees: d.fees, blockAcc: d.blockAcc || '', blockAmt: num(d.blockAmt), guarantors: d.guarantors || [], proposalId: d.proposalId || '', payLedger: d.payLedger || REF.GL.cash, trfAcc: d.trfAcc || '',
+      fees: d.fees || {}, downPay: num(d.downPay), oldAccNo: d.oldAccNo || '', migrated: !!d.postDate, blockAcc: d.blockAcc || '', blockAmt: num(d.blockAmt), guarantors: d.guarantors || [], proposalId: d.proposalId || '', payLedger: d.payLedger || REF.GL.cash, trfAcc: d.trfAcc || '',
       paidP: 0, paidPr: 0, paidPen: 0, paidTotal: 0, penDue: 0, wvP: 0, wvPr: 0, wvC: 0, balance: 0, status: 'active', foId: sam ? sam.foId : '',
       createdBy: App.user.userId, createdAt: FV.serverTimestamp(),
     };
@@ -269,7 +269,7 @@ const LoanForm = {
     if (d.blockAcc && num(d.blockAmt)) blocks.push([d.blockAcc, num(d.blockAmt)]);
     (d.guarantors || []).forEach(g => { if (g.blockAcc && num(g.blockAmt)) blocks.push([g.blockAcc, num(g.blockAmt)]); });
     const vno = await Eng.post({
-      branch: d.branch, date: d.openDate, type: staff ? 'STAFF_LOAN_DISB' : 'LOAN_DISB', narration: `ঋণ বিতরণ ${accNo} - ${title}`, ref: { accNo },
+      branch: d.branch, date: d.postDate || d.openDate, type: staff ? 'STAFF_LOAN_DISB' : 'LOAN_DISB', narration: `ঋণ বিতরণ ${accNo} - ${title}`, ref: { accNo },
       lines: [...lines, ...m.lines],
       txns: [{ accNo, kind: 'loan', type: d.type, memberId, samity, foId: acc.foId, tt: 'LOAN_DISB', amount: d.principal, dc: 'D', principal: d.principal, profit: d.profit, narration: d.purposeName },
         ...feeMap.filter(([k]) => num(d.fees[k])).map(([k]) => ({ accNo, kind: 'fee', type: k, memberId, samity, foId: acc.foId, tt: 'LOAN_FEE_' + k.toUpperCase(), amount: num(d.fees[k]), dc: 'C' })), ...m.txns],
@@ -288,7 +288,7 @@ const LoanForm = {
     if (op > 0) {
       if (d.payLedger !== '20010000') fail('পুরোনো আদায় দিতে "টাকা প্রদানের ধরন" এ ওপেনিং ব্যালেন্স বাছাই করুন');
       const l = await Tx.acc(accNo);
-      await Tx.post(d.branch, d.openDate, 'EMI_RCV', 'পুরোনো আদায় (ওপেনিং) ' + accNo, [await Tx.loanReceive(l, op, { contraGl: '20010000', tt: 'OPEN_PAID', narration: 'Opening Paid', date: d.openDate })]);
+      await Tx.post(d.branch, d.postDate || d.openDate, 'EMI_RCV', 'পুরোনো আদায় (ওপেনিং) ' + accNo, [await Tx.loanReceive(l, op, { contraGl: '20010000', tt: 'OPEN_PAID', narration: 'Opening Paid', date: d.postDate || d.openDate })]);
     }
     return { accNo, vno, acc };
   },

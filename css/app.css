@@ -397,3 +397,26 @@ tr.row-cancel td:last-child,tr.row-cancel td:nth-last-child(2){text-decoration:n
 .loan-main .form-sep{margin-top:6px}
 @media(max-width:900px){.loan-wrap{grid-template-columns:1fr}.loan-side{position:static}}
 .sel-search{width:100%;margin-bottom:4px;padding:6px 8px;border:1px dashed #94a3b8;border-radius:6px;font-size:13px;background:#f8fafc}
+
+/* ── Balance / Member Migrations (eKisti) ── */
+.mig-up{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:10px}
+.mig-zone{display:flex;align-items:center;gap:8px;border:2px dashed #b9c4d6;border-radius:10px;padding:10px 16px;cursor:pointer;background:#f8fafc;min-width:240px}
+.mig-zone small{color:#7a8699}.mig-zone.on{border-color:#16a34a;background:#f0fdf4}
+.mig-map{margin-top:12px}.mig-mtbl{max-width:640px}.mig-mtbl select{width:100%;padding:5px}
+.mig-dhead{display:flex;align-items:center;gap:8px;font-size:16px;margin-bottom:4px}
+.mig-badge{font-size:12px;padding:2px 8px;border-radius:10px;background:#e2e8f0}.mig-badge.err{background:#fee2e2;color:#b91c1c}
+.mig-hint{font-size:12px;color:#b45309;margin-bottom:8px}
+.mig-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:10px}
+.mig-strip div{background:#f1f5f9;border-radius:8px;padding:6px 10px}.mig-strip small{display:block;color:#64748b;font-size:11px}.mig-strip b{font-size:14px}
+.mig-grid{overflow:auto;max-height:70vh;border:1px solid #e2e8f0;border-radius:8px}
+.mig-tbl{min-width:1500px;margin:0}.mig-tbl th,.mig-tbl td{padding:3px 4px;white-space:nowrap}
+.mig-tbl thead{position:sticky;top:0;z-index:2}.mig-tbl thead th{background:#1e3a5f;color:#fff;text-align:center}.mig-tbl thead tr:first-child th{background:#16324f;border-right:1px solid #3b5b80}
+.mig-tbl tfoot{position:sticky;bottom:0;z-index:2}.mig-tbl tfoot th{background:#e2e8f0;text-align:right}
+.mig-in{width:100%;min-width:90px;padding:4px 5px;border:1px solid #cbd5e1;border-radius:5px;font-size:13px;background:#fff}
+.mig-in.num{text-align:right;min-width:80px}.mig-in.calc{background:#eef2f7}
+textarea.mig-in{min-width:170px;resize:vertical}
+.mig-ssl{min-width:34px;text-align:center}.mig-tbl td.mig-sname{min-width:150px}
+tr.mig-bad td{background:#fee2e2 !important}
+.mig-act{text-align:center}.mig-act button{width:26px;height:26px;border:none;border-radius:50%;color:#fff;font-weight:bold;cursor:pointer;margin:0 2px}
+.mig-add{background:#16a34a}.mig-rm{background:#dc2626}
+.mig-empty td{text-align:center;color:#64748b;padding:18px !important}
