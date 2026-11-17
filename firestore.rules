@@ -9,6 +9,11 @@ service cloud.firestore {
     function active() { return signedIn() && exists(userDoc()) && me().status != 'inactive'; }
     function superAdmin() { return active() && (me().group == 'Super Admin' || me().role == 'Admin'); }
 
+    // লগইন ম্যাপ (User ID → লগইন ইমেইল) — পাসওয়ার্ড রিসেটের জন্য, লগইনের আগে পড়া লাগে
+    match /loginMap/{uid} {
+      allow read: if true;
+      allow write: if superAdmin();
+    }
     // ইউজার প্রোফাইল
     match /users/{uid} {
       allow read: if signedIn();

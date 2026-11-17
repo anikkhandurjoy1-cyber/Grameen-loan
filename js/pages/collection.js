@@ -162,10 +162,10 @@ App.page('collReceive', {
     UI.fill(UI.el(el, 'user'), us, u => u.id, u => (u.userId || u.email) + ' — ' + (u.name || ''));
     const calc = async () => {
       const f = UI.get(el); if (!f.user) return;
-      const ts = (await db.collection('txns').where('bd', '==', f.branch + '_' + f.date).get()).docs.map(d => d.data()).filter(t => !t.cancelled && t.by === f.user && t.dc === 'C' && ['dep', 'loan', 'share', 'fee'].includes(t.kind) && !['DEP_TRF_IN', 'EMI_TRF', 'PROFIT_POST', 'LOAN_DISB_TRF'].includes(t.tt));
+      const ts = (await db.collection('txns').where('bd', '==', f.branch + '_' + f.date).get()).docs.map(d => d.data()).filter(t => !t.cancelled && sameUser(t.by, f.user) && t.dc === 'C' && ['dep', 'loan', 'share', 'fee'].includes(t.kind) && !['DEP_TRF_IN', 'EMI_TRF', 'PROFIT_POST', 'LOAN_DISB_TRF'].includes(t.tt));
       UI.el(el, 'collected').value = r2(sum(ts, t => t.amount + num(t.penalty)));
       const rc = (await db.collection('collReceipts').where('bd', '==', f.branch + '_' + f.date).get()).docs.map(d => ({ id: d.id, ...d.data() }));
-      UI.el(el, 'received').value = r2(sum(rc.filter(r => r.user === f.user && !r.cancelled), r => r.amount));
+      UI.el(el, 'received').value = r2(sum(rc.filter(r => sameUser(r.user, f.user) && !r.cancelled), r => r.amount));
       $('.tl', el).innerHTML = UI.table([{ h: 'Branch Code', f: r => r.branch }, { h: 'User', f: r => r.userName }, { h: 'Receive Date', f: r => fmtD(r.date) }, { h: 'Receive Amount', f: r => amt(r.amount), r: 1, sum: 1, v: r => r.cancelled ? 0 : r.amount }, { h: 'Memo Number', f: r => esc(r.docNo || '') }, { h: 'Received By', f: r => r.by }, { h: 'Cancel By', f: r => r.cancelBy || '' }, { h: 'Comments', f: r => esc(r.comments || '') }, { h: 'Action', f: r => r.cancelled ? 'বাতিল' : UI.btn('✖', `CollRcv.cancel('${r.id}')`, 'btn-danger btn-sm') }], rc);
     };
     el._calc = calc; ['user', 'date', 'branch'].forEach(k => UI.el(el, k).addEventListener('change', calc)); calc();

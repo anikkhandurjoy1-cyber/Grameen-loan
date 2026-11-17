@@ -14,7 +14,7 @@ const R = {
   async txns(f, from, upto, branches) {
     const bs = branches || [f.branch]; let out = [];
     for (const b of bs) out = out.concat((await db.collection('txns').where('bd', '>=', b + '_' + from).where('bd', '<=', b + '_' + upto).get()).docs.map(d => d.data()));
-    return out.filter(t => !t.cancelled && (!f.samity || t.samity === f.samity) && (!f.employee || t.foId === f.employee) && (!f.member || t.memberId === f.member) && (!f.user || t.by === f.user));
+    return out.filter(t => !t.cancelled && (!f.samity || t.samity === f.samity) && (!f.employee || t.foId === f.employee) && (!f.member || t.memberId === f.member) && (!f.user || sameUser(t.by, f.user)));
   },
   name: (mem, id) => esc((mem[id] || [])[0] || ''),
   father: (mem, id) => esc((mem[id] || [])[4] || ''),
@@ -76,7 +76,7 @@ Object.assign(R, {
     const out = []; const bs = branches || [f.branch];
     for (const b of bs) {
       const aidx = await Data.accIdx(b); const mem = await Data.memberIdx(b); const sm = await R.sams(b);
-      const vs = (await db.collection('vouchers').where('bd', '>=', b + '_' + from).where('bd', '<=', b + '_' + upto).get()).docs.map(d => d.data()).filter(v => v.status === 'posted' && (!f.user || v.by === f.user));
+      const vs = (await db.collection('vouchers').where('bd', '>=', b + '_' + from).where('bd', '<=', b + '_' + upto).get()).docs.map(d => d.data()).filter(v => v.status === 'posted' && (!f.user || sameUser(v.by, f.user)));
       vs.forEach(v => v.lines.forEach(l => {
         const k = FEE_OF(l.gl); if (!k || !l.cr) return;
         const mid = (v.ref && v.ref.memberId) || ((aidx[(v.ref || {}).accNo] || [])[0]) || ((aidx[l.accNo] || [])[0]) || '';

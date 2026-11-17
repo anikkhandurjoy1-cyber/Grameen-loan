@@ -186,7 +186,7 @@ const AuthL = {
     const el = $('#page-' + id);
     return guard(btn, async () => {
       const f = UI.get(el);
-      let rows = (await db.collection('vouchers').where('status', '==', 'pending').get()).docs.map(d => d.data()).filter(v => v.branch === f.branch && (!f.user || v.by === f.user));
+      let rows = (await db.collection('vouchers').where('status', '==', 'pending').get()).docs.map(d => d.data()).filter(v => v.branch === f.branch && (!f.user || sameUser(v.by, f.user)));
       rows = rows.filter(v => el._types === 'ais' ? v.authType === 'AIS' : v.authType !== 'AIS').filter(v => !f.atype || v.authType === f.atype);
       const lm = await Data.ledgerMap();
       $('.al', el).innerHTML = UI.table([{ h: 'Branch Code', f: v => v.branch }, { h: 'Transaction Type', f: v => esc(v.authType || v.type) }, { h: 'Transaction Date', f: v => fmtD(v.date) }, { h: 'Details', f: v => esc(v.narration) + '<div class="mini">' + v.lines.map(l => `${esc((lm[l.gl] || {}).name || l.gl)} ${l.dr ? 'Dr ' + amt(l.dr) : 'Cr ' + amt(l.cr)}`).join(' | ') + '</div>' }, { h: 'Amount', f: v => amt(v.total), r: 1 }, { h: 'Entered By', f: v => v.byName }, { h: 'Entry Time', f: v => tsStr(v.on) },
@@ -197,7 +197,7 @@ const AuthL = {
     return guard(btn, async () => {
       if (!isBM()) fail('অনুমোদনের অনুমতি নেই');
       const v = (await db.collection('vouchers').doc(vno).get()).data();
-      if (v.by === App.user.uid && !isAdmin()) fail('নিজের এন্ট্রি নিজে অনুমোদন করা যাবে না');
+      if (sameUser(v.by, App.user.uid) && !isAdmin()) fail('নিজের এন্ট্রি নিজে অনুমোদন করা যাবে না');
       await Eng.approve(vno);
       if (v.authType === 'Member Admission' && v.ref && v.ref.memberId) {
         const m = await Data.member(v.ref.memberId); const b = db.batch();
@@ -243,7 +243,7 @@ ReportPage({
   init: async (el, f) => { UI.el(f, 'bdate').value = ''; const us = (await db.collection('users').get()).docs.map(d => ({ id: d.id, ...d.data() })); UI.fill(UI.el(f, 'user'), us, u => u.id, u => u.userId || u.email, '— সব —'); },
   run: async f => {
     const rows = (await db.collection('vouchers').where('bd', '>=', f.branch + '_' + f.from).where('bd', '<=', f.branch + '_' + f.upto).get()).docs.map(d => d.data())
-      .filter(v => (!f.fromB || v.vno >= f.fromB) && (!f.toB || v.vno <= f.toB) && (!f.bdate || v.businessDate === f.bdate) && (!f.user || v.by === f.user) && (!f.q || (v.narration + ' ' + v.type).toLowerCase().includes(f.q.toLowerCase())));
+      .filter(v => (!f.fromB || v.vno >= f.fromB) && (!f.toB || v.vno <= f.toB) && (!f.bdate || v.businessDate === f.bdate) && (!f.user || sameUser(v.by, f.user)) && (!f.q || (v.narration + ' ' + v.type).toLowerCase().includes(f.q.toLowerCase())));
     return { landscape: true, noSig: true, html: VList.table(rows) };
   },
 });

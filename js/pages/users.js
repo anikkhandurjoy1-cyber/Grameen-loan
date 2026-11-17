@@ -1,7 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
 // ইউজার সিটিং — নতুন ইউজার, তালিকা, পদ/ইউজার ভিত্তিক পারমিশন
 // ═══════════════════════════════════════════════════════════════
-const USER_API = '/api/manageUser'; // Vercel serverless (পাসওয়ার্ড রিসেট/ডিলিট)
 const genPass = () => { const c = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'; let p = ''; for (let i = 0; i < 8; i++) p += c[Math.floor(Math.random() * c.length)]; return p; };
 async function groupNames() { const s = await db.collection('permGroups').get(); const n = s.docs.map(d => d.id); return n.length ? n : Object.keys(DEFAULT_GROUPS); }
 // লিমিট চেক: সীমা ছাড়ালে লেনদেন অনুমোদনের জন্য pending
@@ -51,6 +50,7 @@ const Users = {
         flags: { hideBal: f.hideBal, controlling: f.controlling, bm: f.bm, backDate: f.backDate }, status: 'active', pages: [], mustChangePass: true,
         createdBy: App.user.userId, createdAt: FV.serverTimestamp(),
       });
+      db.collection('loginMap').doc(userId).set({ email, uid, at: FV.serverTimestamp() }).catch(() => {});
       $('.newcred', el).innerHTML = Users.credBox(userId, pass, f.name, f.mobile);
       UI.reset(el, ['branch']);
     });
@@ -66,23 +66,44 @@ const Users = {
       <div class="actions" style="margin-top:6px">${UI.btn('📋 কপি করুন', `navigator.clipboard.writeText(${esc(JSON.stringify(msg))}).then(()=>toast('✅ কপি হয়েছে'))`, 'btn-outline btn-sm')}<a class="btn btn-success btn-sm" href="${esc(wa)}" target="_blank">WhatsApp এ পাঠান</a></div>
       <div class="mini">ইউজার মোবাইল/কম্পিউটারের ব্রাউজারে এই লিংক খুলে User ID ও Password দিয়ে লগইন করবেন। প্রথম লগইনে পাসওয়ার্ড পরিবর্তন করতে বলা হবে।</div></div>`;
   },
+  // পাসওয়ার্ড রিসেট (সার্ভার ছাড়া): নতুন লগইন একাউন্ট তৈরি → প্রোফাইল সেখানে সরানো → পুরোনোটা বন্ধ
+  // User ID একই থাকে; লগইনের সময় loginMap থেকে নতুন ইমেইল খুঁজে নেয়
   async resetPass(uid, userId) {
-    if (!confirm(userId + ' এর পাসওয়ার্ড রিসেট করবেন?')) return;
-    const pass = genPass();
+    if (!isAdmin()) return toast('শুধু Super Admin পাসওয়ার্ড রিসেট করতে পারবেন', 'error');
+    if (uid === App.user.uid) return toast('নিজের পাসওয়ার্ড "আমার প্রোফাইল" থেকে পরিবর্তন করুন', 'error');
+    if (!confirm(userId + ' এর পাসওয়ার্ড রিসেট করবেন?\nনতুন পাসওয়ার্ড দেখানো হবে, পুরোনো পাসওয়ার্ড আর কাজ করবে না।')) return;
+    busy(true, 'পাসওয়ার্ড রিসেট হচ্ছে...');
     try {
-      const token = await auth.currentUser.getIdToken();
-      const r = await fetch(USER_API, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ action: 'resetPassword', uid, password: pass }) });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok || !j.success) throw new Error(j.error || 'API কাজ করছে না');
-      await db.collection('users').doc(uid).update({ passwordResetAt: FV.serverTimestamp(), passwordResetBy: App.user.userId });
-      await db.collection('users').doc(uid).update({ mustChangePass: true });
-      UI.modal('🔑 নতুন পাসওয়ার্ড', Users.credBox(userId, pass));
-    } catch (e) { toast('রিসেট ব্যর্থ: ' + e.message, 'error'); }
+      const ref = db.collection('users').doc(uid); const old = (await ref.get()).data();
+      if (!old) throw new Error('ইউজার পাওয়া যায়নি');
+      const uidKey = String(old.userId || userId).toLowerCase();
+      // ১) loginMap লেখার অনুমতি আছে কিনা আগে দেখা (Rules publish না হলে এখানেই থামবে)
+      const mapRef = db.collection('loginMap').doc(uidKey);
+      try { await mapRef.set({ email: old.email || (uidKey + LOGIN_DOMAIN), uid, at: FV.serverTimestamp() }, { merge: true }); }
+      catch (e) { throw new Error('Firestore Rules আপডেট করা নেই — নতুন Rules Publish করুন (loginMap)'); }
+      // ২) নতুন লগইন একাউন্ট
+      const pass = genPass(); const sec = firebase.apps.find(a => a.name === 'sec') || firebase.initializeApp(firebaseConfig, 'sec');
+      let gen = num(old.authGen), email = '', cred = null;
+      for (let i = 0; i < 6 && !cred; i++) {
+        gen++; email = uidKey + '.r' + gen + LOGIN_DOMAIN;
+        try { cred = await sec.auth().createUserWithEmailAndPassword(email, pass); }
+        catch (e) { if (e.code !== 'auth/email-already-in-use') throw e; }
+      }
+      if (!cred) throw new Error('নতুন একাউন্ট তৈরি করা যায়নি');
+      const newUid = cred.user.uid; try { await sec.auth().signOut(); } catch (e) {}
+      // ৩) প্রোফাইল নতুন একাউন্টে সরানো + পুরোনোটা মুছে ফেলা (পুরোনো পাসওয়ার্ডে আর লগইন হবে না)
+      const b = db.batch();
+      b.set(db.collection('users').doc(newUid), { ...old, uid: newUid, email, authGen: gen, mustChangePass: true, prevUids: [...(old.prevUids || []), uid], passwordResetAt: FV.serverTimestamp(), passwordResetBy: App.user.userId });
+      b.delete(ref);
+      b.set(mapRef, { email, uid: newUid, at: FV.serverTimestamp(), by: App.user.userId });
+      await b.commit();
+      busy(false);
+      UI.modal('🔑 নতুন পাসওয়ার্ড', Users.credBox(old.userId || userId, pass, old.name, old.mobile));
+      App.render('userList');
+    } catch (e) { busy(false); toast('রিসেট ব্যর্থ: ' + e.message, 'error'); }
   },
   async toggle(uid, st) {
     await db.collection('users').doc(uid).update({ status: st === 'active' ? 'inactive' : 'active' });
-    // Firebase Auth-এও নিষ্ক্রিয়/সক্রিয় (Vercel API থাকলে)
-    try { const token = await auth.currentUser.getIdToken(); await fetch(USER_API, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ action: st === 'active' ? 'disable' : 'enable', uid }) }); } catch (e) {}
     toast('✅ পরিবর্তন হয়েছে'); App.render('userList');
   },
   // Super Admin: ইউজার মুছে ফেলা (প্রোফাইল মুছলে আর লগইন করতে পারবে না)
@@ -95,7 +116,7 @@ const Users = {
       const b = db.batch(); b.delete(db.collection('users').doc(uid));
       b.set(db.collection('deleteLog').doc(), { kind: 'user', branch: d.branch || '', title: (d.userId || '') + ' - ' + (d.name || ''), accType: d.group || '', balance: 0, vouchers: [], reason: 'User delete', by: App.user.userId, byName: App.user.name || '', on: FV.serverTimestamp(), date: today() });
       await b.commit();
-      try { const token = await auth.currentUser.getIdToken(); await fetch(USER_API, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ action: 'delete', uid }) }); } catch (e) {}
+      if (d.userId) db.collection('loginMap').doc(String(d.userId).toLowerCase()).delete().catch(() => {});
       toast('🗑️ ইউজার মুছে ফেলা হয়েছে — ' + userId); App.render('userList');
     });
   },

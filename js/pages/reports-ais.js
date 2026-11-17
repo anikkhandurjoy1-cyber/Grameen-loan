@@ -330,7 +330,7 @@ ReportPage({
 });
 
 // ── Back Date / Cancel Transaction ──
-const vRows = async (f, flt) => (await db.collection('vouchers').where('bd', '>=', f.branch + '_' + f.from).where('bd', '<=', f.branch + '_' + f.upto).get()).docs.map(d => d.data()).filter(flt).filter(v => (!f.user || v.by === f.user)).sort((a, b) => (a.date + a.vno).localeCompare(b.date + b.vno));
+const vRows = async (f, flt) => (await db.collection('vouchers').where('bd', '>=', f.branch + '_' + f.from).where('bd', '<=', f.branch + '_' + f.upto).get()).docs.map(d => d.data()).filter(flt).filter(v => (!f.user || sameUser(v.by, f.user))).sort((a, b) => (a.date + a.vno).localeCompare(b.date + b.vno));
 const userFilter = { k: 'user', l: 'User Name', t: 'select', opts: [['', '------------']] };
 const fillUsers = async (el, f) => { const us = (await db.collection('users').get()).docs.map(d => ({ id: d.id, ...d.data() })); UI.fill(UI.el(f, 'user'), us, u => u.id, u => u.userId || u.email, '------------'); };
 async function vName(f) { const aidx = await Data.accIdx(f.branch); const mem = await Data.memberIdx(f.branch); return v => { const a = (v.accs || [])[0]; const r = aidx[a]; return esc(r ? (r[5] || (mem[r[0]] || [])[0] || '') : ((v.ref && v.ref.memberId && (mem[v.ref.memberId] || [])[0]) || v.payer || '')); }; }

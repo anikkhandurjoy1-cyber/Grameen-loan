@@ -547,8 +547,10 @@ async function doLogin() {
   const u = $('#loginUser').value.trim(), p = $('#loginPass').value;
   const err = $('#loginError'); err.style.display = 'none';
   if (!u || !p) { err.textContent = 'ইউজার আইডি ও পাসওয়ার্ড দিন'; err.style.display = 'block'; return; }
-  const email = u.includes('@') ? u : u.toLowerCase() + LOGIN_DOMAIN;
+  let email = u.includes('@') ? u : u.toLowerCase() + LOGIN_DOMAIN;
   const btn = $('.btn-login'); btn.disabled = true; btn.textContent = 'লগইন হচ্ছে...';
+  // পাসওয়ার্ড রিসেট হলে নতুন লগইন ইমেইল loginMap এ থাকে
+  if (!u.includes('@')) { try { const m = await db.collection('loginMap').doc(u.toLowerCase()).get(); if (m.exists && m.data().email) email = m.data().email; } catch (e) {} }
   try { await auth.signInWithEmailAndPassword(email, p); }
   catch (e) { err.textContent = 'ইউজার আইডি বা পাসওয়ার্ড ভুল'; err.style.display = 'block'; }
   finally { btn.disabled = false; btn.textContent = 'লগইন করুন →'; }
@@ -588,8 +590,13 @@ async function onSignedIn(fbUser) {
 }
 // প্রিন্টে লোগো নিশ্চিত করতে data URL হিসেবে রাখা
 function preloadLogo() { fetch('logo.png').then(r => r.blob()).then(b => { const fr = new FileReader(); fr.onload = () => App.logoData = fr.result; fr.readAsDataURL(b); }).catch(() => {}); }
+// পাসওয়ার্ড রিসেটে ইউজারের uid বদলায় — পুরোনো uid এর লেনদেনও একই ইউজারের হিসেবে ধরা
+App.uidAlias = {};
+async function loadUidAlias() { try { const m = {}; (await db.collection('users').get()).docs.forEach(d => { const p = d.data().prevUids || []; m[d.id] = p; p.forEach(x => m[x] = [d.id, ...p.filter(y => y !== x)]); }); App.uidAlias = m; } catch (e) {} }
+function sameUser(by, sel) { return by === sel || (!!by && (App.uidAlias[sel] || []).includes(by)); }
 async function startApp() {
   preloadLogo();
+  loadUidAlias();
   $('#loginScreen').style.display = 'none';
   $('#app').style.display = 'block';
   $('#hdrUser').textContent = (App.user.userId || App.user.email || '') + ' • ' + (App.user.group || '');
