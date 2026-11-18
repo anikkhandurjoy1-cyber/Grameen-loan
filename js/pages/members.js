@@ -90,10 +90,13 @@ const Member = {
           pre: async batch => {
             batch.set(db.collection('members').doc(memberId), mdoc);
             Idx.setMember(batch, f.branch, mdoc);
-            const sa = { accNo: shareAcc, kind: 'share', type: 'share', branch: f.branch, memberId, samity: f.samity, title: f.name, openDate: f.joinDate, status: 'active', balance: 0, totCr: 0, totDr: 0, createdAt: FV.serverTimestamp() };
-            batch.set(db.collection('accounts').doc(shareAcc), sa);
-            Idx.setAccount(batch, f.branch, sa);
-            batch.set(db.collection('snap').doc(f.samity), { a: { [shareAcc]: { m: memberId, k: 'share', t: 'share', b: 0, st: 'active', od: f.joinDate } } }, { merge: true });
+            // শেয়ার একাউন্ট শুধু শেয়ার দিলে (অটো শেয়ার বন্ধ)
+            if (share > 0) {
+              const sa = { accNo: shareAcc, kind: 'share', type: 'share', branch: f.branch, memberId, samity: f.samity, title: f.name, openDate: f.joinDate, status: 'active', balance: 0, totCr: 0, totDr: 0, createdAt: FV.serverTimestamp() };
+              batch.set(db.collection('accounts').doc(shareAcc), sa);
+              Idx.setAccount(batch, f.branch, sa);
+              batch.set(db.collection('snap').doc(f.samity), { a: { [shareAcc]: { m: memberId, k: 'share', t: 'share', b: 0, st: 'active', od: f.joinDate } } }, { merge: true });
+            }
           },
         });
         } catch (e) { await db.collection('counters').doc('member_' + f.branch).set({ at: 0 }, { merge: true }).catch(() => {}); throw e; }

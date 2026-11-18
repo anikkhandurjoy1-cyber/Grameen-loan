@@ -27,7 +27,7 @@ async function loanReceiptList(el, accNo, cancelMode) {
 }
 // রসিদ প্রিন্ট
 // রসিদ প্রিন্ট: js/pages/receipts.js (Receipt / Voucher)
-const TT_NAME = { EMI_RCV: 'ঋণের কিস্তি জমা', EMI_MANUAL: 'ম্যানুয়াল কিস্তি', EMI_TRF: 'সঞ্চয় থেকে কিস্তি', EMI_SHEET: 'শীট কিস্তি', DEP_RCV: 'সঞ্চয় জমা', DEP_PAY: 'সঞ্চয় ফেরত', DPS_RCV: 'ডিপিএস জমা', SAV_RCV: 'সেভিংস জমা', SHARE_RCV: 'শেয়ার জমা', SHARE_PAY: 'শেয়ার ফেরত', LOAN_DISB: 'ঋণ বিতরণ', DEP_TRF_IN: 'স্থানান্তর জমা', DEP_TRF_OUT: 'স্থানান্তর উত্তোলন', DEP_CLOSE: 'হিসাব ক্লোজিং', PROFIT_POST: 'মুনাফা জমা', PROFIT_PAY: 'মুনাফা প্রদান', ADMISSION_FEE: 'ভর্তি ফি', PASSBOOK_FEE: 'পাসবই ফি', LOAN_DISB_TRF: 'ঋণ বিতরণ (জমা)', EMI_WAIVE: 'ঋণ মওকুফ', OTHER_RCV: 'জমা', OTHER_PAY: 'প্রদান', OPEN_BAL: 'ওপেনিং ব্যালেন্স', OPEN_PAID: 'পুরোনো আদায় (ওপেনিং)' };
+const TT_NAME = { SALARY_CR: 'বেতন জমা (Salary Account)', EMI_RCV: 'ঋণের কিস্তি জমা', EMI_MANUAL: 'ম্যানুয়াল কিস্তি', EMI_TRF: 'সঞ্চয় থেকে কিস্তি', EMI_SHEET: 'শীট কিস্তি', DEP_RCV: 'সঞ্চয় জমা', DEP_PAY: 'সঞ্চয় ফেরত', DPS_RCV: 'ডিপিএস জমা', SAV_RCV: 'সেভিংস জমা', SHARE_RCV: 'শেয়ার জমা', SHARE_PAY: 'শেয়ার ফেরত', LOAN_DISB: 'ঋণ বিতরণ', DEP_TRF_IN: 'স্থানান্তর জমা', DEP_TRF_OUT: 'স্থানান্তর উত্তোলন', DEP_CLOSE: 'হিসাব ক্লোজিং', PROFIT_POST: 'মুনাফা জমা', PROFIT_PAY: 'মুনাফা প্রদান', ADMISSION_FEE: 'ভর্তি ফি', PASSBOOK_FEE: 'পাসবই ফি', LOAN_DISB_TRF: 'ঋণ বিতরণ (জমা)', EMI_WAIVE: 'ঋণ মওকুফ', OTHER_RCV: 'জমা', OTHER_PAY: 'প্রদান', OPEN_BAL: 'ওপেনিং ব্যালেন্স', OPEN_PAID: 'পুরোনো আদায় (ওপেনিং)' };
 
 // ── কিস্তি জমা পেজ (সাধারণ / ম্যানুয়াল / কর্মী) ──
 // eKisti: "ঋণের কিস্তি জমা" বাংলা লেবেল, ম্যানুয়াল ও কর্মী কিস্তি ইংরেজি

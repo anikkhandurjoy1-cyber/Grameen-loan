@@ -379,8 +379,10 @@ const MemMig = {
     const sa = { accNo: shareAcc, kind: 'share', type: 'share', branch: b, memberId, samity: r.samity, title: r.name, openDate: r.joinDate, status: 'active', balance: 0, totCr: 0, totDr: 0, createdAt: FV.serverTimestamp() };
     const bt = db.batch();
     bt.set(db.collection('members').doc(memberId), mdoc); Idx.setMember(bt, b, mdoc);
-    bt.set(db.collection('accounts').doc(shareAcc), sa); Idx.setAccount(bt, b, sa);
-    bt.set(db.collection('snap').doc(r.samity), { a: { [shareAcc]: { m: memberId, k: 'share', t: 'share', b: 0, st: 'active', od: r.joinDate } } }, { merge: true });
+    if (num(r.share) > 0) { // শেয়ার দিলে তবেই শেয়ার একাউন্ট
+      bt.set(db.collection('accounts').doc(shareAcc), sa); Idx.setAccount(bt, b, sa);
+      bt.set(db.collection('snap').doc(r.samity), { a: { [shareAcc]: { m: memberId, k: 'share', t: 'share', b: 0, st: 'active', od: r.joinDate } } }, { merge: true });
+    }
     await bt.commit();
     if (r.product) await BalMig.openDep(b, mdoc, r.product, r.joinDate);
     if (num(r.share) > 0) { const a = await Tx.acc(shareAcc); await Tx.post(b, r.joinDate, 'OPENING_ACC', 'Member Migration Share ' + memberId + ' - ' + r.name, [await Tx.credit(a, num(r.share), { contraGl: Mig.ADJ, tt: 'OPEN_BAL', narration: 'Member Migration Share', skipProfile: true })]); }

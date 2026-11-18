@@ -31,7 +31,7 @@ function DEP_LBL(id, o) {
 function DepTxPage(id, title, o) {
   App.page(id, {
     title, icon: o.dir === 'C' ? '📥' : '📤',
-    render: () => { const L = DEP_LBL(id, o); return UI.card('', UI.grid([{ ...F.branch, l: L.branch }, { k: 'member', l: L.member, t: 'member', req: 1 }, { k: 'account', l: L.account, t: 'select', req: 1 },
+    render: () => { const L = DEP_LBL(id, o); return UI.card('', UI.grid([{ ...F.branch, l: L.branch }, { k: 'member', l: L.member, t: 'member', req: 1 }, { k: 'account', l: L.account, t: 'select', req: !(o.share && o.dir === 'C') },
       { k: 'amount', l: L.amount, t: 'number', req: 1 }, { k: 'date', l: L.date, t: 'date', req: 1 },
       { k: 'balance', l: L.balance, ro: 1 }, o.dir === 'D' ? { k: 'blocked', l: 'ব্লক পরিমাণ', ro: 1 } : null, o.dps ? { k: 'inst', l: 'মাসিক কিস্তি', ro: 1 } : null, o.dps ? { k: 'dueInfo', l: 'বকেয়া কিস্তি', ro: 1 } : null,
       { k: 'ledger', l: L.ledger, t: 'select' }, { k: 'docNo', l: L.doc }, { k: 'narration', l: L.comments, t: 'textarea', req: o.dir === 'D' && o.share }], 4)
@@ -42,6 +42,8 @@ function DepTxPage(id, title, o) {
       await Pick.account(el, 'account', 'member', 'branch', o.share ? { kind: 'share' } : { kind: 'dep', type: o.types });
       UI.el(el, 'date').value = await businessDate();
       UI.el(el, 'account').addEventListener('change', async () => {
+        const sel = UI.el(el, 'account'), mv = UI.el(el, 'member'); // শেয়ার একাউন্ট না থাকলে প্রথম জমায় নতুন খুলবে
+        if (o.share && o.dir === 'C' && sel.options.length <= 1 && !sel.value && mv && (mv.dataset.val || mv.value)) { if (!sel.options.length) sel.add(new Option('', '')); sel.options[0].text = '➕ নতুন শেয়ার একাউন্ট খুলবে'; }
         const a = await showBal(el, UI.el(el, 'account').value);
         if (a && o.dir === 'C' && num(a.instAmount)) UI.el(el, 'amount').value = a.instAmount;
         if (a && o.dps) { UI.el(el, 'inst').value = a.instAmount; const due = DepTx.dpsDue(a, UI.el(el, 'date').value); UI.el(el, 'dueInfo').value = `${due.dueN} টি (${amt(due.dueAmt)})`; if (due.dueAmt > 0) UI.el(el, 'amount').value = due.dueAmt; }
@@ -52,6 +54,18 @@ function DepTxPage(id, title, o) {
   });
   DepTx.opts[id] = o;
 }
+// শেয়ার একাউন্ট দরকার হলে খোলা (অটো শেয়ার বন্ধ — প্রথম শেয়ার জমায় খোলে)
+const ShareAcc = {
+  async ensure(branch, memberId, date) {
+    const accNo = 'S' + memberId; const ex = await Data.account(accNo);
+    if (ex) { if (ex.status === 'closed') fail('শেয়ার একাউন্ট ক্লোজড: ' + accNo); return accNo; }
+    const m = await Data.member(memberId); if (!m) fail('সদস্য পাওয়া যায়নি');
+    const sa = { accNo, kind: 'share', type: 'share', branch: m.branch || branch, memberId, samity: m.samity, title: m.name, openDate: date || await businessDate(branch), status: 'active', balance: 0, totCr: 0, totDr: 0, createdBy: App.user.userId, createdAt: FV.serverTimestamp() };
+    const b = db.batch(); b.set(db.collection('accounts').doc(accNo), sa); Idx.setAccount(b, sa.branch, sa);
+    b.set(db.collection('snap').doc(m.samity), { a: { [accNo]: { m: memberId, k: 'share', t: 'share', b: 0, st: 'active', od: sa.openDate } } }, { merge: true });
+    await b.commit(); Cache.drop('aidx_'); return accNo;
+  },
+};
 const DepTx = {
   opts: {},
   // DPS: আজ পর্যন্ত কয়টি কিস্তি বকেয়া
@@ -63,7 +77,10 @@ const DepTx = {
   save(id, btn) {
     const el = $('#page-' + id), o = DepTx.opts[id];
     return guard(btn, async () => {
-      UI.validate(el); const f = UI.get(el); const a = await Tx.acc(f.account);
+      UI.validate(el); const f = UI.get(el);
+      if (!f.account && o.share && o.dir === 'C') { if (!f.member) fail('সদস্য বাছাই করুন'); f.account = await ShareAcc.ensure(f.branch, f.member, f.date); }
+      if (!f.account) fail('একাউন্ট বাছাই করুন');
+      const a = await Tx.acc(f.account);
       if (o.dps && num(a.instAmount) && r2(f.amount % num(a.instAmount)) !== 0) fail('DPS জমা কিস্তির গুণিতক (' + a.instAmount + ') হতে হবে');
       const part = o.dir === 'C' ? await Tx.credit(a, f.amount, { contraGl: f.ledger, tt: o.tt, docNo: f.docNo, narration: f.narration }) : await Tx.debit(a, f.amount, { contraGl: f.ledger, tt: o.tt, docNo: f.docNo, narration: f.narration });
       const pending = needsAuth(o.dir === 'C' ? 'deposit' : 'withdraw', f.amount);

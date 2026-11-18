@@ -10,7 +10,7 @@ async function collectRows(samity, date, memberId) {
     if (s.st === 'closed' || s.st === 'cancelled' || (memberId && s.m !== memberId)) return;
     if (s.k === 'loan') { const l = Loan.fromSnap({ ...s, accNo }); const st = Loan.status(l, date); rows.push({ accNo, memberId: s.m, kind: 'loan', type: s.t, bal: num(s.b), exp: st.asonDue, inst: num(s.ia), overdue: st.overdue, advance: st.advance }); }
     else if (s.k === 'dep') { const d = REF.DEP[s.t] || {}; if (d.dtype === 'FD') return; rows.push({ accNo, memberId: s.m, kind: 'dep', type: s.t, bal: num(s.b), exp: num(s.ia), inst: num(s.ia) }); }
-    else if (s.k === 'share') rows.push({ accNo, memberId: s.m, kind: 'share', type: 'share', bal: num(s.b), exp: 0, inst: 0 });
+    else if (s.k === 'share' && num(s.b) > 0) rows.push({ accNo, memberId: s.m, kind: 'share', type: 'share', bal: num(s.b), exp: 0, inst: 0 });
   });
   const ord = { loan: 0, dep: 1, share: 2 };
   return rows.sort((a, b) => a.memberId.localeCompare(b.memberId) || ord[a.kind] - ord[b.kind] || a.accNo.localeCompare(b.accNo));

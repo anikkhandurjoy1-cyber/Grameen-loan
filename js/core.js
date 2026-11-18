@@ -300,7 +300,7 @@ const MemberCard = {
     const m = await Data.member(mid); if (!m) { card.hidden = true; return; }
     const sam = m.samity ? await Data.samity(m.samity) : null;
     const snaps = (await Data.snaps(branch || m.branch, m.samity)).filter(s => s.m === mid);
-    const dep = snaps.filter(s => s.k !== 'loan'), ln = snaps.filter(s => s.k === 'loan');
+    const dep = snaps.filter(s => s.k !== 'loan' && !(s.k === 'share' && !num(s.b) && s.st !== 'closed')), ln = snaps.filter(s => s.k === 'loan');
     const on = l => l.filter(s => s.st !== 'closed').length, off = l => l.filter(s => s.st === 'closed').length;
     const accRow = s => { let extra = ''; if (s.k === 'loan' && s.st !== 'closed') { try { const l = Loan.fromSnap(s); l.base = num(s.bs); const st = Loan.status(l, today()); extra = ` <small>কিস্তি ${amt(s.ia)} • বকেয়া ${amt(st.overdue)}</small>`; } catch (e) {} } return `<div class="mc-acc${s.st === 'closed' ? ' off' : ''}"><span>${esc(typeName(s.k, s.t))} <b>${esc(s.accNo)}</b>${extra}</span><b>${amt(s.b)}</b></div>`; };
     card.innerHTML = `<div class="mc-top">${m.photoUrl ? `<img src="${esc(m.photoUrl)}">` : '<span class="mc-ph">👤</span>'}<div><div class="mc-name">${esc(m.name)} <small>(${esc(mid)})</small></div>
