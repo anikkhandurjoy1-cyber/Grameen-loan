@@ -162,7 +162,9 @@ App.page('userList', {
 // ── পারমিশন চেকলিস্ট ──
 function permChecklist(selected) {
   const sel = new Set(selected || []);
-  return MENU.map(sec => {
+  // eKisti: Module বাছাই করলে শুধু সেই মডিউলের পেজ দেখায় (অন্যগুলোর টিক বদলায় না)
+  const mod = `<div class="form-group" style="max-width:360px;margin-bottom:10px"><label>Module</label><select onchange="$$('.perm-sec',this.closest('.card')).forEach((d,i)=>d.style.display=(this.value===''||this.value==String(i))?'':'none')"><option value="">— সব মডিউল —</option>${MENU.map((sec, i) => `<option value="${i}">${esc(sec.t)}</option>`).join('')}</select></div>`;
+  return mod + MENU.map(sec => {
     const items = sec.page ? [[sec.t, sec.page]] : sec.items;
     const uniq = items.filter(([, p], i) => items.findIndex(x => x[1] === p) === i);
     return `<div class="perm-sec" style="margin-bottom:10px"><label style="font-weight:700;color:var(--primary)"><input type="checkbox" onchange="$$('input[data-p]',this.closest('.perm-sec')).forEach(c=>c.checked=this.checked)"> ${esc(sec.t)}</label>

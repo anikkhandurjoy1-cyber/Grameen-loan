@@ -287,10 +287,10 @@ const ProfitPay = {
 App.page('profitDist', {
   title: 'ম্যানুয়াল লাভ বন্টন', icon: '🧮',
   render: () => `<div class="report-filter">${UI.grid([F.branch, { ...F.samity }, { k: 'type', l: 'Account Type', t: 'select', req: 1, opts: [['', '------------'], ...DEP_TYPES] },
-    { k: 'on', l: 'Profit Balance On', t: 'select', req: 1, opts: [['D', 'D-Daily Balance'], ['B', 'B-Ason Day Balance'], ['M', 'M-Minimum Balance'], ['X', 'X-Maximum Balance'], ['A', 'A-Average Balance']] },
+    { k: 'on', l: 'Profit Balance On', t: 'select', req: 1, opts: [['D', 'D-Daily Balance'], ['B', 'B-Ason Day Balance'], ['M', 'M-Minimum Balance'], ['X', 'X-Maximum Balance'], ['A', 'A-Average Balance'], ['O', 'O-Account Opening Balance'], ['N', 'N-Not Applicable']] },
     { k: 'from', l: 'From Date', t: 'date', req: 1 }, { k: 'upto', l: 'Upto Date', t: 'date', req: 1 }, { k: 'rate', l: 'Profit Rate', t: 'number' }, { k: 'dist', l: 'Distribution Amount', t: 'number', hint: 'দিলে হার স্বয়ংক্রিয় হিসাব হবে' },
     { k: 'calcRate', l: 'Calculated Profit Rate', ro: 1 }, { k: 'calcDist', l: 'Calculated Distribution Amount', ro: 1 }, { k: 'date', l: 'Posting Date', t: 'date', req: 1 }, { k: 'excl', l: 'Exclude Zero Balance', t: 'select', opts: [['Y', 'Yes'], ['N', 'No']] }], 4)}
-    <div class="filter-actions">${UI.btn('🔍 Search', 'ProfitDist.search(this)')}${UI.btn('📮 Post to Account', 'ProfitDist.post(this)', 'btn-success')}</div></div><div class="card pd"></div>`,
+    <div class="filter-actions">${UI.btn('🔍 Search', 'ProfitDist.search(this)')}${UI.btn('🔄 Update Profit', 'ProfitDist.update(this)', 'btn-outline')}${UI.btn('📮 Post to Account', 'ProfitDist.post(this)', 'btn-success')}</div></div><div class="card pd"></div>`,
   init: async el => {
     await Pick.branch(el, 'branch'); await Pick.samity(el, 'samity', 'branch');
     const bd = await businessDate(); UI.el(el, 'date').value = UI.el(el, 'upto').value = bd; UI.el(el, 'from').value = bd.slice(0, 4) + '-01-01';
@@ -304,7 +304,7 @@ const ProfitDist = {
       const f = UI.get(el); if (!f.type) fail('Account Type বাছাই করুন');
       busy(true, 'হিসাব হচ্ছে...');
       try {
-        const sams = f.samity ? [{ code: f.samity }] : await Data.samities(f.branch);
+        const allS = await Data.samities(f.branch); el._sams = allS; const sams = f.samity ? allS.filter(x => x.code === f.samity) : allS;
         const mem = await Data.memberIdx(f.branch);
         const rows = [];
         for (const s of sams) {
@@ -323,10 +323,12 @@ const ProfitDist = {
             else if (f.on === 'B') base = r2((vals.length ? vals[vals.length - 1] : num(v.b)) * days / 360);
             else if (f.on === 'M') base = r2((vals.length ? Math.min(...vals) : 0) * days / 360);
             else if (f.on === 'X') base = r2((vals.length ? Math.max(...vals) : 0) * days / 360);
+            else if (f.on === 'O') base = r2((vals.length ? vals[0] : num(v.b)) * days / 360);   // সময়ের শুরুর ব্যালেন্স
+            else if (f.on === 'N') base = 0;                                                     // শুধু হাতে লেখা মুনাফা
             else base = r2((r.rows.length ? sum(r.rows, x => x.bal * x.days) / days : 0) * days / 360);
             const bal = r.rows.length ? r.rows[r.rows.length - 1].bal : num(v.b);
             if (f.excl === 'Y' && bal <= 0) continue;
-            rows.push({ accNo, memberId: v.m, name: (mem[v.m] || [])[0] || '', samity: s.code, bal, base, last: '' });
+            rows.push({ accNo, memberId: v.m, name: (mem[v.m] || [])[0] || '', samity: s.code, samName: s.name || '', bal, base, last: (byAcc[accNo] || []).filter(t => t.tt === 'PROFIT_POST').map(t => t.date).sort().pop() || '' });
           }
         }
         const totalBase = sum(rows, r => r.base);
@@ -335,8 +337,28 @@ const ProfitDist = {
         rows.forEach(r => r.profit = Math.round(r.base * rate / 100));
         UI.el(el, 'calcRate').value = rate; UI.el(el, 'calcDist').value = sum(rows, r => r.profit);
         el._rows = rows; el._f = { ...f, rate };
-        $('.pd', el).innerHTML = UI.table([{ h: 'SL', f: r => rows.indexOf(r) + 1 }, { h: 'ID', f: r => r.memberId }, { h: 'Name', f: r => esc(r.name) }, { h: 'Center Code', f: r => r.samity }, { h: 'Account Number', f: r => r.accNo }, { h: 'Balance', f: r => amt(r.bal), r: 1, sum: 1, v: r => r.bal }, { h: 'Profit On Amount (×দিন/৩৬০)', f: r => amt(r.base), r: 1 }, { h: 'Profit Payment', f: r => `<input type="number" class="pp" data-acc="${r.accNo}" value="${r.profit}" style="width:90px">`, r: 1, sum: 1, v: r => r.profit }], rows);
+        ProfitDist.draw(el);
       } finally { busy(false); }
+    });
+  },
+  draw(el) {
+    const rows = el._rows || []; const sn = {}; (el._sams || []).forEach(x => sn[x.code] = x.name);
+    $('.pd', el).innerHTML = UI.table([{ h: 'SL', f: r => rows.indexOf(r) + 1 }, { h: 'ID', f: r => r.memberId }, { h: 'Name', f: r => esc(r.name) }, { h: 'Center Code', f: r => String(r.samity).slice(-4) }, { h: 'Center Name', f: r => esc(r.samName || sn[r.samity] || '') }, { h: 'Account Number', f: r => r.accNo }, { h: 'Last Payment Date', f: r => fmtD(r.last) },
+      { h: 'Balance', f: r => amt(r.bal), r: 1, sum: 1, v: r => r.bal }, { h: 'Profit On Amount', f: r => amt(r.base), r: 1, sum: 1, v: r => r.base }, { h: 'Profit Pending', f: () => '0.00', r: 1 }, { h: 'Total Payable', f: r => amt(r.profit), r: 1, sum: 1, v: r => r.profit },
+      { h: 'Profit Payment', f: r => `<input type="number" class="pp" data-acc="${r.accNo}" value="${r.profit}" style="width:90px">`, r: 1, sum: 1, v: r => r.profit }], rows);
+  },
+  // Update Profit: হার/বন্টন পরিমাণ বদলালে আবার Search ছাড়াই নতুন হিসাব; হাতে বদলানো ঘরও গোনা হয়
+  update(btn) {
+    const el = $('#page-profitDist');
+    return guard(btn, async () => {
+      const rows = el._rows; if (!rows || !rows.length) fail('আগে Search করুন');
+      const f = UI.get(el); const totalBase = sum(rows, r => r.base); let rate = num(f.rate);
+      const changed = rate !== num((el._f || {}).rate) || num(f.dist) !== num((el._f || {}).dist);
+      if (changed) { if (num(f.dist) && totalBase) rate = r2(num(f.dist) * 100 / totalBase * 10000) / 10000; rows.forEach(r => r.profit = Math.round(r.base * rate / 100)); }
+      else $$('.pp', el).forEach(i => { const r = rows.find(x => x.accNo === i.dataset.acc); if (r) r.profit = num(i.value); });
+      el._f = { ...el._f, rate, dist: f.dist, date: f.date };
+      UI.el(el, 'calcRate').value = rate; UI.el(el, 'calcDist').value = sum(rows, r => r.profit);
+      ProfitDist.draw(el); toast('✅ মুনাফা আপডেট হয়েছে');
     });
   },
   post(btn) {

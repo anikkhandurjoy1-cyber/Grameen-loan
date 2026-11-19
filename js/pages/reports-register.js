@@ -217,9 +217,9 @@ async function memberDocs(f) {
 const ageOf = (dob, d) => dob ? Math.floor(daysBetween(dob, d) / 365.25) : '';
 ReportPage({
   id: 'rptAdmission', title: 'ভর্তি রেজিস্টার', landscape: true, fromDefault: 'month',
-  filters: [F.branch, F.samity, F.employee, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, { k: 'ms', l: 'Member Status', t: 'select', opts: [['', 'Choose'], ['active', 'Active'], ['inactive', 'Inactive'], ['closed', 'Closed']] }, { k: 'village', l: 'Location (গ্রাম/ঠিকানা)', t: 'text' }],
+  filters: [F.branch, F.samity, F.employee, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, { k: 'ms', l: 'Member Status', t: 'select', opts: [['', 'Choose'], ['active', 'Active'], ['inactive', 'Inactive'], ['closed', 'Closed']] }, ...LOC_F],
   run: async f => {
-    const rows = (await memberDocs(f)).filter(m => m.joinDate >= f.from && m.joinDate <= f.upto && (!f.ms || (m.status || 'active') === f.ms) && (!f.village || String(m.presentAddr || m.permAddr || '').includes(f.village))).sort((a, b) => (a.joinDate + a.memberId).localeCompare(b.joinDate + b.memberId));
+    const rows = (await memberDocs(f)).filter(m => m.joinDate >= f.from && m.joinDate <= f.upto && (!f.ms || (m.status || 'active') === f.ms) && locMatch(f, m)).sort((a, b) => (a.joinDate + a.memberId).localeCompare(b.joinDate + b.memberId));
     const G = 'Member Information';
     return { title: 'Admission Register Report', html: UI.table([SL, ...[['ID', m => m.memberId], ['Name', m => esc(m.name)], ['Reference', m => esc(m.reference || '')], ['Father Name', m => esc(m.father || '')], ['Mother Name', m => esc(m.mother || '')], ['Gender', m => esc(m.sex || '')], ['National ID', m => esc(m.nid || '')], ['Location', m => esc(m.village || '')], ['Present Address', m => esc(m.presentAddr || '')], ['Phone', m => esc(m.mobile || '')], ['Admission Date', m => fmtD(m.joinDate)], ['Education', m => esc(m.education || '')], ['Age', m => ageOf(m.dob, f.upto)], ['Status', m => (m.status || 'active').replace(/^./, c => c.toUpperCase())], ['Monthly Income', m => n2(m.income)]].map(([h, fn]) => ({ g: G, h, f: fn, r: h === 'Monthly Income' }))], rows) };
   },
@@ -270,6 +270,17 @@ ReportPage({
 ReportPage({
   id: 'rptPeriodProgress', title: 'পর্যায়ক্রমিক অগ্রগতি রিপোর্ট', landscape: true, fromDefault: 'month',
   filters: [F.branch, F.btype, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, F.samity, F.employee, { ...R.GROUP, opts: [['center', 'Center'], ['branch', 'Branch'], ['employee', 'Employee'], ['member', 'Member']] }, { k: 'sc', l: 'Service Charge', t: 'select', opts: [['with', 'With Service Charge'], ['without', 'Without Service Charge']] }],
-  run: async f => { const grp = f.grp || 'center'; const { rows, lab } = await perfRows(f, grp);
-    return { title: 'Periodical Progress Report', html: UI.table(perfCols(lab, [{ h: { center: 'Samity', branch: 'Branch', employee: 'Field Officer', member: 'Member' }[grp], f: r => r.k === '—' ? '—' : lab(r.k) }]), rows) }; },
+  buttons: [['🖨️ অগ্রগতি বিশ্লেষণ প্রিন্ট', 'analysis']],
+  run: async (f, mode) => { const grp = f.grp || 'center'; const { rows, lab } = await perfRows(f, grp);
+    const G = { center: 'Samity', branch: 'Branch', employee: 'Field Officer', member: 'Member' }[grp]; const name = r => r.k === '—' ? '—' : lab(r.k);
+    if (mode === 'analysis') {
+      // শুরু বনাম শেষ — বৃদ্ধি (%) ও আদায়ের হার
+      const pct = (a, b) => a ? (r2((b - a) * 100 / a)).toFixed(2) + '%' : (b ? '100.00%' : '0.00%');
+      const blk = (h, a, b) => [{ g: h, h: 'শুরু', f: r => n2(a(r)), r: 1, sum: 1, v: a }, { g: h, h: 'শেষ', f: r => n2(b(r)), r: 1, sum: 1, v: b }, { g: h, h: 'বৃদ্ধি', f: r => pct(a(r), b(r)), r: 1 }];
+      const cols = [SL, { h: G, f: name }, { g: 'সদস্য', h: 'শুরু', f: r => r.b0.mem.size, r: 1, sum: 1, int: 1, v: r => r.b0.mem.size }, { g: 'সদস্য', h: 'শেষ', f: r => r.b1.mem.size, r: 1, sum: 1, int: 1, v: r => r.b1.mem.size }, { g: 'সদস্য', h: 'বৃদ্ধি', f: r => pct(r.b0.mem.size, r.b1.mem.size), r: 1 },
+        ...blk('সঞ্চয় স্থিতি', r => r.b0.dep, r => r.b1.dep), ...blk('ঋণ স্থিতি', r => r.b0.lb, r => r.b1.lb), ...blk('বকেয়া', r => r.b0.ld, r => r.b1.ld),
+        { g: 'এই সময়ে', h: 'বিতরণ', f: r => n2(r.da), r: 1, sum: 1, v: r => r.da }, { g: 'এই সময়ে', h: 'আদায়যোগ্য', f: r => n2(r.due), r: 1, sum: 1, v: r => r.due }, { g: 'এই সময়ে', h: 'আদায়', f: r => n2(r.rcv), r: 1, sum: 1, v: r => r.rcv }, { g: 'এই সময়ে', h: 'আদায়ের হার', f: r => r.due ? (Math.min(r.rcv, r.due) * 100 / r.due).toFixed(2) + '%' : '—', r: 1 }];
+      return { title: 'অগ্রগতি বিশ্লেষণ (Progress Analysis)', html: UI.table(cols, rows) };
+    }
+    return { title: 'Periodical Progress Report', html: UI.table(perfCols(lab, [{ h: G, f: name }]), rows) }; },
 });

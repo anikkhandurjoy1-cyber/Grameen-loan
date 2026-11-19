@@ -435,6 +435,21 @@ function typeFull(kind, type) {
 // ─────────────── প্রিন্ট ───────────────
 // eKisti এর রিপোর্ট প্রিন্ট ভিউ: লোগো + প্রতিষ্ঠানের নাম + রিপোর্টের নাম + তথ্য গ্রিড + টেবিল + স্বাক্ষর
 // opts: {landscape, sub, branchName, branchAddr, info:[[label,value]], noSig, addr(true হলে ঠিকানা লাইন), sigs:[...], auto(সাথে সাথে প্রিন্ট)}
+// ঠিকানার বিস্তারিত (eKisti: Country / Division / District / Police Station / Word/Union / Village)
+const LOC = [['country', 'Country'], ['division', 'Division'], ['district', 'District'], ['upazila', 'Police Station'], ['union', 'Word/Union'], ['village', 'Village']];
+const LOC_F = LOC.map(([k, l]) => ({ k: 'loc_' + k, l }));
+const locActive = f => LOC.some(([k]) => (f['loc_' + k] || '').trim());
+// সদস্যের ঠিকানা ফিল্টারে মেলে কিনা (ঘর খালি থাকলে বর্তমান/স্থায়ী ঠিকানায় খোঁজে)
+function locMatch(f, m) {
+  if (!m) return false;
+  return LOC.every(([k]) => { const q = (f['loc_' + k] || '').trim().toLowerCase(); if (!q) return true; const v = String(m[k] || (k === 'country' ? 'Bangladesh' : '')).toLowerCase(); return v ? v.includes(q) : (String(m.presentAddr || '') + ' ' + String(m.permAddr || '')).toLowerCase().includes(q); });
+}
+// ফিল্টার থাকলে শাখার সদস্য ডক থেকে মেলা সদস্যদের সেট (না থাকলে null)
+async function locMembers(f) {
+  if (!locActive(f)) return null;
+  const ms = (await db.collection('members').where('branch', '==', f.branch).get()).docs.map(d => ({ id: d.id, ...d.data() }));
+  return new Set(ms.filter(m => locMatch(f, m)).map(m => m.memberId || m.id));
+}
 const PRINT_CSS = `td .btn,td button{display:none!important}
 body{font-family:'Hind Siliguri',Arial,sans-serif;color:#000;margin:0;background:#fff}
   #wrap{max-width:96%;margin:0 auto;padding-top:10px}

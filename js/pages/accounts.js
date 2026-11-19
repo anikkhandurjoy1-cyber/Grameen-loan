@@ -440,13 +440,16 @@ ReportPage({
 // ── এ্যাকাউন্ট তালিকা ──
 ReportPage({
   id: 'accList', title: 'এ্যাকাউন্ট তালিকা', icon: '📒',
-  filters: [F.branch, F.samity, { k: 'kind', l: 'Account Type', t: 'select', opts: [['', '— সব —'], ['dep', 'Deposit'], ['loan', 'Loan'], ['share', 'Share'], ['other', 'Others'], ...DEP_TYPES.map(([c, t]) => ['dep:' + c, t]), ...LOAN_TYPES.map(([c, t]) => ['loan:' + c, t])] }, F.member, { k: 'phone', l: 'Phone Number' }, { k: 'status', l: 'অবস্থা', t: 'select', opts: [['', 'All'], ['active', 'Active'], ['closed', 'Closed']] }],
+  filters: [F.branch, F.samity, { k: 'kind', l: 'Account Type', t: 'select', opts: [['', '— সব —'], ['dep', 'Deposit'], ['loan', 'Loan'], ['share', 'Share'], ['other', 'Others'], ...DEP_TYPES.map(([c, t]) => ['dep:' + c, t]), ...LOAN_TYPES.map(([c, t]) => ['loan:' + c, t])] }, F.member, { k: 'ofrom', l: 'From Date', t: 'date' }, { k: 'oupto', l: 'Upto Date', t: 'date' }, { k: 'phone', l: 'Phone Number' }, { k: 'accNo', l: 'Select Account' }, { k: 'status', l: 'অবস্থা', t: 'select', opts: [['', 'All'], ['active', 'Active'], ['closed', 'Closed']] }],
   run: async f => {
     const [kind, type] = (f.kind || '').split(':');
     let accs = await Data.accountsOf(f.branch, f.member || null, kind || null, type || null);
     if (f.samity) accs = accs.filter(a => a.samity === f.samity);
     if (f.status) accs = accs.filter(a => (a.status || 'active') === f.status);
+    if (f.accNo) accs = accs.filter(a => String(a.accNo).toUpperCase().includes(f.accNo.trim().toUpperCase()));
     const snaps = {}; (await Data.snaps(f.branch, f.samity)).forEach(s => snaps[s.accNo] = s);
+    const od = a => a.openDate || (snaps[a.accNo] || {}).od || ''; // খোলার তারিখ
+    if (f.ofrom) accs = accs.filter(a => od(a) >= f.ofrom); if (f.oupto) accs = accs.filter(a => od(a) && od(a) <= f.oupto);
     const mem = await Data.memberIdx(f.branch);
     if (f.phone) accs = accs.filter(a => ((mem[a.memberId] || [])[2] || '').includes(f.phone));
     return { landscape: true, html: UI.table([{ h: 'Branch Code', f: () => f.branch }, { h: 'Phone Number', f: a => esc((mem[a.memberId] || [])[2] || '') }, { h: 'Member ID', f: a => a.memberId }, { h: 'AC Type', f: a => typeFull(a.kind, a.type) }, { h: 'Account Number', f: a => a.accNo }, { h: 'Account Name', f: a => esc(a.title) }, { h: 'Address', f: a => esc(a.address || (mem[a.memberId] || [])[6] || '') }, { h: 'Total Credit', f: a => amt((snaps[a.accNo] || {}).tc || (snaps[a.accNo] || {}).pt), r: 1 }, { h: 'Total Debit', f: a => amt((snaps[a.accNo] || {}).td || (a.kind === 'loan' ? (snaps[a.accNo] || {}).tr : 0)), r: 1 }, { h: 'Current Balance', f: a => amt((snaps[a.accNo] || {}).b), r: 1, sum: 1, v: a => (snaps[a.accNo] || {}).b }, { h: 'Credit Limit', f: a => amt(a.creditLimit || 0), r: 1 }, { h: 'Is Active', f: a => a.status === 'closed' ? 'No' : 'Yes' }, { h: 'Opening Date', f: a => fmtD((snaps[a.accNo] || {}).od) }, { h: 'Closing Date', f: a => fmtD((snaps[a.accNo] || {}).cd) }, ...(isBM() ? [{ h: 'Action', f: a => UI.btn('🗑️ ডিলিট', `AccDelete.run('${a.accNo}',this)`, 'btn-danger btn-sm'), noPrint: 1 }] : [])], accs) + await AccDelete.logHtml(f.branch) };

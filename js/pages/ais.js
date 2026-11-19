@@ -47,7 +47,7 @@ const GLX = {
 App.page('accTxn', {
   title: 'এ্যাকাউন্টস লেনদেন (Account Transaction)', icon: '🏦',
   render: () => UI.card('', UI.grid([F.branch, { k: 'tt', l: 'Transaction Type', t: 'select', req: 1, opts: [['', '----------'], ...REF.ACC_TT.map(x => [x[0], x[1]])] }, { k: 'method', l: 'Receipt/Payment Method', t: 'select', req: 1 }, { k: 'account', l: 'Transaction Account', t: 'select', req: 1 },
-    { k: 'balance', l: 'Current Balance', ro: 1 }, { k: 'amount', l: 'Transaction Amount', t: 'number', req: 1 }, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }, { k: 'docNo', l: 'Document Number (Bank Cheque)' },
+    { k: 'balance', l: 'Current Balance', ro: 1 }, { k: 'amount', l: 'Transaction Amount', t: 'number', req: 1 }, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }, { k: 'billId', l: 'Bill ID' }, { k: 'docNo', l: 'Document Number (Bank Cheque)' },
     { k: 'comments', l: 'Comments', t: 'textarea' }, { k: 'payerPhone', l: 'Receiver/Payer Phone' }, { k: 'payerName', l: 'Receiver/Payer Name' }, { k: 'file', l: 'Upload Documents', t: 'file', accept: 'image/*' }], 4)
     + `<div class="actions">${UI.btn('✅ Post Transaction', 'AccTxn.save(this)', 'btn-success')}</div>`) + UI.card('সাম্প্রতিক লেনদেন', '<div class="tl"></div>'),
   init: async el => {
@@ -69,9 +69,9 @@ const AccTxn = {
       const part = t[3] === 'R' ? await Tx.credit(a, f.amount, opts) : await Tx.debit(a, f.amount, { ...opts, internal: true });
       part.txns[0].payer = f.payerName; part.txns[0].payerPhone = f.payerPhone; part.txns[0].fileUrl = fileUrl;
       const pending = needsAuth(t[3] === 'R' ? 'vrcv' : 'vpay', f.amount);
-      const vno = await Tx.post(f.branch, f.date, 'ACC_TXN', `${t[1]} — ${a.accNo} ${a.title}`, [part], { docNo: f.docNo, payer: f.payerName, status: pending ? 'pending' : 'posted', authType: 'AIS' });
+      const vno = await Tx.post(f.branch, f.date, 'ACC_TXN', `${t[1]} — ${a.accNo} ${a.title}`, [part], { docNo: f.docNo, billId: f.billId || '', payer: f.payerName, status: pending ? 'pending' : 'posted', authType: 'AIS' });
       toast(pending ? '⏳ অনুমোদনের অপেক্ষায় — ' + vno : '✅ লেনদেন পোস্ট হয়েছে — ' + vno);
-      ['amount', 'docNo', 'comments', 'payerPhone', 'payerName'].forEach(k => UI.el(el, k).value = '');
+      ['amount', 'docNo', 'billId', 'comments', 'payerPhone', 'payerName'].forEach(k => UI.el(el, k).value = '');
       await showBal(el, f.account); accTxnList(el, f.account);
     });
   },
@@ -118,15 +118,16 @@ const LedgerTxn = {
 function MultiLinePage(id, title, contra) {
   App.page(id, {
     title, icon: contra ? '🔁' : '📓',
-    render: () => UI.card('', UI.grid([F.branch, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }, { k: 'narration', l: 'Journal Comments', t: 'textarea', req: 1 }, { k: 'docNo', l: 'Document Number (Bank Cheque)' }], 4)
+    render: () => UI.card('', UI.grid([F.branch, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }, { k: 'narration', l: 'Journal Comments', t: 'textarea', req: 1 }, { k: 'docNo', l: 'Document Number (Bank Cheque)' }, contra ? null : { k: 'bill', l: 'Recurrent Bill', t: 'select', opts: [['', '— বাছুন —']] }].filter(Boolean), 4)
       + `<div class="card-title">লাইন যোগ করুন</div>` + UI.grid(contra
         ? [{ k: 'drGl', l: 'Debit Ledger', t: 'select' }, { k: 'crGl', l: 'Credit Ledger', t: 'select' }, { k: 'amt', l: 'Transaction Amount', t: 'number' }, { k: 'memo', l: 'Comments' }]
         : [{ k: 'side', l: 'Transaction Type', t: 'select', opts: [['dr', 'Debit'], ['cr', 'Credit']] }, { k: 'gl', l: 'Transaction Ledger', t: 'select' }, { k: 'acc', l: 'Transaction Account (ঐচ্ছিক)', t: 'select' }, { k: 'amt', l: 'Transaction Amount', t: 'number' }, { k: 'memo', l: 'Comments' }], 4)
-      + `<div class="actions">${UI.btn('➕ Add Item', `ML.add('${id}',${contra})`, 'btn-outline')}${UI.btn('🗑️ Clear All', `ML.clear('${id}')`, 'btn-secondary')}</div><div class="ml-lines" style="margin-top:8px"></div>
+      + `<div class="actions">${UI.btn('➕ Add Item', `ML.add('${id}',${contra})`, 'btn-outline')}${contra ? '' : UI.btn('🔁 Add Recurrent Bill', `ML.saveBill('${id}',this)`, 'btn-outline')}${UI.btn('🗑️ Clear All', `ML.clear('${id}')`, 'btn-secondary')}</div><div class="ml-lines" style="margin-top:8px"></div>
       <div class="kv"><div>Total Debit<b class="tdr">0</b></div><div>Total Credit<b class="tcr">0</b></div></div><div class="actions">${UI.btn('✅ Submit Voucher', `ML.submit('${id}',this)`, 'btn-success')}</div>`)
       + (contra ? UI.card('📘 Accounting Entry Help / হিসাব এন্ট্রি সহায়তা', UI.table([{ h: 'Account Type / অ্যাকাউন্টের ধরন', f: r => r[0] }, { h: 'Example / উদাহরণ', f: r => r[1] }, { h: 'If Increased / বৃদ্ধি হলে', f: r => r[2] }, { h: 'If Decreased / হ্রাস হলে', f: r => r[3] }], [['Asset / সম্পদ', 'Cash, Bank, Loan', 'Debit', 'Credit'], ['Liability / দায়', 'Savings, Payable', 'Credit', 'Debit'], ['Income / আয়', 'Service Charge, Fee', 'Credit', 'Debit'], ['Expense / ব্যয়', 'Salary, Rent', 'Debit', 'Credit']])) : ''),
     init: async el => {
       await Pick.branch(el, 'branch'); UI.el(el, 'date').value = await businessDate(); el._lines = [];
+      if (!contra) { await ML.bills(el); UI.el(el, 'bill').addEventListener('change', () => ML.loadBill(el)); }
       for (const k of contra ? ['drGl', 'crGl'] : ['gl']) await Pick.ledger(UI.el(el, k), l => l.leaf);
       if (!contra) UI.el(el, 'gl').addEventListener('change', async () => {
         const g = UI.el(el, 'gl').value; const kinds = Object.entries(REF.DEP).filter(([, d]) => d.gl === g).map(([t]) => ['dep', t]).concat(Object.entries(REF.LOAN).filter(([, d]) => d.gl === g).map(([t]) => ['loan', t])).concat(Object.entries(REF.OTHER).filter(([, d]) => d.gl === g).map(([t]) => ['other', t])).concat(g === REF.GL.share ? [['share', 'share']] : []);
@@ -146,6 +147,17 @@ const ML = {
     UI.el(el, 'amt').value = ''; UI.el(el, 'memo').value = ''; ML.draw(el);
   },
   clear(id) { const el = $('#page-' + id); el._lines = []; ML.draw(el); },
+  // Recurrent Bill: বারবার লাগে এমন জার্নাল (ভাড়া, বিল ইত্যাদি) টেমপ্লেট হিসেবে রাখা
+  async bills(el) { const bs = (await db.collection('recurrentBills').get()).docs.map(d => ({ id: d.id, ...d.data() })).filter(b => !b.branch || b.branch === UI.el(el, 'branch').value); el._bills = bs; UI.fill(UI.el(el, 'bill'), bs, b => b.id, b => b.name, '— বাছুন —'); },
+  loadBill(el) { const b = (el._bills || []).find(x => x.id === UI.el(el, 'bill').value); if (!b) return; el._lines = (b.lines || []).map(l => { const o = { gl: l.gl, accNo: l.accNo || '', memo: l.memo || '' }; if (num(l.dr)) o.dr = num(l.dr); if (num(l.cr)) o.cr = num(l.cr); return o; }); if (b.narration && !UI.el(el, 'narration').value) UI.el(el, 'narration').value = b.narration; ML.draw(el); toast('🔁 ' + b.name + ' — লাইন বসানো হয়েছে, দরকার হলে পরিমাণ বদলান'); },
+  saveBill(id, btn) {
+    const el = $('#page-' + id);
+    return guard(btn, async () => {
+      if (!(el._lines || []).length) fail('আগে লাইন যোগ করুন'); const name = prompt('Recurrent Bill এর নাম (যেমন: অফিস ভাড়া):'); if (!name) return;
+      await db.collection('recurrentBills').add({ name: name.trim(), branch: UI.el(el, 'branch').value, narration: UI.el(el, 'narration').value || '', lines: el._lines.map(l => ({ gl: l.gl, dr: num(l.dr), cr: num(l.cr), accNo: l.accNo || '', memo: l.memo || '' })), by: App.user.userId, on: FV.serverTimestamp() });
+      await ML.bills(el); toast('✅ Recurrent Bill সংরক্ষণ হয়েছে: ' + name);
+    });
+  },
   async draw(el) {
     const lm = await Data.ledgerMap();
     $('.ml-lines', el).innerHTML = UI.table([{ h: 'Ledger Code', f: l => l.gl }, { h: 'Ledger Name', f: l => esc((lm[l.gl] || {}).name || '') }, { h: 'Account', f: l => l.accNo || '' }, { h: 'Debit', f: l => l.dr ? amt(l.dr) : '', r: 1 }, { h: 'Credit', f: l => l.cr ? amt(l.cr) : '', r: 1 }, { h: 'Comments', f: l => esc(l.memo || '') }, { h: 'Action', f: l => `<button class="btn btn-danger btn-sm" onclick="ML.del(this,${el._lines.indexOf(l)})">✖</button>` }], el._lines);
@@ -239,12 +251,14 @@ const VList = {
 };
 ReportPage({
   id: 'voucherList', title: 'ভাউচার তালিকা', icon: '🧾',
-  filters: [F.branch, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, { k: 'fromB', l: 'From Batch' }, { k: 'toB', l: 'To Number' }, { k: 'bdate', l: 'Business Date', t: 'date' }, { k: 'user', l: 'User ID', t: 'select', opts: [['', '— সব —']] }, { k: 'q', l: 'Comments / Type' }],
+  filters: [F.branch, F.samity, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, { k: 'fromB', l: 'From Batch' }, { k: 'toB', l: 'To Number' }, { k: 'bdate', l: 'Business Date', t: 'date' }, { k: 'user', l: 'User ID', t: 'select', opts: [['', '— সব —']] }, { k: 'q', l: 'Comments / Type' }],
   init: async (el, f) => { UI.el(f, 'bdate').value = ''; const us = (await db.collection('users').get()).docs.map(d => ({ id: d.id, ...d.data() })); UI.fill(UI.el(f, 'user'), us, u => u.id, u => u.userId || u.email, '— সব —'); },
   run: async f => {
     const rows = (await db.collection('vouchers').where('bd', '>=', f.branch + '_' + f.from).where('bd', '<=', f.branch + '_' + f.upto).get()).docs.map(d => d.data())
       .filter(v => (!f.fromB || v.vno >= f.fromB) && (!f.toB || v.vno <= f.toB) && (!f.bdate || v.businessDate === f.bdate) && (!f.user || sameUser(v.by, f.user)) && (!f.q || (v.narration + ' ' + v.type).toLowerCase().includes(f.q.toLowerCase())));
-    return { landscape: true, noSig: true, html: VList.table(rows) };
+    let list = rows;
+    if (f.samity) { const aidx = await Data.accIdx(f.branch), mem = await Data.memberIdx(f.branch); list = rows.filter(v => (v.accs || []).some(a => (aidx[a] || [])[4] === f.samity) || (v.ref && v.ref.memberId && (mem[v.ref.memberId] || [])[1] === f.samity) || v.samity === f.samity); }
+    return { landscape: true, noSig: true, html: VList.table(list) };
   },
 });
 

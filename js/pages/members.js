@@ -11,7 +11,7 @@ const MEMBER_FIELDS = [
   { k: 'branch', l: 'শাখা নাম', t: 'select', req: 1 }, { k: 'name', l: 'সদস্য নাম', req: 1 }, { k: 'samity', l: 'সমিতি নাম', t: 'select', req: 1 },
   { k: 'father', l: 'পিতার নাম' }, { k: 'mother', l: 'মাতার নাম' }, { k: 'spouse', l: 'স্বামী / স্ত্রী' },
   { k: 'mobile', l: 'মোবাইল', req: 1 }, { k: 'joinDate', l: 'ভর্তির তারিখ', t: 'date', req: 1 }, { k: 'presentAddr', l: 'বর্তমান ঠিকানা', t: 'textarea' },
-  { k: 'permAddr', l: 'স্থায়ী ঠিকানা', t: 'textarea' }, { k: 'share', l: 'শেয়ার পরিমান TK', t: 'number' }, { k: 'reference', l: 'রেফারেন্স' },
+  { k: 'permAddr', l: 'স্থায়ী ঠিকানা', t: 'textarea' }, { k: 'country', l: 'দেশ (Country)', v: 'Bangladesh' }, { k: 'division', l: 'বিভাগ (Division)' }, { k: 'district', l: 'জেলা (District)' }, { k: 'upazila', l: 'থানা/উপজেলা (Police Station)' }, { k: 'union', l: 'ওয়ার্ড/ইউনিয়ন (Word/Union)' }, { k: 'village', l: 'গ্রাম (Village)' }, { k: 'share', l: 'শেয়ার পরিমান TK', t: 'number' }, { k: 'reference', l: 'রেফারেন্স' },
   { k: 'nid', l: 'জাতীয় পরিচয় পত্র' }, { k: 'birthId', l: 'জন্ম সনদ' }, { k: 'email', l: 'ই-মেইল' },
   { k: 'blood', l: 'রক্তের গ্রুপ', t: 'select', opts: BLOOD }, { k: 'sex', l: 'লিঙ্গ', t: 'select', opts: GENDER }, { k: 'religion', l: 'ধর্ম', t: 'select', opts: RELIGION },
   { k: 'marital', l: 'বৈবাহিক অবস্থা', t: 'select', opts: MARITAL }, { k: 'dob', l: 'জন্ম তারিখ', t: 'date' }, { k: 'income', l: 'মাসিক আয়', t: 'number' },
@@ -58,6 +58,7 @@ const Member = {
         for (const k of ['photo', 'signature', 'document', 'nomPhoto', 'nomSignature']) if (f[k]) up[k + 'Url'] = await uploadImage(f[k]);
         const data = {
           name: f.name, father: f.father, mother: f.mother, spouse: f.spouse, mobile: f.mobile, joinDate: f.joinDate, presentAddr: f.presentAddr, permAddr: f.permAddr,
+          country: f.country || '', division: f.division || '', district: f.district || '', upazila: f.upazila || '', union: f.union || '', village: f.village || '',
           reference: f.reference, nid: f.nid, birthId: f.birthId, email: f.email, blood: f.blood, sex: f.sex, religion: f.religion, marital: f.marital, dob: f.dob,
           income: num(f.income), profession: f.profession, lat: f.lat, lng: f.lng,
           nominee: { name: f.nomName, father: f.nomFather, mother: f.nomMother, phone: f.nomPhone, relation: f.nomRelation, nid: f.nomNid, address: f.nomAddr }, ...up,

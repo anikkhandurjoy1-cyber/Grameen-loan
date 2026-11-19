@@ -10,10 +10,11 @@ const zeroOk = (z, v) => z === 'nz' ? r2(v) !== 0 : z === 'pos' ? v > 0 : z === 
 // ── এ্যাকাউন্টস ব্যালেন্স ──
 ReportPage({
   id: 'rptAccBalance', title: 'এ্যাকাউন্টস ব্যালেন্স', landscape: true,
-  filters: [F.branch, F.samity, F.employee, { k: 'kind', l: 'Account Type', t: 'select', opts: KIND_OPTS }, F.member, F.date, { k: 'zero', l: 'Show Zero Balance', t: 'select', opts: ZERO_OPTS }, { k: 'status', l: 'Customer Status', t: 'select', opts: [['', 'Choose'], ['active', 'Active'], ['closed', 'Closed']] }],
+  filters: [F.branch, F.samity, F.employee, { k: 'kind', l: 'Account Type', t: 'select', opts: KIND_OPTS }, F.member, F.date, { k: 'zero', l: 'Show Zero Balance', t: 'select', opts: ZERO_OPTS }, ...LOC_F, { k: 'status', l: 'Customer Status', t: 'select', opts: [['', 'Choose'], ['active', 'Active'], ['inactive', 'Inactive'], ['closed', 'Closed']] }],
   run: async f => {
     const fo = await foMap(f.branch); const mem = await Data.memberIdx(f.branch);
     let rows = (await Hist.snapsAt(f.branch, f.date, f.samity)).filter(s => kindMatch(f, s) && (!f.member || s.m === f.member) && (!f.employee || fo[s.samity] === f.employee) && (!f.status || (s.st === 'closed' ? 'closed' : 'active') === f.status) && zeroOk(f.zero, num(s.b)));
+    const lm0 = await locMembers(f); if (lm0) rows = rows.filter(s => lm0.has(s.m));
     rows.sort((a, b) => a.samity.localeCompare(b.samity) || a.accNo.localeCompare(b.accNo));
     const sgn = s => s.k === 'loan' ? -num(s.b) : num(s.b); const cr = s => s.k === 'loan' ? num(s.pt) : num(s.tc); const dr = s => s.k === 'loan' ? num(s.tr) : num(s.td);
     return { title: 'Account Balance Report', html: UI.table([SL, { h: 'সদস্য আইডি', f: s => s.m }, { h: 'হিসাবের নাম', f: s => esc((mem[s.m] || [])[0] || '') + '<div class="mini">' + s.accNo + '</div>' }, { h: 'Address', f: s => esc((mem[s.m] || [])[6] || '') }, { h: 'Phone', f: s => esc((mem[s.m] || [])[2] || '') }, { h: 'অ্যাকাউন্টের ধরন', f: s => s.k === 'share' ? 'Share Accounts' : esc(typeFull(s.k, s.t).replace(/^\w+ - /, '')) }, { h: 'Credit(Receive)', f: s => amt(cr(s)), r: 1, sum: 1, v: cr }, { h: 'Debit(Payment)', f: s => amt(dr(s)), r: 1, sum: 1, v: dr }, { h: 'ব্যালেন্স', f: s => amt(sgn(s)), r: 1, sum: 1, v: sgn }], rows, { totalLabel: 'মোট :' }) };
@@ -23,7 +24,7 @@ ReportPage({
 // ── এ্যাকাউন্ট রিসিভ পেমেন্ট ──
 ReportPage({
   id: 'rptAccRecPay', title: 'এ্যাকাউন্ট রিসিভ পেমেন্ট', landscape: true, fromDefault: 'month',
-  filters: [F.branch, { k: 'kind', l: 'Account Type', t: 'select', opts: KIND_OPTS }, F.samity, F.employee, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, { k: 'cash', l: 'Cash & Bank', t: 'select', opts: [['cb', 'Cash & Bank'], ['co', 'Cash Only'], ['bo', 'Bank Only'], ['nc', 'Non Cash'], ['all', 'Cash, Bank & Non-Cash All']] }, { k: 'bal', l: 'Balance Type', t: 'select', opts: [['nz', 'All Without Zero Balance'], ['due', 'Due Only'], ['adv', 'Advance Only'], ['all', 'All With Zero Balance']] }],
+  filters: [F.branch, { k: 'kind', l: 'Account Type', t: 'select', opts: KIND_OPTS }, F.samity, F.employee, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, { k: 'cash', l: 'Cash & Bank', t: 'select', opts: [['cb', 'Cash & Bank'], ['co', 'Cash Only'], ['bo', 'Bank Only'], ['nc', 'Non Cash'], ['all', 'Cash, Bank & Non-Cash All']] }, { k: 'bal', l: 'Balance Type', t: 'select', opts: [['nz', 'All Without Zero Balance'], ['due', 'Due Only'], ['adv', 'Advance Only'], ['all', 'All With Zero Balance']] }, ...LOC_F],
   buttons: [['🖨️ Print Details Report', 'details'], ['🖨️ Print Type Wise', 'type']],
   run: async (f, mode) => {
     const fo = await foMap(f.branch); const mem = await Data.memberIdx(f.branch);
@@ -37,6 +38,7 @@ ReportPage({
     closing.forEach(s => { if (kindMatch(f, s) && (!f.employee || fo[s.samity] === f.employee)) by[s.accNo] = { ...s, open: ob[s.accNo] || 0, close: num(s.b), rcv: 0, pay: 0, list: [] }; });
     tsf.forEach(t => { const r = by[t.accNo]; if (!r) return; const d = num(t.delta); const isRcv = r.k === 'loan' ? d < 0 : d > 0; if (isRcv) r.rcv += Math.abs(d); else r.pay += Math.abs(d); r.list.push(t); });
     // Due = ঋণে বকেয়া/সঞ্চয়ে ঋণাত্মক, Advance = সঞ্চয়ে জমা/ঋণে অগ্রিম
+    const lm0 = await locMembers(f); if (lm0) Object.keys(by).forEach(k => { if (!lm0.has(by[k].m)) delete by[k]; });
     let rows = Object.values(by).filter(r => f.bal === 'all' ? true : f.bal === 'due' ? (r.k === 'loan' ? r2(r.close) > 0 : r2(r.close) < 0) : f.bal === 'adv' ? (r.k === 'loan' ? r2(r.close) < 0 : r2(r.close) > 0) : (r2(r.open) || r2(r.rcv) || r2(r.pay) || r2(r.close)));
     rows.sort((a, b) => a.samity.localeCompare(b.samity) || a.accNo.localeCompare(b.accNo));
     if (mode === 'type') { const g = groupBy(rows, r => typeName(r.k, r.t)); rows = Object.entries(g).map(([t, l]) => ({ accNo: t, m: '', open: sum(l, x => x.open), rcv: sum(l, x => x.rcv), pay: sum(l, x => x.pay), close: sum(l, x => x.close), k: '', t })); }
@@ -180,17 +182,26 @@ ReportPage({
 
 // ── প্রাপ্তি-প্রদান (Receipt Payment Statement) ──
 // প্রাপ্তি = নগদ/ব্যাংক জড়িত ভাউচারে অন্য লেজারের ক্রেডিট, প্রদান = ডেবিট
-async function rpPeriod(bs, from, upto) {
+// field = 'cgl' (নগদ/ব্যাংক ভাউচার) অথবা 'gl' (সব) — from=null হলে শুরু থেকে
+async function rpSum(bs, from, upto, field) {
+  if (from) return GLX.range(bs, from, upto, false, field);
+  const out = {}; for (const b of bs) { const ms = await db.collection('glMonthly').where(DOCID(), '>=', b + '_0000').where(DOCID(), '<=', b + '_' + upto.slice(0, 7)).get(); ms.forEach(d => { if (d.id.slice(-7) < upto.slice(0, 7)) GLX.add(out, d.data()[field] || {}); }); }
+  GLX.add(out, await GLX.range(bs, upto.slice(0, 7) + '-01', upto, false, field)); return out;
+}
+// rtype: cash = নগদ/ব্যাংক, nc = নন-ক্যাশ (জার্নাল/স্থানান্তর), both = দুটোই
+async function rpPeriod(bs, from, upto, rtype = 'cash') {
   const lm = await Data.ledgerMap();
-  const g = from ? await GLX.range(bs, from, upto, false, 'cgl') : await (async () => { const out = {}; for (const b of bs) { const ms = await db.collection('glMonthly').where(DOCID(), '>=', b + '_0000').where(DOCID(), '<=', b + '_' + upto.slice(0, 7)).get(); ms.forEach(d => { if (d.id.slice(-7) < upto.slice(0, 7)) GLX.add(out, d.data().cgl || {}); }); } GLX.add(out, await GLX.range(bs, upto.slice(0, 7) + '-01', upto, false, 'cgl')); return out; })();
+  const gC = await rpSum(bs, from, upto, 'cgl');
+  let g = gC;
+  if (rtype !== 'cash') { const gA = await rpSum(bs, from, upto, 'gl'); if (rtype === 'nc') { g = {}; Object.entries(gA).forEach(([c, x]) => { const y = gC[c] || {}; const dr = r2(num(x.dr) - num(y.dr)), cr = r2(num(x.cr) - num(y.cr)); if (dr || cr) g[c] = { dr, cr }; }); } else g = gA; }
   const rc = {}, py = {}; Object.entries(g).forEach(([c, x]) => { if (isCashGl(lm, c)) return; if (num(x.cr)) rc[c] = num(x.cr); if (num(x.dr)) py[c] = num(x.dr); });
   const cashCodes = Object.keys(lm).filter(c => isCashGl(lm, c) && lm[c].leaf);
   const ob = from ? await GLX.before(bs, from) : {}; const cb = await GLX.upto(bs, upto);
-  const open = {}, close = {}; cashCodes.forEach(c => { open[c] = GLX.nat(c, ob[c]); close[c] = GLX.nat(c, cb[c]); });
+  const open = {}, close = {}; if (rtype !== 'nc') cashCodes.forEach(c => { open[c] = GLX.nat(c, ob[c]); close[c] = GLX.nat(c, cb[c]); });
   return { rc, py, open, close };
 }
 async function recPayStatement(f, periods, heads) {
-  const bs = await GLX.branchesFor(f); const P = []; for (const [fr, up] of periods) P.push(await rpPeriod(bs, fr, up));
+  const bs = await GLX.branchesFor(f); const P = []; for (const [fr, up] of periods) P.push(await rpPeriod(bs, fr, up, f.rtype || 'cash'));
   const openRows = await treeMulti(P.map(p => p.open), ['1']), rcRows = await treeMulti(P.map(p => p.rc), ['1', '2', '3', '4']);
   const pyRows = await treeMulti(P.map(p => p.py), ['1', '2', '3', '4']), closeRows = await treeMulti(P.map(p => p.close), ['1']);
   const hdr = (t) => ({ code: '', name: t, leaf: false, depth: 0, vals: P.map(() => 0), hdr: 1 });
@@ -203,15 +214,43 @@ async function recPayStatement(f, periods, heads) {
   h += `</tbody><tfoot><tr><td><b>Total:</b></td>${tL.map(v => `<td class="r"><b>${amt(v)}</b></td>`).join('')}<td><b>Total:</b></td>${tR.map(v => `<td class="r"><b>${amt(v)}</b></td>`).join('')}</tr></tfoot></table>`;
   return h;
 }
-const RTYPE = { k: 'rtype', l: 'Reporting Type', t: 'select', opts: [['cash', 'Cash Only'], ['both', 'Cash & Non-Cash Both']] };
+const RTYPE = { k: 'rtype', l: 'Reporting Type', t: 'select', opts: [['cash', 'Cash Only'], ['nc', 'Non Cash Only'], ['both', 'Cash & Non-Cash Both']] };
+const GRP = { k: 'grp', l: 'Group With', t: 'select', opts: [['none', 'No Grouping'], ['ledger', 'Ledger'], ['date', 'Date']] };
+// দিন-ভিত্তিক প্রাপ্তি/প্রদান (নন-ক্যাশ লেজারের ক্রেডিট = প্রাপ্তি, ডেবিট = প্রদান)
+async function rpByDate(bs, from, upto, rtype) {
+  const lm = await Data.ledgerMap(); const gC = await GLX.range(bs, from, upto, true, 'cgl'); const gA = rtype === 'cash' ? null : await GLX.range(bs, from, upto, true, 'gl');
+  const out = {}; const dates = [...new Set([...Object.keys(gC), ...Object.keys(gA || {})])].sort();
+  dates.forEach(d => { let rc = 0, py = 0; const C = gC[d] || {}, A = (gA || {})[d] || {};
+    const keys = new Set([...Object.keys(C), ...Object.keys(A)]);
+    keys.forEach(c => { if (isCashGl(lm, c)) return; const x = rtype === 'cash' ? (C[c] || {}) : rtype === 'both' ? (A[c] || {}) : { dr: num((A[c] || {}).dr) - num((C[c] || {}).dr), cr: num((A[c] || {}).cr) - num((C[c] || {}).cr) }; rc += num(x.cr); py += num(x.dr); });
+    if (rc || py) out[d] = { rc: r2(rc), py: r2(py) }; });
+  return out;
+}
 ReportPage({
   id: 'rptRecPay', title: 'প্রাপ্তি- প্রদান রিপোর্ট', landscape: true, filters: [F.branch, F.btype, F.date, RTYPE],
   run: async f => ({ title: 'Receipt Payment Statement', info: [['Report Date', fmtD(f.date)], ['শাখার নাম', esc((await Data.branch(f.branch) || {}).name || '')], ['শাখার ঠিকানা', esc((await Data.branch(f.branch) || {}).address || '')]],
     html: await recPayStatement(f, [[f.date, f.date], [f.date.slice(0, 7) + '-01', f.date], [f.date.slice(0, 4) + '-01-01', f.date], [null, f.date]], ['প্রাপ্তি', ['This Date', 'This Month', 'This Year', 'Cumulative'], 'প্রদান']) }),
 });
 ReportPage({
-  id: 'rptRecPay2', title: 'প্রাপ্তি- প্রদান II', fromDefault: 'month', landscape: true, filters: [F.branch, F.btype, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, RTYPE],
-  run: async f => ({ title: 'Receipt Payment Statement', html: await recPayStatement(f, [[f.from, f.upto]], ['Receipt', ['This Period'], 'Payment']) }),
+  id: 'rptRecPay2', title: 'প্রাপ্তি- প্রদান II', fromDefault: 'month', landscape: true, filters: [F.branch, F.btype, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, RTYPE, GRP],
+  buttons: [['🖨️ Receive & Payment (Simple)', 'simple']],
+  run: async (f, mode) => {
+    const bs = await GLX.branchesFor(f); const rt = f.rtype || 'cash';
+    if (f.grp === 'date') {
+      const byD = await rpByDate(bs, f.from, f.upto, rt); const lm = await Data.ledgerMap();
+      const ob = await GLX.before(bs, f.from); let bal = rt === 'nc' ? 0 : sum(Object.keys(lm).filter(c => isCashGl(lm, c) && lm[c].leaf), c => GLX.nat(c, ob[c]));
+      const rows = Object.entries(byD).map(([d, x]) => { if (rt !== 'nc') bal = r2(bal + x.rc - x.py); return { d, ...x, bal }; });
+      return { title: 'Receipt Payment Statement (Date Wise)', html: UI.table([SL, { h: 'Date', f: r => fmtD(r.d) }, { h: 'Receipt', f: r => amt(r.rc), r: 1, sum: 1, v: r => r.rc }, { h: 'Payment', f: r => amt(r.py), r: 1, sum: 1, v: r => r.py }, rt === 'nc' ? null : { h: 'Closing Cash & Bank', f: r => amt(r.bal), r: 1 }], rows) };
+    }
+    if (f.grp === 'ledger' || mode === 'simple') {
+      const p = await rpPeriod(bs, f.from, f.upto, rt); const lm = await Data.ledgerMap();
+      const codes = [...new Set([...Object.keys(p.rc), ...Object.keys(p.py)])].sort();
+      const rows = codes.map(c => ({ c, rc: num(p.rc[c]), py: num(p.py[c]) }));
+      return { title: 'Receipt Payment Statement' + (mode === 'simple' ? ' (Simple)' : ' (Ledger Wise)'), info: [['Opening Cash & Bank', amt(sum(Object.values(p.open)))], ['Closing Cash & Bank', amt(sum(Object.values(p.close)))]],
+        html: UI.table([SL, { h: 'Ledger Code', f: r => r.c }, { h: 'Ledger Name', f: r => esc((lm[r.c] || {}).name || r.c) }, { h: 'Receipt', f: r => amt(r.rc), r: 1, sum: 1, v: r => r.rc }, { h: 'Payment', f: r => amt(r.py), r: 1, sum: 1, v: r => r.py }], rows) };
+    }
+    return { title: 'Receipt Payment Statement', html: await recPayStatement(f, [[f.from, f.upto]], ['Receipt', ['This Period'], 'Payment']) };
+  },
 });
 
 // ── ব্যালেন্স সীট (Statement of Financial Position) ──
@@ -264,10 +303,21 @@ ReportPage({
 });
 // ── আয়-ব্যায় হিসাব (Statement of Profit & Loss) ──
 ReportPage({
-  id: 'rptProfitLoss', title: 'আয়-ব্যায় হিসাব', fromDefault: 'month', landscape: true, filters: [F.branch, F.btype, { ...F.from, req: 1 }, { ...F.upto, req: 1 }],
-  buttons: [['🖨️ Print Income Statement', 'inc'], ['🖨️ Print Expense Statement', 'exp']],
+  id: 'rptProfitLoss', title: 'আয়-ব্যায় হিসাব', fromDefault: 'month', landscape: true, filters: [F.branch, F.btype, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, GRP],
+  buttons: [['🖨️ Print All Branch', 'all'], ['🖨️ Print Income Statement', 'inc'], ['🖨️ Print Expense Statement', 'exp']],
   run: async (f, mode) => {
-    const bs = await GLX.branchesFor(f); const vals = [natMap(await GLX.range(bs, f.from, f.upto), ['3', '4']), await ieVals(bs, f.upto)];
+    if (mode === 'all') { f = { ...f, btype: 'all' }; mode = ''; }
+    const bs = await GLX.branchesFor(f);
+    if (f.grp === 'date') {
+      const byD = await GLX.range(bs, f.from, f.upto, true);
+      const rows = Object.keys(byD).sort().map(d => { const x = byD[d]; let inc = 0, exp = 0; Object.entries(x).forEach(([c, v]) => { if (c[0] === '3') inc += num(v.cr) - num(v.dr); if (c[0] === '4') exp += num(v.dr) - num(v.cr); }); return { d, inc: r2(inc), exp: r2(exp), net: r2(inc - exp) }; }).filter(r => r.inc || r.exp);
+      return { title: 'Statement of Profit & Loss (Date Wise)', html: UI.table([SL, { h: 'Date', f: r => fmtD(r.d) }, { h: 'Income', f: r => amt(r.inc), r: 1, sum: 1, v: r => r.inc }, { h: 'Expense', f: r => amt(r.exp), r: 1, sum: 1, v: r => r.exp }, { h: 'Net Profit/Loss', f: r => amt(r.net), r: 1, sum: 1, v: r => r.net }], rows) };
+    }
+    if (f.grp === 'ledger') {
+      const lm = await Data.ledgerMap(); const v = natMap(await GLX.range(bs, f.from, f.upto), ['3', '4']);
+      const rows = Object.entries(v).filter(([, x]) => r2(x)).sort(([a], [b]) => a.localeCompare(b)).map(([c, x]) => ({ c, inc: c[0] === '3' ? x : 0, exp: c[0] === '4' ? x : 0 }));
+      return { title: 'Statement of Profit & Loss (Ledger Wise)', html: UI.table([SL, { h: 'Ledger Code', f: r => r.c }, { h: 'Ledger Name', f: r => esc((lm[r.c] || {}).name || r.c) }, { h: 'Income', f: r => r.inc ? amt(r.inc) : '', r: 1, sum: 1, v: r => r.inc }, { h: 'Expense', f: r => r.exp ? amt(r.exp) : '', r: 1, sum: 1, v: r => r.exp }], rows) };
+    } const vals = [natMap(await GLX.range(bs, f.from, f.upto), ['3', '4']), await ieVals(bs, f.upto)];
     let I = await treeMulti(vals, ['3']), E = await treeMulti(vals, ['4']); if (mode === 'inc') E = []; if (mode === 'exp') I = [];
     const tI = vals.map(v => sum(Object.entries(v).filter(([c]) => c[0] === '3'), ([, x]) => x)), tE = vals.map(v => sum(Object.entries(v).filter(([c]) => c[0] === '4'), ([, x]) => x));
     const np = tI.map((v, i) => Math.max(0, r2(v - tE[i]))), nl = tI.map((v, i) => Math.max(0, r2(tE[i] - v)));
@@ -301,8 +351,8 @@ ReportPage({
 
 // ── ক্যাশবুক (Cash & Bank Book Report) ──
 ReportPage({
-  id: 'rptCashBook', title: 'ক্যাশবুক (Cash & Bank)', landscape: true, filters: [F.branch, F.btype, { ...F.from, req: 1 }, { ...F.upto, req: 1 }],
-  buttons: [['🖨️ Debit Voucher', 'dv'], ['🖨️ Credit Voucher', 'cv']],
+  id: 'rptCashBook', title: 'ক্যাশবুক (Cash & Bank)', landscape: true, filters: [F.branch, F.btype, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, GRP],
+  buttons: [['🖨️ Cash & Bank Statement', 'stmt'], ['🖨️ Debit Voucher', 'dv'], ['🖨️ Credit Voucher', 'cv']],
   run: async (f, mode) => {
     const lm = await Data.ledgerMap(); const bs = await GLX.branchesFor(f);
     const cashCodes = Object.keys(lm).filter(c => isCashGl(lm, c) && lm[c].leaf);
@@ -323,6 +373,25 @@ ReportPage({
       cash = r2(cash + rcC - pyC); bank = r2(bank + rcB - pyB);
       rows.push({ date: v.date, part: part + `<div class="mini">${esc(v.narration)}</div>`, rcC, rcB, pyC, pyB, bC: cash, bB: bank });
     });
+    if (mode === 'stmt') {
+      // প্রতিটি নগদ/ব্যাংক লেজারের ওপেনিং-প্রাপ্তি-প্রদান-ক্লোজিং
+      const per = {}; cashCodes.forEach(c => per[c] = { c, o: GLX.nat(c, ob[c]), rc: 0, py: 0 });
+      vs.forEach(v => v.lines.filter(l => cashCodes.includes(l.gl)).forEach(l => { per[l.gl].rc += num(l.dr); per[l.gl].py += num(l.cr); }));
+      const st = Object.values(per).map(x => ({ ...x, cl: r2(x.o + x.rc - x.py) })).filter(x => x.o || x.rc || x.py || x.cl);
+      return { title: 'Cash & Bank Statement', info: [['রিপোর্ট তারিখ', `${fmtD(f.from)} - ${fmtD(f.upto)}`], ['শাখা', esc((await Data.branch(f.branch) || {}).name || '')]], html: UI.table([SL, { h: 'Ledger Code', f: r => r.c }, { h: 'Ledger Name', f: r => esc((lm[r.c] || {}).name || r.c) }, { h: 'Opening Balance', f: r => amt(r.o), r: 1, sum: 1, v: r => r.o }, { h: 'Receipt', f: r => amt(r.rc), r: 1, sum: 1, v: r => r.rc }, { h: 'Payment', f: r => amt(r.py), r: 1, sum: 1, v: r => r.py }, { h: 'Closing Balance', f: r => amt(r.cl), r: 1, sum: 1, v: r => r.cl }], st) };
+    }
+    if (f.grp === 'ledger' || f.grp === 'date') {
+      // লেজার/তারিখ অনুযায়ী একত্র — ব্যালেন্স চলমান
+      const g = {}; let c0 = oCash, b0 = oBank;
+      vs.forEach(v => { const cl = v.lines.filter(l => cashCodes.includes(l.gl)); const other = v.lines.filter(l => !cashCodes.includes(l.gl));
+        const k = f.grp === 'date' ? v.date : (other[0] ? other[0].gl : 'other');
+        const x = g[k] = g[k] || { k, rcC: 0, rcB: 0, pyC: 0, pyB: 0 };
+        x.rcC += sum(cl.filter(l => !isBankGl(l.gl)), l => l.dr); x.rcB += sum(cl.filter(l => isBankGl(l.gl)), l => l.dr); x.pyC += sum(cl.filter(l => !isBankGl(l.gl)), l => l.cr); x.pyB += sum(cl.filter(l => isBankGl(l.gl)), l => l.cr); });
+      const gr = Object.values(g).sort((a, b) => String(a.k).localeCompare(String(b.k))).map(x => { c0 = r2(c0 + x.rcC - x.pyC); b0 = r2(b0 + x.rcB - x.pyB); return { ...x, bC: c0, bB: b0 }; });
+      const lab = r => f.grp === 'date' ? fmtD(r.k) : glName(lm, r.k);
+      return { title: 'Cash & Bank Book Report (' + (f.grp === 'date' ? 'Date' : 'Ledger') + ' Wise)', info: [['রিপোর্ট তারিখ', `${fmtD(f.from)} - ${fmtD(f.upto)}`], ['ওপেনিং হাতে নগদ', amt(oCash)], ['ব্যাংক ওপেনিং', amt(oBank)]],
+        html: UI.table([SL, { h: f.grp === 'date' ? 'Date' : 'Ledger', f: lab }, { g: 'Receipt (Debit)', h: 'Cash', f: r => amt(r.rcC), r: 1, sum: 1, v: r => r.rcC }, { g: 'Receipt (Debit)', h: 'Bank', f: r => amt(r.rcB), r: 1, sum: 1, v: r => r.rcB }, { g: 'Payment (Credit)', h: 'Cash', f: r => amt(r.pyC), r: 1, sum: 1, v: r => r.pyC }, { g: 'Payment (Credit)', h: 'Bank', f: r => amt(r.pyB), r: 1, sum: 1, v: r => r.pyB }].concat(f.grp === 'date' ? [{ g: 'Balance', h: 'Cash', f: r => amt(r.bC), r: 1 }, { g: 'Balance', h: 'Bank', f: r => amt(r.bB), r: 1 }] : []), gr) };
+    }
     const tR = sum(rows, r => r.rcC + r.rcB), tP = sum(rows, r => r.pyC + r.pyB);
     const info = [['রিপোর্ট তারিখ', `${fmtD(f.from)} - ${fmtD(f.upto)}`], ['ওপেনিং হাতে নগদ', amt(oCash)], ['মোট ওপেনিং টাকা', amt(oCash + oBank)], ['ব্যাংক ওপেনিং', amt(oBank)], ['শাখা', esc((await Data.branch(f.branch) || {}).name || '')], ['আজকের মোট গ্রহন', amt(tR)], ['আজকের উদৃত্ত হিসাব', amt(oCash + oBank + tR - tP)], ['আজকের মোট প্রদান', amt(tP)], ['Branch Address', esc((await Data.branch(f.branch) || {}).address || '')], ['Closing Cash', amt(cash)], ['Closing Balance', amt(cash + bank)], ['Closing Bank', amt(bank)]];
     const foot = `<tfoot><tr><td colspan="3" class="r"><b>Total During This Period :</b></td>${[sum(rows, r => r.rcC), sum(rows, r => r.rcB), sum(rows, r => r.pyC), sum(rows, r => r.pyB), cash, bank].map(v => `<td class="r"><b>${amt(v)}</b></td>`).join('')}</tr><tr><td colspan="3" class="r"><b>Closing Total :</b></td>${[oCash + sum(rows, r => r.rcC), oBank + sum(rows, r => r.rcB), sum(rows, r => r.pyC), sum(rows, r => r.pyB), cash, bank].map(v => `<td class="r"><b>${amt(v)}</b></td>`).join('')}</tr></tfoot>`;
