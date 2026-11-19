@@ -117,7 +117,7 @@ const CS = {
   f2: v => CS.us.format(r2(num(v))),                                  // 1,234.00 (eKisti)
   f2z: v => num(v) ? CS.f2(v) : '',                                    // শূন্য হলে ফাঁকা
   int: v => String(Math.round(num(v) * 100) / 100),                    // 300
-  yy: d => { if (!d) return ''; const [y, m, dd] = String(d).split('-'); return dd + '-' + m + '-' + y.slice(2); },
+  yy: d => { if (!d) return ''; const [y, m, dd] = String(d).split('-'); return '<span class="nw">' + dd + '-' + m + '-' + y.slice(2) + '</span>'; },
   short: s => s.k === 'loan' ? ((REF.LOAN[s.t] || {}).short || 'GL') : ((REF.DEP[s.t] || {}).short || BUCKET(s.k, s.t)),
   // ঋণ: তারিখ পর্যন্ত বকেয়া কিস্তি (incl = ঐ দিনসহ)
   due(s, d, incl) { const l = Loan.fromSnap(s); let c = 0, a = 0; Loan.schedule(l).forEach(x => { if (incl ? x.date <= d : x.date < d) { c++; a += x.amount; } }); return { c, a: r2(a), l }; },
@@ -149,7 +149,7 @@ ReportPage({
     const nm = id => R.name(cE.mem, id), fa = id => R.father(cE.mem, id), mo = id => R.mobile(cE.mem, id);
     const extra = parseInt(f.extra) || 0;
     const info = [['Branch Name', esc((await Data.branch(f.branch) || {}).name || '')], ['Samity Name', esc(f.samity.slice(-4) + (tpl === 'monthly' || tpl === 'tpl1' ? ' ' : ' - ') + (sam.name || ''))], ['Samity Day', esc(sam.day || '')], ['Samity Time', esc(sam.startTime || 'NA')], ['Samity Opening Date', fmtD(sam.openDate)], ['Report Month', MONTHS[Number(month.slice(5, 7)) - 1]], ['Report Date', fmtD(f.date)], ['Field Officer Name', esc((en(sam.foId) || '').replace(/^\d+ - /, ''))], ['Samity Location', esc(sam.address || 'NA')]];
-    const result = html => ({ title: COLL_TITLE[tpl], addr: true, landscape: true, info, sub: `সমিতি: ${f.samity} - ${esc(sam.name || '')} | ${MONTHS[Number(month.slice(5, 7)) - 1]} ${month.slice(0, 4)}`, html });
+    const result = html => ({ title: COLL_TITLE[tpl], addr: true, landscape: true, sheet: true, noSig: true, info, sub: `সমিতি: ${f.samity} - ${esc(sam.name || '')} | ${MONTHS[Number(month.slice(5, 7)) - 1]} ${month.slice(0, 4)}`, html });
 
     // ════════ Monthly / Template 1 ════════
     if (tpl === 'monthly' || tpl === 'tpl1') {
@@ -239,7 +239,7 @@ ReportPage({
         let tr = ''; if (x.first) { sl++; tr += td(sl, 0, x.span) + td(x.blank ? '&nbsp;' : x.m, 0, x.span) + td(x.blank ? '' : nm(x.m), 0, x.span) + td(x.blank ? '' : fa(x.m), 0, x.span) + td(x.blank ? '' : mo(x.m), 0, x.span); }
         const s = x.s, L = isL(x);
         tr += td(s ? CS.short(s) : '') + td(L && T ? CS.int(s.ia) : '', 1);
-        tr += td(L ? fmtD(s.od) : '') + td(L ? CS.f2(s.pr) : '', 1) + td(L ? CS.f2(num(s.pr) ? num(s.pf) / num(s.pr) * 100 : 0) : '', 1) + td(L ? cycle(x.m) : '', 1) + td(L ? x.ip : '', 1) + td(L ? fmtD(s.ed) : '') + td(L ? num(s.an) + (num(s.li) ? 1 : 0) : '', 1);
+        tr += td(L ? '<span class="nw">' + fmtD(s.od) + '</span>' : '') + td(L ? CS.f2(s.pr) : '', 1) + td(L ? CS.f2(num(s.pr) ? num(s.pf) / num(s.pr) * 100 : 0) : '', 1) + td(L ? cycle(x.m) : '', 1) + td(L ? x.ip : '', 1) + td(L ? '<span class="nw">' + fmtD(s.ed) + '</span>' : '') + td(L ? num(s.an) + (num(s.li) ? 1 : 0) : '', 1);
         tr += td(s && T && x.ob != null ? CS.f2(x.ob) : '', 1) + td(L && T ? CS.f2(x.oov) : '', 1) + td(L && T ? CS.f2(x.oad) : '', 1);
         tr += days.map((_, i) => dayCell(x, i)).join('') + td(s && D ? CS.f2(x.rec) : '', 1);
         tr += td(s && D && x.cb ? CS.f2(x.cb) : '', 1) + td(L && D ? CS.f2(x.cov) : '', 1) + td(L && D ? CS.f2(x.cad) : '', 1);

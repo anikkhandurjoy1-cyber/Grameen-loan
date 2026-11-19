@@ -449,6 +449,10 @@ body{font-family:'Hind Siliguri',Arial,sans-serif;color:#000;margin:0;background
   tfoot td{font-weight:700}.empty{text-align:center;color:#666}.grp td{background:#f3f3f3;font-weight:700}
   .sig{display:flex;justify-content:space-between;margin-top:40px;font-size:13px}.sig div{width:32%}.sig div:nth-child(2){text-align:center}.sig div:nth-child(3){text-align:right}.sig p{margin:4px 0}
   .pf{font-size:10px;color:#555;margin-top:10px}.btnp{display:block;width:100%;background:#337ab7;color:#fff;border:0;padding:10px;font-size:15px;margin-top:14px;cursor:pointer;text-transform:uppercase}
+  .sheetp .ig p,.sheetp .ig p:nth-child(3n),.sheetp .ig p:nth-child(3n+2){width:20%;text-align:left;font-size:14px}
+  .sheetp .ph h4.ad{font-size:18px;font-weight:500;margin-top:4px}
+  table.sheet th{background:transparent;font-size:9px;font-weight:700;padding:5px}table.sheet td{font-size:12px;height:40px;padding:5px}table.sheet td.r,table.sheet .nw{white-space:nowrap}
+  @media print{table.sheet th{font-size:8px!important}table.sheet td{font-size:10px!important;height:34px}}
   @media print{.no-print{display:none!important}#wrap{max-width:100%}th{background:transparent!important;font-size:10px}td{font-size:10px}}`;
 function printHTML(title, body, opts = {}) {
   const w = window.open('', '_blank');
@@ -461,7 +465,7 @@ function printHTML(title, body, opts = {}) {
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>${PRINT_CSS}@page{size:${opts.landscape ? 'A4 landscape' : 'A4'};margin:8mm}</style></head><body>
   <div class="tb no-print"><button onclick="fz(1)">A+</button><button onclick="fz(-1)">A-</button></div>
-  <div id="wrap"><div class="ph"><img src="${logo}" alt=""><div class="t"><h2>${esc(App.org.name)}</h2>${opts.addr ? `<div class="ad">${esc(App.org.address)}</div>` : ''}<h4>${esc(title)}</h4></div></div>
+  <div id="wrap"${opts.sheet ? ' class="sheetp"' : ''}><div class="ph"><img src="${logo}" alt=""><div class="t"><h2>${esc(App.org.name)}</h2>${opts.sheet ? `<h4>${esc(title)}</h4><h4 class="ad">${esc(App.org.address)}</h4>` : `${opts.addr ? `<div class="ad">${esc(App.org.address)}</div>` : ''}<h4>${esc(title)}</h4>`}</div></div>
   ${info.length ? `<div class="ig">${info.map(([l, v]) => `<p>${l ? `<b>${esc(l)} : </b>` : ''}${v == null ? '' : v}</p>`).join('')}</div>` : ''}
   ${body}
   ${opts.noSig ? '' : `<div class="sig">${sigs.map(s => `<div><p>${esc(s)} :</p><p>Signature :</p><p>Designation :</p></div>`).join('')}</div>`}
@@ -755,7 +759,7 @@ ReportPage.run = function (id, btn, print, mode) {
     const b = f.branch ? await Data.branch(f.branch) : null;
     el._last = { ...res, branchName: b ? b.code + ' - ' + b.name : 'সকল শাখা' };
     $('.rpt-out', el).innerHTML = `<div class="mini" style="margin-bottom:6px">${res.sub || ''}</div>` + res.html;
-    if (print) printHTML(res.title || o.title, res.html, { info: res.info || await ReportPage.info(o, f, el), landscape: res.landscape != null ? res.landscape : o.landscape, noSig: res.noSig, addr: res.addr });
+    if (print) printHTML(res.title || o.title, res.html, { info: res.info || await ReportPage.info(o, f, el), landscape: res.landscape != null ? res.landscape : o.landscape, noSig: res.noSig, addr: res.addr, sheet: res.sheet });
   });
 };
 // eKisti এর মতো রিপোর্ট তথ্য: Reporting Date, Branch Name, Branch Address, Samity, Field Officer, Account Type
