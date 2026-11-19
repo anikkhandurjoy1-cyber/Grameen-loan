@@ -86,11 +86,10 @@ window.REF = (function () {
     ['000014','Employee Salary Payment','5002','P'], ['000015','Employee Salary Receive','5002','R'],
     ['000022','Staff Security Receive','5003','R'], ['000023','Staff Security Payment','5003','P'],
     ['000024','Provident Fund Receive','5004','R'], ['000025','Provident Fund Payment','5004','P'],
-    ['000020','হাওলাদ গ্রহন','5005','R'], ['000021','হাওলাদ প্রদান/ফেরত','5005','P'],
     ['000026','Gratuity Receive','5006','R'], ['000027','Gratuity Payment','5006','P'],
   ];
   // লেজার লেনদেন ধরন: [code, name, kind]  kind: BD=bank deposit, BW=bank withdraw, EXP, INC
-  const LEDGER_TT = [['000003','Bank Deposit','BD'],['000004','Bank Widthwral','BW'],['000013','Expense Entry','EXP'],['000018','Income Entry','INC']];
+  const LEDGER_TT = [['000003','Bank Deposit','BD'],['000004','Bank Widthwral','BW'],['000013','Expense Entry','EXP'],['000018','Income Entry','INC'],['000020','হাওলাদ গ্রহন','HR'],['000021','হাওলাদ প্রধান/ফেরত','HP']];
 
   const GL = {
     cash:'11110001', share:'21100002', admission:'32000003', passbook:'32000006', formFee:'32000001', docFee:'32000002',

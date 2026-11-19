@@ -88,7 +88,7 @@ App.page('ledgerTxn', {
     await Pick.branch(el, 'branch'); UI.el(el, 'date').value = await businessDate();
     UI.el(el, 'tt').addEventListener('change', async () => {
       const k = (REF.LEDGER_TT.find(x => x[0] === UI.el(el, 'tt').value) || [])[2];
-      const flt = k === 'BD' || k === 'BW' ? l => l.leaf && l.cashBank && l.code !== REF.GL.cash : k === 'EXP' ? l => l.leaf && l.code[0] === '4' : k === 'INC' ? l => l.leaf && l.code[0] === '3' : () => false;
+      const flt = k === 'BD' || k === 'BW' ? l => l.leaf && l.cashBank && l.code !== REF.GL.cash : k === 'EXP' ? l => l.leaf && l.code[0] === '4' : k === 'INC' ? l => l.leaf && l.code[0] === '3' : k === 'HR' || k === 'HP' ? l => l.code === '28000002' : () => false;
       await Pick.ledger(UI.el(el, 'ledger'), flt);
     });
     UI.el(el, 'ledger').addEventListener('change', async () => { UI.el(el, 'balance').value = UI.el(el, 'ledger').value ? await GLX.ledgerBalance(UI.el(el, 'branch').value, UI.el(el, 'ledger').value, UI.el(el, 'date').value) : ''; });
@@ -103,10 +103,10 @@ const LedgerTxn = {
       const cash = REF.GL.cash; let lines;
       if (k === 'BD') lines = [{ gl: f.ledger, dr: amtv }, { gl: cash, cr: amtv }];
       else if (k === 'BW') lines = [{ gl: cash, dr: amtv }, { gl: f.ledger, cr: amtv }];
-      else if (k === 'EXP') lines = [{ gl: f.ledger, dr: amtv }, { gl: cash, cr: amtv }];
-      else lines = [{ gl: cash, dr: amtv }, { gl: f.ledger, cr: amtv }];
+      else if (k === 'EXP' || k === 'HP') lines = [{ gl: f.ledger, dr: amtv }, { gl: cash, cr: amtv }];   // খরচ / হাওলাদ প্রধান-ফেরত
+      else lines = [{ gl: cash, dr: amtv }, { gl: f.ledger, cr: amtv }];                                      // আয় / হাওলাদ গ্রহন
       const fileUrl = f.file ? await uploadImage(f.file) : '';
-      const pending = needsAuth(k === 'EXP' || k === 'BD' ? 'vpay' : 'vrcv', amtv);
+      const pending = needsAuth(k === 'EXP' || k === 'BD' || k === 'HP' ? 'vpay' : 'vrcv', amtv);
       const vno = await Eng.post({ branch: f.branch, date: f.date, type: 'LEDGER_TXN', narration: `${UI.el(el, 'tt').selectedOptions[0].text} — ${UI.el(el, 'ledger').selectedOptions[0].text}${f.comments ? ' — ' + f.comments : ''}`, docNo: f.docNo, payer: f.payerName, lines, status: pending ? 'pending' : 'posted', authType: 'AIS', ref: { payerPhone: f.payerPhone, fileUrl } });
       toast(pending ? '⏳ অনুমোদনের অপেক্ষায় — ' + vno : '✅ লেনদেন পোস্ট হয়েছে — ' + vno);
       ['amount', 'docNo', 'comments', 'payerPhone', 'payerName'].forEach(x => UI.el(el, x).value = ''); UI.el(el, 'ledger').dispatchEvent(new Event('change')); VList.today(el, ['LEDGER_TXN']);
