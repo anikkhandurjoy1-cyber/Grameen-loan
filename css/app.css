@@ -429,3 +429,4 @@ tr.mig-bad td{background:#fee2e2 !important}
 .cg-table td{white-space:nowrap;vertical-align:middle}.cg-table input[type=checkbox]{width:18px;height:18px}
 @media(min-width:800px){.cg-sum{grid-template-columns:repeat(4,1fr)}.cg-sum .cg-big{grid-column:auto}}
 .sheet .nw,table.sheet td.r{white-space:nowrap}
+.cg-table tr.cg-on td{box-shadow:inset 0 0 0 9999px rgba(22,163,74,.12)}

@@ -8,8 +8,8 @@ async function collectRows(samity, date, memberId) {
   const rows = [];
   Object.entries(snap.a || {}).forEach(([accNo, s]) => {
     if (s.st === 'closed' || s.st === 'cancelled' || (memberId && s.m !== memberId)) return;
-    if (s.k === 'loan') { const l = Loan.fromSnap({ ...s, accNo }); const st = Loan.status(l, date); rows.push({ accNo, memberId: s.m, kind: 'loan', type: s.t, bal: num(s.b), exp: st.asonDue, inst: num(s.ia), overdue: st.overdue, advance: st.advance, instNo: st.dueCnt, nInst: num(s.an) + (num(s.li) ? 1 : 0) }); }
-    else if (s.k === 'dep') { const d = REF.DEP[s.t] || {}; if (d.dtype === 'FD') return; rows.push({ accNo, memberId: s.m, kind: 'dep', type: s.t, bal: num(s.b), exp: num(s.ia), inst: num(s.ia) }); }
+    if (s.k === 'loan') { const l = Loan.fromSnap({ ...s, accNo }); const st = Loan.status(l, date); if (!(st.outstanding > 0)) return; rows.push({ accNo, memberId: s.m, kind: 'loan', type: s.t, bal: num(s.b), exp: st.asonDue, inst: num(s.ia), instAmt: r2(Math.min(num(s.ia) || st.outstanding, st.outstanding)), overdue: st.overdue, advance: st.advance, instNo: st.dueCnt, nInst: num(s.an) + (num(s.li) ? 1 : 0), freq: s.fq }); }
+    else if (s.k === 'dep') { const d = REF.DEP[s.t] || {}; if (d.dtype === 'FD') return; rows.push({ accNo, memberId: s.m, kind: 'dep', type: s.t, bal: num(s.b), exp: num(s.ia), inst: num(s.ia), instAmt: num(s.ia) }); }
     else if (s.k === 'share' && num(s.b) > 0) rows.push({ accNo, memberId: s.m, kind: 'share', type: 'share', bal: num(s.b), exp: 0, inst: 0 });
   });
   const ord = { loan: 0, dep: 1, share: 2 };
@@ -54,7 +54,7 @@ const CollGrid = {
     let alt = false, body = '';
     Object.entries(by).sort((a, b) => a[0].localeCompare(b[0])).forEach(([m, g]) => {
       const n = Math.max(g.L.length, g.S.length, 1); alt = !alt; const due = r2(sum(g.L, r => r.exp) + sum(g.S, r => r.exp));
-      const cell = (r, grp) => r ? `<td>${esc(r.accNo)}${r.kind !== 'loan' ? `<br><small>${esc(typeName(r.kind, r.type))}</small>` : ''}</td>${grp === 'L' ? `<td class="c">${r.instNo || 0}/${r.nInst || ''}</td>` : ''}<td class="r">${CollGrid.f(r.exp)}</td><td class="c"><input type="checkbox" class="cg-f" data-acc="${r.accNo}"${r.exp > 0 ? ' checked' : ''}></td><td class="c"><input type="checkbox" class="cg-z" data-acc="${r.accNo}"></td><td><input type="number" class="ci" data-acc="${r.accNo}" data-m="${m}" data-g="${grp}" data-due="${r.exp}" value="${r.exp || ''}" min="0" style="width:90px"></td>` : `<td></td>${grp === 'L' ? '<td></td>' : ''}<td></td><td></td><td></td><td></td>`;
+      const cell = (r, grp) => r ? `<td>${esc(r.accNo)}<br><small>${esc(r.kind === 'loan' ? (REF.FREQ[r.freq] || '') : typeName(r.kind, r.type))}</small></td>${grp === 'L' ? `<td class="c">${r.instNo || 0}/${r.nInst || ''}</td>` : ''}<td class="r">${CollGrid.f(r.exp)}</td><td class="c"><input type="checkbox" class="cg-f" data-acc="${r.accNo}"></td><td class="c"><input type="checkbox" class="cg-z" data-acc="${r.accNo}"></td><td><input type="number" class="ci" data-acc="${r.accNo}" data-m="${m}" data-g="${grp}" data-due="${r.exp}" data-inst="${r.instAmt || ''}" value="${r.instAmt || ''}" min="0" style="width:90px"${r.kind === 'loan' && r.freq ? ` title="${esc(REF.FREQ[r.freq] || r.freq)} কিস্তি"` : ''}></td>` : `<td></td>${grp === 'L' ? '<td></td>' : ''}<td></td><td></td><td></td><td></td>`;
       for (let i = 0; i < n; i++) {
         body += `<tr class="cg-row" style="background:${alt ? '#C6D7EB' : '#FFFFFF'}">`;
         if (i === 0) body += `<td rowspan="${n}">${m}</td><td rowspan="${n}">${esc((mem[m] || [])[0] || '')}</td><td rowspan="${n}">${esc((mem[m] || [])[2] || '')}</td>`;
@@ -66,19 +66,27 @@ const CollGrid = {
     const card = `<div class="cg-sum"><div class="cg-big"><small>Total Receivable</small><b data-s="due">0.00 Tk</b></div><div><small>Loan Receive</small><b data-s="L">0.00 Tk</b></div><div><small>Deposit Receive</small><b data-s="S">0.00 Tk</b></div><div class="cg-g"><small>Total Receive</small><b data-s="rcv">0.00 TK</b></div><div class="cg-r"><small>Total Dues</small><b data-s="dues">0.00 TK</b></div></div>`;
     return card + `<div class="table-wrap"><table class="sheet-table cg-table"><thead>${head}</thead><tbody>${body || '<tr><td colspan="16" class="c">কোনো একাউন্ট নেই</td></tr>'}</tbody></table></div>`;
   },
+  // টিক দেওয়া (F) সারিগুলোই জমা হবে — ইনপুট বদলালে নিজে টিক পড়ে
+  picked(root) { return $$('.ci', root).filter(i => { const f = $(`.cg-f[data-acc="${CSS.escape(i.dataset.acc)}"]`, root); return f && f.checked && num(i.value) > 0; }); },
   bind(root) {
+    const fOf = acc => $(`.cg-f[data-acc="${CSS.escape(acc)}"]`, root), zOf = acc => $(`.cg-z[data-acc="${CSS.escape(acc)}"]`, root), inp = acc => $(`.ci[data-acc="${CSS.escape(acc)}"]`, root);
     const upd = () => {
-      const ins = $$('.ci', root); const tot = { L: 0, S: 0, due: 0 }; const pm = {};
-      ins.forEach(i => { const v = num(i.value); tot[i.dataset.g] += v; tot.due += num(i.dataset.due); pm[i.dataset.m] = (pm[i.dataset.m] || 0) + v; });
+      const tot = { L: 0, S: 0, due: 0 }; const pm = {}; const on = new Set(CollGrid.picked(root));
+      $$('.ci', root).forEach(i => { const v = on.has(i) ? num(i.value) : 0; tot[i.dataset.g] += v; tot.due += num(i.dataset.due); pm[i.dataset.m] = (pm[i.dataset.m] || 0) + v; });
       $$('.cg-mt', root).forEach(b => b.textContent = CollGrid.f(pm[b.dataset.m]));
       const set = (k, v, u = ' Tk') => { const e = $(`[data-s="${k}"]`, root); if (e) e.textContent = CollGrid.f(v) + u; };
       set('due', tot.due); set('L', tot.L); set('S', tot.S); set('rcv', tot.L + tot.S, ' TK'); set('dues', Math.max(0, tot.due - tot.L - tot.S), ' TK');
+      $$('tr.cg-row', root).forEach(tr => tr.classList.toggle('cg-on', !!$('.cg-f:checked', tr)));
     };
-    const inp = acc => $(`.ci[data-acc="${CSS.escape(acc)}"]`, root);
-    $$('.ci', root).forEach(i => i.addEventListener('input', () => { const f = $(`.cg-f[data-acc="${CSS.escape(i.dataset.acc)}"]`, root), z = $(`.cg-z[data-acc="${CSS.escape(i.dataset.acc)}"]`, root); if (f) f.checked = num(i.value) === num(i.dataset.due) && num(i.value) > 0; if (z) z.checked = !num(i.value); upd(); }));
-    $$('.cg-f', root).forEach(c => c.addEventListener('change', () => { const i = inp(c.dataset.acc); if (c.checked) { i.value = num(i.dataset.due) || ''; const z = $(`.cg-z[data-acc="${CSS.escape(c.dataset.acc)}"]`, root); if (z) z.checked = false; } upd(); }));
-    $$('.cg-z', root).forEach(c => c.addEventListener('change', () => { const i = inp(c.dataset.acc); if (c.checked) { i.value = ''; const f = $(`.cg-f[data-acc="${CSS.escape(c.dataset.acc)}"]`, root); if (f) f.checked = false; } upd(); }));
-    $$('.cg-all', root).forEach(c => c.addEventListener('change', () => { if (!c.checked) return; $$(`.ci[data-g="${c.dataset.g}"]`, root).forEach(i => { i.value = c.dataset.k === 'F' ? (num(i.dataset.due) || '') : ''; i.dispatchEvent(new Event('input')); }); const o = $(`.cg-all[data-g="${c.dataset.g}"][data-k="${c.dataset.k === 'F' ? 'Z' : 'F'}"]`, root); if (o) o.checked = false; }));
+    $$('.ci', root).forEach(i => i.addEventListener('input', () => { const f = fOf(i.dataset.acc), z = zOf(i.dataset.acc); if (f) f.checked = num(i.value) > 0; if (z) z.checked = false; upd(); }));
+    $$('.cg-f', root).forEach(c => c.addEventListener('change', () => { const i = inp(c.dataset.acc); if (c.checked) { if (!num(i.value)) i.value = num(i.dataset.inst) || num(i.dataset.due) || ''; if (!num(i.value)) c.checked = false; const z = zOf(c.dataset.acc); if (z) z.checked = false; } upd(); }));
+    $$('.cg-z', root).forEach(c => c.addEventListener('change', () => { const i = inp(c.dataset.acc); if (c.checked) { i.value = ''; const f = fOf(c.dataset.acc); if (f) f.checked = false; } else i.value = num(i.dataset.inst) || ''; upd(); }));
+    $$('.cg-all', root).forEach(c => c.addEventListener('change', () => {
+      const F = c.dataset.k === 'F';
+      $$(`.ci[data-g="${c.dataset.g}"]`, root).forEach(i => { const f = fOf(i.dataset.acc), z = zOf(i.dataset.acc);
+        if (F) { if (c.checked) { if (!num(i.value)) i.value = num(i.dataset.inst) || ''; if (f) f.checked = num(i.value) > 0; if (z) z.checked = false; } else if (f) f.checked = false; }
+        else if (c.checked) { i.value = ''; if (f) f.checked = false; if (z) z.checked = true; } else { i.value = num(i.dataset.inst) || ''; if (z) z.checked = false; } });
+      const o = $(`.cg-all[data-g="${c.dataset.g}"][data-k="${F ? 'Z' : 'F'}"]`, root); if (o && c.checked) o.checked = false; upd(); }));
     upd();
   },
 };
@@ -106,8 +114,8 @@ const Sheet = {
     return guard(btn, async () => {
       const f = UI.get(el); if (!el._rows) fail('আগে Search Details চাপুন');
       const byMember = {};
-      $$('.ci', el).forEach(i => { if (num(i.value) > 0) (byMember[i.dataset.m] = byMember[i.dataset.m] || []).push({ accNo: i.dataset.acc, amount: num(i.value) }); });
-      const ms = Object.keys(byMember); if (!ms.length) fail('কোনো আদায় দেওয়া হয়নি');
+      CollGrid.picked(el).forEach(i => (byMember[i.dataset.m] = byMember[i.dataset.m] || []).push({ accNo: i.dataset.acc, amount: num(i.value) }));
+      const ms = Object.keys(byMember); if (!ms.length) fail('কোনো সারিতে টিক (F) দেওয়া হয়নি — যাদের আদায় হয়েছে তাদের F এ টিক দিন');
       const total = sum(Object.values(byMember).flat(), x => x.amount);
       if (!confirm(`${ms.length} জন সদস্যের মোট ${tk(total)} আদায় পোস্ট করবেন?`)) return;
       busy(true, 'প্রস্তুত হচ্ছে...');
@@ -144,8 +152,8 @@ const MemColl = {
   submit(btn) {
     const el = $('#page-memberColl');
     return guard(btn, async () => {
-      const f = UI.get(el); const items = $$('.ci', el).filter(i => num(i.value) > 0).map(i => ({ accNo: i.dataset.acc, amount: num(i.value) }));
-      if (!items.length) fail('আদায়ের পরিমাণ দিন');
+      const f = UI.get(el); const items = CollGrid.picked(el).map(i => ({ accNo: i.dataset.acc, amount: num(i.value) }));
+      if (!items.length) fail('যে একাউন্টে আদায় হয়েছে তার F এ টিক দিন');
       const p = await buildMemberCollection(f.branch, f.date, f.member, items, 'member');
       const vno = await Eng.post(p);
       toast('✅ কালেকশন সম্পন্ন — ' + vno); Receipt.print(vno); MemColl.load();
