@@ -64,8 +64,9 @@ ReportPage({
     const rows = (await IB.rows({ upto: f.date })).filter(r => r.status === 'Approve Completed' && (r.sender === f.branch || r.receiver === f.branch));
     const bs = await Data.branches(); const agg = {};
     rows.forEach(r => { const other = r.sender === f.branch ? r.receiver : r.sender; if (f.other && other !== f.other) return; agg[other] = agg[other] || { rcv: 0, pay: 0 }; if (r.sender === f.branch) agg[other].rcv += r.amount; else agg[other].pay += r.amount; });
-    const list = Object.entries(agg).map(([b, v]) => ({ b, name: (bs.find(x => x.code === b) || {}).name || '', ...v, net: r2(v.rcv - v.pay) }));
-    return { sub: 'তারিখ: ' + fmtD(f.date), html: UI.table([{ h: 'Other Branch', f: r => r.b + ' - ' + esc(r.name) }, { h: 'Receivable (পাওনা)', f: r => amt(r.rcv), r: 1, sum: 1, v: r => r.rcv }, { h: 'Payable (দেনা)', f: r => amt(r.pay), r: 1, sum: 1, v: r => r.pay }, { h: 'Net Balance', f: r => amt(r.net), r: 1, sum: 1, v: r => r.net }], list) };
+    const list = Object.entries(agg).map(([b, v]) => ({ b, name: (bs.find(x => x.code === b) || {}).name || '', rcvAmt: v.pay, payAmt: v.rcv, rcvbl: Math.max(0, r2(v.rcv - v.pay)), paybl: Math.max(0, r2(v.pay - v.rcv)) }));
+    // eKisti: Branch Code | Branch Name | Total Receive | Total Payment | Receivable | Payable
+    return { title: 'Inter Branch Receipt Payment Report', sub: 'Report Date : ' + fmtD(f.date), html: UI.table([{ h: 'ক্রমিক নং', sl: 1 }, { h: 'Branch Code', f: r => r.b }, { h: 'Branch Name', f: r => esc(r.name) }, { h: 'Total Receive', f: r => amt(r.rcvAmt), r: 1, sum: 1, v: r => r.rcvAmt }, { h: 'Total Payment', f: r => amt(r.payAmt), r: 1, sum: 1, v: r => r.payAmt }, { h: 'Receivable', f: r => amt(r.rcvbl), r: 1, sum: 1, v: r => r.rcvbl }, { h: 'Payable', f: r => amt(r.paybl), r: 1, sum: 1, v: r => r.paybl }], list) };
   },
 });
 ReportPage({
@@ -73,8 +74,12 @@ ReportPage({
   filters: [F.branch, { k: 'other', l: 'Other Branch Name', t: 'select' }, F.from, F.upto],
   buttons: [['🖨️ Print Details Report', 'details']],
   init: async (el, f) => { const bs = await Data.branches(); UI.fill(UI.el(f, 'other'), bs, b => b.code, b => b.code + ' - ' + b.name, '— সব —'); },
-  run: async f => {
+  run: async (f, mode) => {
     const rows = (await IB.rows({ from: f.from, upto: f.upto })).filter(r => (r.sender === f.branch || r.receiver === f.branch) && (!f.other || r.sender === f.other || r.receiver === f.other));
+    const bs = await Data.branches(); const oth = r => r.sender === f.branch ? r.receiver : r.sender; const bn = c => (bs.find(x => x.code === c) || {}).name || '';
+    const done = rows.filter(r => r.status === 'Approve Completed');
+    // eKisti: Branch Code | Branch Name | Date | Transaction Details | Total Receive | Total Payment
+    if (mode !== 'details') return { title: 'Inter Branch Receive Payment Report', html: UI.table([{ h: 'ক্রমিক নং', sl: 1 }, { h: 'Branch Code', f: r => oth(r) }, { h: 'Branch Name', f: r => esc(bn(oth(r))) }, { h: 'Date', f: r => fmtD(r.date) }, { h: 'Transaction Details', f: r => esc((r.sender === f.branch ? 'Inter Branch Payment to ' : 'Inter Branch Receive from ') + oth(r) + ' ' + r.id + (r.comments ? ' ' + r.comments : '')) }, { h: 'Total Receive', f: r => r.receiver === f.branch ? amt(r.amount) : '0', r: 1, sum: 1, v: r => r.receiver === f.branch ? r.amount : 0 }, { h: 'Total Payment', f: r => r.sender === f.branch ? amt(r.amount) : '0', r: 1, sum: 1, v: r => r.sender === f.branch ? r.amount : 0 }], done) };
     return { landscape: true, html: UI.table([{ h: 'Date', f: r => fmtD(r.date) }, { h: 'Transaction ID', f: r => r.id }, { h: 'Other Branch', f: r => r.sender === f.branch ? r.receiver : r.sender }, { h: 'ধরন', f: r => r.sender === f.branch ? 'প্রেরণ (Payment)' : 'প্রাপ্তি (Receipt)' }, { h: 'Receipt', f: r => r.receiver === f.branch ? amt(r.amount) : '', r: 1, sum: 1, v: r => r.receiver === f.branch && r.status === 'Approve Completed' ? r.amount : 0 }, { h: 'Payment', f: r => r.sender === f.branch ? amt(r.amount) : '', r: 1, sum: 1, v: r => r.sender === f.branch && r.status === 'Approve Completed' ? r.amount : 0 }, { h: 'Status', f: r => r.status }, { h: 'Comments', f: r => esc(r.comments || '') }], rows) };
   },
 });

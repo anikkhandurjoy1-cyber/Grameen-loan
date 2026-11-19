@@ -403,20 +403,21 @@ async function dcrRows(f, grp) {
   fees.forEach(x => { const r = row(key(x.samity, x.memberId, x.foId)); r.fee[x.k] = (r.fee[x.k] || 0) + x.amount; });
   return { rows: Object.values(by).map(r => ({ ...r, cashR: r.tot + r.chg + sum(BUCKETS, b => r.rc[b]) + sum(Object.values(r.fee)), cashP: sum(BUCKETS, b => r.py[b]) + r.disb, pct: r.recv ? r2((r.reg) / r.recv * 100) : 0, todayDue: Math.max(0, r2(r.recv - r.reg)) })).sort((a, b) => String(a.k).localeCompare(String(b.k))), rec };
 }
-function dcrCols(lab, firstH) {
+function dcrCols(lab, firstH, foCol) {
   const L = 'ঋণ আদায়';
-  return [SL, { h: firstH, f: r => r.k === '—' ? '—' : lab(r.k) }, { g: 'মোট নগদ', h: 'আদায়', f: r => n2(r.cashR), r: 1, sum: 1, v: r => r.cashR }, { g: 'মোট নগদ', h: 'ফেরত', f: r => n2(r.cashP), r: 1, sum: 1, v: r => r.cashP }, { h: 'Disb', f: r => n2(r.disb), r: 1, sum: 1, v: r => r.disb },
+  return [SL, { h: firstH, f: r => r.k === '—' ? '—' : lab(r.k) }, foCol, { g: 'মোট নগদ', h: 'আদায়', f: r => n2(r.cashR), r: 1, sum: 1, v: r => r.cashR }, { g: 'মোট নগদ', h: 'ফেরত', f: r => n2(r.cashP), r: 1, sum: 1, v: r => r.cashP }, { h: 'Disb', f: r => n2(r.disb), r: 1, sum: 1, v: r => r.disb },
     { g: L, h: 'Todays Receivable', f: r => n2(r.recv), r: 1, sum: 1, v: r => r.recv }, { g: L, h: 'Todays Total Recover', f: r => n2(r.tot), r: 1, sum: 1, v: r => r.tot }, { g: L, h: 'আজকের আদায়', f: r => n2(r.reg), r: 1, sum: 1, v: r => r.reg }, { g: L, h: 'আদায়ের শতকরা হার', f: r => r.pct.toFixed(2), r: 1 }, { g: L, h: 'আজকের বকেয়া', f: r => n2(r.todayDue), r: 1, sum: 1, v: r => r.todayDue },
     { g: L, h: 'ডাউন পেমেন্ট', f: () => n2(0), r: 1 }, { g: L, h: 'Due Recover', f: r => n2(r.due + r.exp), r: 1, sum: 1, v: r => r.due + r.exp }, { g: L, h: 'অগ্রীম আদায়', f: r => n2(r.adv), r: 1, sum: 1, v: r => r.adv }, { g: L, h: 'লাভ আদায়', f: r => n2(r.profit), r: 1, sum: 1, v: r => r.profit }, { g: L, h: 'চার্জ', f: r => n2(r.chg), r: 1, sum: 1, v: r => r.chg },
-    ...[['GS', 'GS'], ['SS', 'SS'], ['FDR', 'FDR'], ['DPS', 'ডি পি এস আদায়']].map(([b, h]) => ({ g: 'সঞ্চয় আদায়', h, f: r => n2(r.rc[b]), r: 1, sum: 1, v: r => r.rc[b] })),
-    ...[['GS', 'GS'], ['SS', 'SS'], ['FDR', 'FDR'], ['DPS', 'ডি পি এস ফেরত']].map(([b, h]) => ({ g: 'সঞ্চয় ফেরত', h, f: r => n2(r.py[b]), r: 1, sum: 1, v: r => r.py[b] })),
+    // eKisti: সঞ্চয় (GS | SS | ডি পি এস) — FDR আলাদা কলাম নেই, DPS এর সাথে যোগ
+    ...[['GS', 'GS'], ['SS', 'SS'], ['DPS', 'ডি পি এস আদায়']].map(([b, h]) => { const v = r => b === 'DPS' ? r.rc.DPS + r.rc.FDR : r.rc[b]; return { g: 'সঞ্চয়', h, f: r => n2(v(r)), r: 1, sum: 1, v }; }),
+    ...[['GS', 'GS'], ['SS', 'SS'], ['DPS', 'ডি পি এস ফেরত']].map(([b, h]) => { const v = r => b === 'DPS' ? r.py.DPS + r.py.FDR : r.py[b]; return { g: 'সঞ্চয়\u200b', h, f: r => n2(v(r)), r: 1, sum: 1, v }; }),
     { g: 'শেয়ার', h: 'আদায়', f: r => n2(r.rc.Share), r: 1, sum: 1, v: r => r.rc.Share }, { g: 'শেয়ার', h: 'ফেরত', f: r => n2(r.py.Share), r: 1, sum: 1, v: r => r.py.Share },
     ...[['form', 'ফরম ফি'], ['admission', 'ভর্তি'], ['passbook', 'পাসবুক'], ['insurance', 'বীমা ফি'], ['document', 'ডকুমেন্ট'], ['closing', 'বন্ধ ফি']].map(([k, h]) => ({ g: 'ফি আদায়', h, f: r => n2(r.fee[k]), r: 1, sum: 1, v: r => r.fee[k] || 0 })),
     { g: 'সাইন', h: 'বি এম', f: () => '' }];
 }
 ReportPage({
   id: 'rptDCR', title: '(ডি সি আর) রিপোর্ট', landscape: true, filters: [F.branch, F.btype, F.samity, F.employee, { ...F.from, req: 1 }, { ...F.upto, req: 1 }],
-  run: async f => { const { rows } = await dcrRows(f, 'center'); const lab = await R.glabel('center', [f.branch]); return { title: 'Samity Wise Collection Summary', html: UI.table(dcrCols(k => lab(k).replace(/^\d{3}(\d{4}) - /, '$1-'), 'সমিতির নাম').concat([]).map(c => c), rows) }; },
+  run: async f => { const { rows, rec } = await dcrRows(f, 'center'); const lab = await R.glabel('center', [f.branch]); const en = await R.empName(); return { title: 'Samity Wise Collection Summary', html: UI.table(dcrCols(k => lab(k).replace(/^\d{3}(\d{4}) - /, '$1-'), 'সমিতির নাম', { h: 'ফিল্ড অফিসার', f: r => esc((en(rec.fo(r.k)) || '').replace(/^\d+ - /, '')) }), rows) }; },
 });
 ReportPage({
   id: 'rptFieldOfficer', title: 'ফিল্ড অফিসার রিপোর্ট', landscape: true, filters: [F.branch, F.btype, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, F.samity, F.employee, { ...R.GROUP, opts: [['employee', 'Employee'], ['center', 'Center'], ['member', 'Member'], ['branch', 'Branch']] }],

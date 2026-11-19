@@ -788,6 +788,8 @@ ReportPage.info = async function (o, f, el) {
   if ('employee' in f) out.push(['Field Officer', f.employee ? esc(txt('employee')) : 'All Officer']);
   if ('member' in f && f.member) out.push(['Member', esc(UI.el(fr, 'member').value)]);
   if ('user' in f) out.push(['User Name', f.user ? esc(txt('user')) : 'All User']);
+  if ('loc_country' in f) out.push(['Location Details', locActive(f) ? esc(LOC.map(([k]) => (f['loc_' + k] || '').trim()).filter(Boolean).join(', ')) : 'All Locations']);
+  if (o.infoMap) out.forEach(p => { if (o.infoMap[p[0]]) p[0] = o.infoMap[p[0]]; });
   return out;
 };
 ReportPage.excel = function (id) { const el = $('#page-' + id); if (!el._last) return toast('আগে "দেখুন" চাপুন', 'error'); downloadExcel(ReportPage.defs[id].title, el._last.html); };

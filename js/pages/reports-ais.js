@@ -9,7 +9,7 @@ const zeroOk = (z, v) => z === 'nz' ? r2(v) !== 0 : z === 'pos' ? v > 0 : z === 
 
 // ── এ্যাকাউন্টস ব্যালেন্স ──
 ReportPage({
-  id: 'rptAccBalance', title: 'এ্যাকাউন্টস ব্যালেন্স', landscape: true,
+  id: 'rptAccBalance', infoMap: { 'Reporting Date': 'রিপোর্টিং তারিখ', 'Branch Name': 'শাখার নাম', 'Branch Address': 'শাখা ঠিকানা', 'Account Type': 'অ্যাকাউন্টের ধরন' }, title: 'এ্যাকাউন্টস ব্যালেন্স', landscape: true,
   filters: [F.branch, F.samity, F.employee, { k: 'kind', l: 'Account Type', t: 'select', opts: KIND_OPTS }, F.member, F.date, { k: 'zero', l: 'Show Zero Balance', t: 'select', opts: ZERO_OPTS }, ...LOC_F, { k: 'status', l: 'Customer Status', t: 'select', opts: [['', 'Choose'], ['active', 'Active'], ['inactive', 'Inactive'], ['closed', 'Closed']] }],
   run: async f => {
     const fo = await foMap(f.branch); const mem = await Data.memberIdx(f.branch);
@@ -23,7 +23,7 @@ ReportPage({
 
 // ── এ্যাকাউন্ট রিসিভ পেমেন্ট ──
 ReportPage({
-  id: 'rptAccRecPay', title: 'এ্যাকাউন্ট রিসিভ পেমেন্ট', landscape: true, fromDefault: 'month',
+  id: 'rptAccRecPay', infoMap: { 'Reporting Date': 'রিপোর্টিং তারিখ', 'Branch Name': 'শাখার নাম', 'Branch Address': 'শাখা ঠিকানা', 'Account Type': 'একাউন্টের ধরন' }, title: 'এ্যাকাউন্ট রিসিভ পেমেন্ট', landscape: true, fromDefault: 'month',
   filters: [F.branch, { k: 'kind', l: 'Account Type', t: 'select', opts: KIND_OPTS }, F.samity, F.employee, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, { k: 'cash', l: 'Cash & Bank', t: 'select', opts: [['cb', 'Cash & Bank'], ['co', 'Cash Only'], ['bo', 'Bank Only'], ['nc', 'Non Cash'], ['all', 'Cash, Bank & Non-Cash All']] }, { k: 'bal', l: 'Balance Type', t: 'select', opts: [['nz', 'All Without Zero Balance'], ['due', 'Due Only'], ['adv', 'Advance Only'], ['all', 'All With Zero Balance']] }, ...LOC_F],
   buttons: [['🖨️ Print Details Report', 'details'], ['🖨️ Print Type Wise', 'type']],
   run: async (f, mode) => {
@@ -78,11 +78,11 @@ async function accRows(accNo, from, upto) {
   const rows = [{ date: from > '2000-01-01' ? addDays(from, -1) : (a.openDate || from), open: 1, bal }].concat(ts.filter(t => t.date >= from && t.date <= upto).map(t => { bal = r2(bal + num(t.delta)); return { ...t, bal }; }));
   return { a, isLoan, rows };
 }
-async function accStatementHTML(accNo, from, upto) {
+async function accStatementHTML(accNo, from, upto, uni) {
   const { a, isLoan, rows } = await accRows(accNo, from, upto);
   const inc = t => !t.open && (isLoan ? t.delta < 0 : t.delta > 0), dec = t => !t.open && !inc(t);
   const det = t => t.open ? 'Opening Balance' : t.hist ? esc(t.narration) : esc((TT_EN[t.tt] || TT_NAME[t.tt] || t.tt) + ' ' + (a.accNo) + (t.narration ? ' — ' + t.narration : ''));
-  const cols = isLoan
+  const cols = isLoan && !uni
     ? [SL, { h: 'Date', f: t => fmtD(t.date).replace(/-/g, '/') }, { h: 'Transaction Details', f: det }, { h: 'Disburse', f: t => dec(t) && t.delta ? amt(Math.abs(t.delta)) : '', r: 1, sum: 1, v: t => dec(t) ? Math.abs(t.delta || 0) : 0 }, { h: 'Principal', f: t => inc(t) ? amt(t.principal) : '', r: 1, sum: 1, v: t => inc(t) ? t.principal : 0 }, { h: 'Profit', f: t => inc(t) ? amt(t.profit) : '', r: 1, sum: 1, v: t => inc(t) ? t.profit : 0 }, { h: 'Receive', f: t => inc(t) ? amt(Math.abs(t.delta)) : '', r: 1, sum: 1, v: t => inc(t) ? Math.abs(t.delta) : 0 }, { h: 'Balance', f: t => amt(t.bal), r: 1 }]
     : [SL, { h: 'Date', f: t => fmtD(t.date).replace(/-/g, '/') }, { h: 'Transaction Details', f: det }, { h: 'Deposit', f: t => inc(t) ? amt(Math.abs(t.delta)) : '', r: 1, sum: 1, v: t => inc(t) ? Math.abs(t.delta) : 0 }, { h: 'Withdraw', f: t => dec(t) && t.delta ? amt(Math.abs(t.delta)) : '', r: 1, sum: 1, v: t => dec(t) ? Math.abs(t.delta || 0) : 0 }, { h: 'Balance', f: t => amt(t.bal), r: 1 }];
   const head = isLoan ? UI.info([['Loan No', a.accNo], ['Disbursed', amt(a.principal)], ['Profit', amt(a.profit)], ['Total', amt(a.totalRepay)], ['Installment', amt(a.instAmount) + ' (' + (FREQ_EN[a.freq] || a.freq || '') + ')'], ['Expire Date', fmtD(a.expDate)]]) : '';
@@ -105,7 +105,7 @@ ReportPage({
     const m = await Data.member(f.member); if (!m) fail('সদস্য পাওয়া যায়নি');
     const accs = (await Data.accountsOf(f.branch, f.member)).filter(a => a.status !== 'cancelled');
     let html = UI.info([['Member', esc(m.memberId + ' - ' + m.name)], ['Father Name', esc(m.father || m.spouse || '')], ['Samity', esc(m.samity)], ['Phone', esc(m.mobile)]]);
-    for (const a of accs) html += `<h4 style="margin:12px 0 4px">${a.accNo} — ${typeFull(a.kind, a.type)}</h4>` + await accStatementHTML(a.accNo, f.from, f.upto);
+    for (const a of accs) html += `<h4 style="margin:12px 0 4px">${a.accNo} — ${typeFull(a.kind, a.type)}</h4>` + await accStatementHTML(a.accNo, f.from, f.upto, 1);
     return { title: 'Member All Account Statement', sub: `${fmtD(f.from)} হতে ${fmtD(f.upto)}`, html: html + `<div style="text-align:right;margin-top:30px">Authorized Signature: ${esc(App.user.userId || '')}</div>`, noSig: true };
   },
 });

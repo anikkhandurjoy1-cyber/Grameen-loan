@@ -97,10 +97,18 @@ const Voucher = {
     const personPhone = ((v.ref || {}).payerPhone) || '';
     const lines = v.lines.map(l => ({ ...l, part: l.accNo ? titles[l.accNo] : (lm[l.gl] || {}).name || l.gl }));
     const tot = sum(lines, l => l.dr);
+    // eKisti: সদস্য একাউন্ট লাইনে Balance কলাম (ঋণ ঋণাত্মক/ব্র্যাকেটে)
+    try {
+      const vts = (await db.collection('txns').where('vno', '==', v.vno).get()).docs.map(d => d.data()).filter(t => t.accNo && !t.cancelled);
+      const run = {}; const lastIdx = {}; lines.forEach((l, i) => { if (l.accNo) lastIdx[l.accNo] = i; });
+      for (const acc of Object.keys(lastIdx)) { const b = await Receipt.balances(acc, v, sum(vts.filter(t => t.accNo === acc), t => t.delta)); const loan = (b.a || {}).kind === 'loan'; run[acc] = { loan, cur: loan ? -b.before : b.before, after: loan ? -b.after : b.after }; }
+      lines.forEach((l, i) => { const r = run[l.accNo]; if (!r) return; r.cur = r2(r.cur + num(l.cr) - num(l.dr)); l.bal = i === lastIdx[l.accNo] ? r.after : r.cur; });
+    } catch (e) { }
+    const fmtB = x => x == null ? '' : x < 0 ? '(' + amt(-x) + ')' : amt(x);
     const body = RCPT_CSS + `<div class="vmeta"><span><b>Voucher No. :</b> ${v.vno}</span><span><b>Posting Time :</b> ${tsStr(v.on)}</span></div>
       <div class="vmeta"><span><b>Dated :</b> ${fmtD(v.date)}</span><span><b>Transaction Type :</b> ${esc(v.type || '—')}</span></div>
       ${person || personPhone ? `<div class="vbox">Person Name : <b>${esc(person)}</b> &nbsp;|&nbsp; Person Phone : <b>${esc(personPhone)}</b></div>` : ''}`
-      + UI.table([{ h: 'ক্রমিক নং', sl: 1 }, { h: 'Particulars', f: l => esc(l.part) }, { h: 'Details', f: l => esc(l.memo || v.narration || '') }, { h: 'Doc No', f: l => esc(l.accNo || v.docNo || '') }, { h: 'Debit', f: l => l.dr ? amt(l.dr) : '', r: 1, sum: 1, v: l => l.dr }, { h: 'Credit', f: l => l.cr ? amt(l.cr) : '', r: 1, sum: 1, v: l => l.cr }], lines, { cls: 'vh', totalLabel: 'Total' })
+      + UI.table([{ h: 'ক্রমিক নং', sl: 1 }, { h: 'Particulars', f: l => esc(l.part) }, { h: 'Details', f: l => esc(l.memo || v.narration || '') }, { h: 'Doc No', f: l => esc(l.accNo || v.docNo || '') }, { h: 'Debit', f: l => l.dr ? amt(l.dr) : '', r: 1, sum: 1, v: l => l.dr }, { h: 'Credit', f: l => l.cr ? amt(l.cr) : '', r: 1, sum: 1, v: l => l.cr }, { h: 'Balance', f: l => fmtB(l.bal), r: 1 }], lines, { cls: 'vh', totalLabel: 'Total' })
       + `<div style="margin-top:8px;font-size:13px"><b>Amount In Words:</b> ${esc(amountInWords(tot))}</div><div style="font-size:13px"><b>Comments:</b> ${esc(v.narration || '')}</div>
       <div class="vsg"><div>${esc(v.byName || '')}<br>Prepared By</div><div>${esc(v.authBy || v.byName || '')}<br>Authorized By</div><div><br>Director</div></div>`
       + (v.status === 'cancelled' ? '<div style="color:#c00;font-weight:700;text-align:center;margin-top:8px">*** বাতিলকৃত ভাউচার ***</div>' : '');
