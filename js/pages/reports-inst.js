@@ -109,66 +109,162 @@ Object.assign(R, {
   info(f, sm, extra = []) { return null; },
 });
 
-// ─── কালেকশন শীট (Monthly / Weekly / Daily / 1-15 / 16-31) ───
-const COLL_TPL = [['monthly', 'Monthly Collection Sheet'], ['weekly', 'Weekly Collection Sheet'], ['daily', 'Daily Collection Sheet'], ['d1', '1 To 15 Days Collection Sheet'], ['d16', '16 To 31 Days Collection Sheet']];
+// ─── কালেকশন শীট — eKisti এর ৬টি টেমপ্লেট হুবহু (Monthly / Template 1 / Weekly / Daily / 1-15 / 16-31) ───
+const COLL_TPL = [['d1', '1 To 15 Days Collection Sheet'], ['d16', '16 To 31 Days Collection Sheet'], ['daily', 'Daily Collection Sheet'], ['monthly', 'Monthly Collection Sheet'], ['tpl1', 'Template 1'], ['weekly', 'Weekly Collection Sheet']];
+const COLL_TITLE = { monthly: 'Monthly Collection Sheet', tpl1: 'Collection Sheet', weekly: 'Weekly Collecttion Sheet', daily: 'Daily Collecttion Sheet', d1: 'One To Fifteen Days Collection Sheet', d16: 'Sixteen To Thirtyone Days Collection Sheet' };
+const CS = {
+  us: new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+  f2: v => CS.us.format(r2(num(v))),                                  // 1,234.00 (eKisti)
+  f2z: v => num(v) ? CS.f2(v) : '',                                    // শূন্য হলে ফাঁকা
+  int: v => String(Math.round(num(v) * 100) / 100),                    // 300
+  yy: d => { if (!d) return ''; const [y, m, dd] = String(d).split('-'); return dd + '-' + m + '-' + y.slice(2); },
+  short: s => s.k === 'loan' ? ((REF.LOAN[s.t] || {}).short || 'GL') : ((REF.DEP[s.t] || {}).short || BUCKET(s.k, s.t)),
+  // ঋণ: তারিখ পর্যন্ত বকেয়া কিস্তি (incl = ঐ দিনসহ)
+  due(s, d, incl) { const l = Loan.fromSnap(s); let c = 0, a = 0; Loan.schedule(l).forEach(x => { if (incl ? x.date <= d : x.date < d) { c++; a += x.amount; } }); return { c, a: r2(a), l }; },
+  paid: s => r2(num(Loan.fromSnap(s).paidTotal) - num(s.bs)),
+  out: s => r2(Math.max(0, num(s.tr) - num(Loan.fromSnap(s).paidTotal))),
+  th: (t, cs, rs, cls = 'c') => `<th class="${cls}"${cs > 1 ? ` colspan="${cs}"` : ''}${rs > 1 ? ` rowspan="${rs}"` : ''}>${t}</th>`,
+  wrap: (head, body, foot) => `<div class="table-wrap"><table class="sheet"><thead>${head}</thead><tbody>${body}</tbody>${foot ? `<tfoot>${foot}</tfoot>` : ''}</table></div>`,
+};
 ReportPage({
   id: 'rptCollSheet', title: 'কালেকশন শীট', landscape: true,
-  filters: [F.branch, { ...F.samity, req: 1 }, { ...F.date, l: 'Report Date' }, { k: 'tpl', l: 'Report Name', t: 'select', opts: COLL_TPL }, { k: 'sheet', l: 'Sheet Type', t: 'select', opts: [['blank', 'Blank Sheet'], ['target', 'Target Sheet'], ['data', 'With Data']] }, { k: 'extra', l: 'Extra Row', t: 'number', v: 0 }],
+  filters: [F.branch, { ...F.samity, req: 1 }, { ...F.date, l: 'Report Date' }, { k: 'tpl', l: 'Report Name', t: 'select', opts: COLL_TPL, v: 'monthly' }, { k: 'sheet', l: 'Sheet Type', t: 'select', opts: [['blank', 'Blank Sheet'], ['target', 'Target Sheet'], ['data', 'With Data']] }, { k: 'extra', l: 'Extra Row', t: 'number', v: 0 }],
   run: async f => {
     if (!f.samity) fail('সমিতি বাছাই করুন');
-    const month = f.date.slice(0, 7), first = month + '-01', last = ymd(new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0));
-    const c0 = await R.snaps(f, addDays(first, -1)); const c = await R.snaps(f, f.date < last ? f.date : last);
-    const openBal = {}; c0.list.forEach(s => openBal[s.accNo] = s);
-    const sam = c.sm[f.samity] || {};
-    // কলামের তারিখ
-    let slots;
-    if (f.tpl === 'monthly') slots = R.meetDates(sam, month).map((d, i) => ({ k: d, h: `${['1st', '2nd', '3rd', '4th', '5th'][i] || (i + 1) + 'th'} Week ${fmtD(d)}`, test: x => x === d }));
-    else if (f.tpl === 'd1' || f.tpl === 'd16') { const s = f.tpl === 'd1' ? 1 : 16, e = f.tpl === 'd1' ? 15 : Number(last.slice(8)); slots = []; for (let i = s; i <= e; i++) { const d = month + '-' + pad(i, 2); slots.push({ k: d, h: String(i), test: x => x === d }); } }
-    else slots = [0, 1, 2, 3].map(i => ({ k: 'w' + i, h: '', test: () => false }));
-    if (f.tpl === 'daily') slots = [{ k: f.date, h: fmtD(f.date), test: x => x === f.date }];
-    // মাসিক: লেনদেনের তারিখ যে সপ্তাহে পড়ে সেই কলামে
-    if (f.tpl === 'monthly') slots.forEach((sl, i) => { const nx = slots[i + 1]; sl.test = x => (i === 0 || x >= sl.k) && (!nx || x < nx.k); });
-    const ts = f.sheet === 'data' ? await R.txns(f, first, last) : [];
-    const by = {};
-    const mrow = m => by[m] = by[m] || { m, gsO: 0, gsI: 0, ssO: 0, ssI: 0, gsC: {}, ssC: {}, gsW: [], ssW: [], loan: null, lc: {}, cycle: 0 };
-    Object.entries(c.mem).filter(([, r]) => r[1] === f.samity && r[3] !== 'closed').forEach(([id]) => mrow(id));
-    c.list.forEach(s => {
-      if ((s.st === 'closed' && !(s.cd >= first)) || !by[s.m] && s.samity !== f.samity) return; const r = mrow(s.m);
-      if (s.k === 'loan') {
-        r.cycle++; const o = openBal[s.accNo];
-        // মাসের শুরুর অবস্থা (মাসে বিতরণ হলে পূর্ণ ঋণ)
-        const s0 = o || { ...s, b: num(s.tr), pt: 0, pp: 0, ppr: 0, st: 'active' };
-        const { st } = R.loanSt(s0, first); if (!r.loan || s.od > r.loan.s.od) r.loan = { s: s0, st };
-      }
-      else if (s.k === 'dep' || s.k === 'share') { const g = BUCKET(s.k, s.t) === 'GS' ? 'gs' : 'ss'; r[g + 'O'] += num((openBal[s.accNo] || {}).b); r[g + 'I'] += num(s.ia); }
-    });
-    ts.forEach(t => {
-      const r = by[t.memberId]; if (!r) return;
-      if (t.kind === 'loan' && t.dc === 'C') { const sl = slots.find(x => x.test(t.date)); const k = sl ? sl.k : 'other'; r.lc[k] = (r.lc[k] || 0) + num(t.amount); r.lcT = (r.lcT || 0) + num(t.amount); }
-      else if (t.kind === 'dep' || t.kind === 'share') { const g = BUCKET(t.kind, t.type) === 'GS' ? 'gs' : 'ss'; if (t.dc === 'C' && t.tt !== 'PROFIT_POST') { const sl = slots.find(x => x.test(t.date)); const k = sl ? sl.k : 'other'; r[g + 'C'][k] = (r[g + 'C'][k] || 0) + num(t.amount); } else if (t.dc === 'D') r[g + 'W'].push(t); }
-    });
-    const rows = Object.values(by).sort((a, b) => a.m.localeCompare(b.m));
-    for (let i = 0; i < (parseInt(f.extra) || 0); i++) rows.push({ blank: 1, gsC: {}, ssC: {}, gsW: [], ssW: [], lc: {} });
-    const D = f.sheet === 'data', T = f.sheet !== 'blank', B = r => r.blank;
-    const savCols = (g, G) => [
-      { g: G, h: 'Opening Balance', f: r => B(r) ? '' : n2(r[g + 'O']), r: 1, sum: 1, v: r => r[g + 'O'] || 0 }, { g: G, h: 'Inst', f: r => B(r) || !T ? '' : n2(r[g + 'I']), r: 1 },
-      ...slots.map(sl => ({ g: [G, 'This Month Savings Collection'], h: sl.h || ' ', f: r => D && r[g + 'C'][sl.k] ? n2(r[g + 'C'][sl.k]) : '', r: 1, sum: D, v: r => r[g + 'C'][sl.k] || 0 })),
-      { g: [G, 'Withdraw'], h: 'Date', f: r => D ? r[g + 'W'].map(t => fmtD(t.date)).join('<br>') : '' }, { g: [G, 'Withdraw'], h: 'Amount', f: r => D && r[g + 'W'].length ? n2(sum(r[g + 'W'], t => t.amount)) : '', r: 1, sum: D, v: r => sum(r[g + 'W'] || [], t => t.amount) },
-    ];
-    const LI = 'Loan Information';
-    const cols = [SL, { g: 'Member', h: 'Member ID', f: r => r.m || '&nbsp;' }, { g: 'Member', h: 'Member Name', f: r => B(r) ? '' : R.name(c.mem, r.m) }, { g: 'Member', h: 'Father Name', f: r => B(r) ? '' : R.father(c.mem, r.m) }, { g: 'Member', h: 'Mobile No', f: r => B(r) ? '' : R.mobile(c.mem, r.m) },
-      ...savCols('gs', 'General Savings'), ...savCols('ss', 'Security Savings'),
-      { g: LI, h: 'Disb. Date', f: r => r.loan ? fmtD(r.loan.s.od) : '' }, { g: LI, h: 'Amount', f: r => r.loan ? n2(r.loan.s.pr) : '', r: 1, sum: 1, v: r => r.loan ? r.loan.s.pr : 0 }, { g: LI, h: 'Cycle', f: r => r.loan ? r.cycle : '', r: 1 },
-      { g: LI, h: 'Inst Paid', f: r => r.loan ? r.loan.st.paidCnt : '', r: 1 }, { g: LI, h: 'Opening Outst', f: r => r.loan ? n2(r.loan.st.outstanding) : '', r: 1, sum: 1, v: r => r.loan ? r.loan.st.outstanding : 0 },
-      { g: LI, h: 'Overdue', f: r => r.loan ? n2(r.loan.st.overdue) : '', r: 1, sum: 1, v: r => r.loan ? r.loan.st.overdue : 0 }, { g: LI, h: 'Inst', f: r => r.loan && T ? n2(r.loan.s.ia) : '', r: 1, sum: T, v: r => r.loan ? r.loan.s.ia : 0 },
-      ...slots.map(sl => ({ g: [LI, 'This Month Loan Collection'], h: sl.h || ' ', f: r => D && r.lc[sl.k] ? n2(r.lc[sl.k]) : '', r: 1, sum: D, v: r => r.lc[sl.k] || 0 })),
-      { g: LI, h: 'Closing Outst', f: r => r.loan && D ? n2(r.loan.st.outstanding - (r.lcT || 0)) : '', r: 1, sum: D, v: r => r.loan ? r.loan.st.outstanding - (r.lcT || 0) : 0 }];
+    const tpl = f.tpl || 'monthly';
+    const month = f.date.slice(0, 7), first = month + '-01', last = ymd(new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0)), mid = month + '-15';
+    const sam = (await R.sams(f.branch))[f.samity] || {};
+    // পিরিয়ড: শুরু (P) ও শেষ (E)
+    let P = first, E = last;
+    if (tpl === 'd1') E = mid; if (tpl === 'd16') P = month + '-16';
+    if (tpl === 'weekly') { P = f.date; if (sam.day) { for (let i = 0; i < 7; i++) { const d = addDays(f.date, i); if (WEEKDAYS[parseD(d).getDay()] === sam.day) { P = d; break; } } } E = addDays(P, 6); }
+    const c0 = await R.snaps(f, addDays(P, -1)), cE = await R.snaps(f, E);
+    const open = {}; c0.list.forEach(s => open[s.accNo] = s);
+    const D = f.sheet === 'data', T = f.sheet !== 'blank';
+    const ts = D ? await R.txns(f, P, E) : [];
     const en = await R.empName();
-    return {
-      title: (COLL_TPL.find(x => x[0] === f.tpl) || COLL_TPL[0])[1], addr: true, landscape: true,
-      info: [['Branch Name', esc((await Data.branch(f.branch) || {}).name || '')], ['Samity Name', esc(f.samity.slice(-4) + ' ' + (sam.name || ''))], ['Samity Day', esc(sam.day || '')], ['Samity Time', esc(sam.startTime || '')], ['Samity Opening Date', fmtD(sam.openDate)], ['Report Month', MONTHS[Number(month.slice(5, 7)) - 1]], ['Report Date', fmtD(f.date)], ['Field Officer Name', esc((en(sam.foId) || '').replace(/^\d+ - /, ''))], ['Samity Location', esc(sam.address || 'NA')]],
-      sub: `সমিতি: ${f.samity} - ${esc(sam.name || '')} | ${MONTHS[Number(month.slice(5, 7)) - 1]} ${month.slice(0, 4)}`, html: UI.table(cols, rows, { cls: 'sheet' }),
-    };
+    const members = Object.entries(cE.mem).filter(([, r]) => r[1] === f.samity && r[3] !== 'closed').map(([id]) => id).sort();
+    const accsOf = m => cE.list.filter(s => s.m === m && s.k !== 'share' && !(s.st === 'closed' && !(s.cd >= P)));
+    const cycle = m => cE.list.filter(s => s.m === m && s.k === 'loan').length;
+    const nm = id => R.name(cE.mem, id), fa = id => R.father(cE.mem, id), mo = id => R.mobile(cE.mem, id);
+    const extra = parseInt(f.extra) || 0;
+    const info = [['Branch Name', esc((await Data.branch(f.branch) || {}).name || '')], ['Samity Name', esc(f.samity.slice(-4) + (tpl === 'monthly' || tpl === 'tpl1' ? ' ' : ' - ') + (sam.name || ''))], ['Samity Day', esc(sam.day || '')], ['Samity Time', esc(sam.startTime || 'NA')], ['Samity Opening Date', fmtD(sam.openDate)], ['Report Month', MONTHS[Number(month.slice(5, 7)) - 1]], ['Report Date', fmtD(f.date)], ['Field Officer Name', esc((en(sam.foId) || '').replace(/^\d+ - /, ''))], ['Samity Location', esc(sam.address || 'NA')]];
+    const result = html => ({ title: COLL_TITLE[tpl], addr: true, landscape: true, info, sub: `সমিতি: ${f.samity} - ${esc(sam.name || '')} | ${MONTHS[Number(month.slice(5, 7)) - 1]} ${month.slice(0, 4)}`, html });
+
+    // ════════ Monthly / Template 1 ════════
+    if (tpl === 'monthly' || tpl === 'tpl1') {
+      const slots = R.meetDates(sam, month).map((d, i) => ({ k: d, h: `${['1st', '2nd', '3rd', '4th', '5th'][i] || (i + 1) + 'th'} Week ${fmtD(d)}` }));
+      slots.forEach((sl, i) => { const nx = slots[i + 1]; sl.test = x => (i === 0 || x >= sl.k) && (!nx || x < nx.k); });
+      const slotOf = d => (slots.find(x => x.test(d)) || {}).k || 'other';
+      const rows = members.map(m => {
+        const r = { m, gs: null, ss: null, gsI: 0, ssI: 0, gsC: {}, ssC: {}, gsW: [], ssW: [], lc: {}, lcT: 0, loan: null };
+        accsOf(m).forEach(s => {
+          if (s.k === 'loan') { if (!r.loan || s.od > r.loan.s.od) r.loan = { s, o: open[s.accNo] && s.od < P ? open[s.accNo] : null }; }
+          else { const g = BUCKET(s.k, s.t) === 'GS' ? 'gs' : BUCKET(s.k, s.t) === 'SS' ? 'ss' : null; if (!g) return; const o = open[s.accNo]; if (o) r[g] = num(r[g]) + num(o.b); else if (r[g] == null && s.od < P) r[g] = 0; r[g + 'I'] += num(s.ia); }
+        });
+        if (r.loan) { const { s, o } = r.loan; if (o) { const d0 = CS.due(o, P, false), p0 = CS.paid(o); r.loan.cnt = d0.c; r.loan.pc = num(o.ia) ? Math.floor((p0 + 0.001) / num(o.ia)) : 0; r.loan.od = r2(p0 - d0.a); r.loan.oo = CS.out(o); } r.loan.co = CS.out(s); }
+        return r;
+      });
+      ts.forEach(t => {
+        const r = rows.find(x => x.m === t.memberId); if (!r) return;
+        if (t.kind === 'loan' && t.dc === 'C') { const k = slotOf(t.date); r.lc[k] = (r.lc[k] || 0) + num(t.amount); r.lcT += num(t.amount); }
+        else if (t.kind === 'dep') { const b = BUCKET(t.kind, t.type); const g = b === 'GS' ? 'gs' : b === 'SS' ? 'ss' : null; if (!g) return; if (t.dc === 'C' && t.tt !== 'PROFIT_POST') { const k = slotOf(t.date); r[g + 'C'][k] = (r[g + 'C'][k] || 0) + num(t.amount); } else if (t.dc === 'D') r[g + 'W'].push(t); }
+      });
+      for (let i = 0; i < extra; i++) rows.push({ blank: 1, gsC: {}, ssC: {}, gsW: [], ssW: [], lc: {} });
+      const B = r => r.blank, L = r => r.loan, ns = slots.length, t1 = tpl === 'tpl1';
+      const sumv = fn => rows.reduce((a, r) => a + num(fn(r)), 0);
+      // হেডার
+      let h1 = CS.th('ক্রমিক নং', 1, 3) + CS.th('Member', 4) + CS.th('General Savings', (t1 ? 1 : 2) + ns + 2), h2 = '', h3 = '';
+      h2 += ['Member ID', 'Member Name', 'Father Name', 'Mobile No'].map(x => CS.th(x, 1, 2)).join('') + CS.th('Opening Balance', 1, 2) + (t1 ? '' : CS.th('Inst', 1, 2)) + CS.th('This Month Savings Collection', ns) + CS.th('Withdraw', 2);
+      h3 += slots.map(x => CS.th(x.h)).join('') + CS.th('Date') + CS.th('Amount');
+      if (t1) { h1 += CS.th('Office', 2, 2); h3 += CS.th('Date') + CS.th('Amount'); }
+      h1 += CS.th('Security Savings', t1 ? 3 : 2 + ns + 2);
+      h2 += CS.th('Opening Balance', 1, 2) + (t1 ? '' : CS.th('Inst', 1, 2) + CS.th('This Month Savings Collection', ns)) + CS.th('Withdraw', 2);
+      h3 += (t1 ? '' : slots.map(x => CS.th(x.h)).join('')) + CS.th('Date') + CS.th('Amount');
+      const lcols = t1 ? ['Disb. Date', 'Loan Amount', 'Cycle', 'Opening Outst', 'Opening Overdue', 'Inst'] : ['Disb. Date', 'Amount', 'Cycle', 'Inst Paid', 'Opening Outst', 'Overdue', 'Inst'];
+      h1 += CS.th('Loan Information', lcols.length + ns + 1);
+      h2 += lcols.map(x => CS.th(x, 1, 2)).join('') + CS.th('This Month Loan Collection', ns) + CS.th('Closing Outst', 1, 2);
+      h3 += slots.map(x => CS.th(x.h)).join('');
+      if (t1) { h1 += CS.th('Office', 2, 2) + CS.th('Collection', 2, 2); h3 += CS.th('Date') + CS.th('Amount') + CS.th('Date') + CS.th('Amount'); }
+      const td = (v, r) => `<td${r ? ' class="r"' : ''}>${v == null ? '' : v}</td>`;
+      const sav = (r, g, withColl) => td(B(r) || r[g] == null ? '' : CS.f2(r[g]), 1) + (t1 && !withColl ? '' : (t1 ? '' : td(B(r) || !T || !r[g + 'I'] ? '' : CS.f2(r[g + 'I']), 1)) + slots.map(sl => td(D && r[g + 'C'][sl.k] ? CS.f2(r[g + 'C'][sl.k]) : '', 1)).join('')) + td(D ? r[g + 'W'].map(t => t.date.slice(8)).join('<br>') : '') + td(D && r[g + 'W'].length ? CS.f2(sum(r[g + 'W'], t => t.amount)) : '', 1);
+      const body = rows.map((r, i) => {
+        const l = L(r); let tr = td(i + 1) + td(B(r) ? '&nbsp;' : r.m) + td(B(r) ? '' : nm(r.m)) + td(B(r) ? '' : fa(r.m)) + td(B(r) ? '' : mo(r.m));
+        tr += sav(r, 'gs', true) + (t1 ? td('') + td('') : '') + sav(r, 'ss', !t1);
+        if (t1) tr += td(l ? CS.yy(l.s.od) : '') + td(l ? CS.f2(l.s.pr) : '', 1) + td(l ? cycle(r.m) : '', 1) + td(l && l.o ? CS.f2(l.oo) : '', 1) + td(l ? CS.f2(Math.max(0, -num(l.od))) : '', 1) + td(l && T ? CS.int(l.s.ia) : '', 1);
+        else tr += td(l ? CS.yy(l.s.od) : '') + td(l ? CS.f2(l.s.pr) : '', 1) + td(l ? cycle(r.m) : '', 1) + td(l ? (l.o ? l.cnt + '-' + l.pc : '0-0') : '', 1) + td(l && l.o ? CS.f2(l.oo) : '', 1) + td(l && l.o && l.od ? CS.f2(l.od) : '', 1) + td(l && T ? CS.int(l.s.ia) : '', 1);
+        tr += slots.map(sl => td(D && r.lc[sl.k] ? CS.f2(r.lc[sl.k]) : '', 1)).join('') + td(l && D ? CS.f2(l.co) : '', 1);
+        if (t1) tr += td('') + td('') + td('') + td('');
+        return `<tr>${tr}</tr>`;
+      }).join('');
+      // টোটাল
+      const tt = v => `<td class="r"><b>${v}</b></td>`, te = '<td></td>';
+      const savT = (g, withColl) => tt(CS.f2(sumv(r => r[g]))) + (t1 && !withColl ? '' : (t1 ? '' : te) + slots.map(sl => tt(D ? CS.f2(sumv(r => r[g + 'C'][sl.k])) : '')).join('')) + te + tt(D ? CS.f2(sumv(r => sum(r[g + 'W'] || [], t => t.amount))) : '');
+      let foot = `<td colspan="5" class="r"><b>Total :</b></td>` + savT('gs', true) + (t1 ? te + te : '') + savT('ss', !t1);
+      foot += te + tt(CS.f2(sumv(r => r.loan ? r.loan.s.pr : 0))) + te + (t1 ? '' : te) + tt(CS.f2(sumv(r => r.loan && r.loan.o ? r.loan.oo : 0))) + tt(CS.f2(t1 ? sumv(r => r.loan ? Math.max(0, -num(r.loan.od)) : 0) : sumv(r => r.loan && r.loan.o ? r.loan.od : 0))) + te;
+      foot += slots.map(sl => tt(D ? CS.f2(sumv(r => r.lc[sl.k])) : '')).join('') + tt(D ? CS.f2(sumv(r => r.loan ? r.loan.co : 0)) : '') + (t1 ? te + te + te + te : '');
+      return result(CS.wrap(`<tr>${h1}</tr><tr>${h2}</tr><tr>${h3}</tr>`, body, `<tr>${foot}</tr>`));
+    }
+
+    // ════════ একাউন্ট-ভিত্তিক শীট: Daily / 1-15 / 16-31 / Weekly ════════
+    const W = tpl === 'weekly';
+    const days = W ? [1, 2, 3, 4, 5, 6, 7] : []; if (!W) for (let d = Number(P.slice(8)); d <= (tpl === 'd1' ? 15 : 31); d++) days.push(d); // eKisti: সবসময় ৩১ / ১৬ কলাম
+    const lines = [];
+    members.forEach(m => {
+      const accs = accsOf(m).sort((a, b) => (a.k === 'loan' ? 0 : 1) - (b.k === 'loan' ? 0 : 1) || String(a.od).localeCompare(String(b.od)));
+      if (!accs.length) { lines.push({ m, s: null, first: true, span: 1 }); return; }
+      accs.forEach((s, i) => lines.push({ m, s, first: i === 0, span: accs.length }));
+    });
+    // প্রতি লাইনের হিসাব
+    const ix = {}; lines.forEach(x => { if (x.s) ix[x.s.accNo] = x; x.day = {}; x.seq = []; x.rec = 0; x.wd = 0; });
+    ts.forEach(t => { const x = ix[t.accNo]; if (!x) return; if (t.dc === 'C' && t.tt !== 'PROFIT_POST') { if (W) x.seq.push(num(t.amount)); else { const d = Number(t.date.slice(8)); x.day[d] = (x.day[d] || 0) + num(t.amount); } x.rec += num(t.amount); } else if (t.dc === 'D') x.wd += num(t.amount); });
+    lines.forEach(x => {
+      const s = x.s; if (!s) return; const o = open[s.accNo] && s.od < P ? open[s.accNo] : null; x.o = o;
+      if (s.k === 'loan') {
+        x.ob = o ? -CS.out(o) : null; x.cb = -CS.out(s);
+        if (W) { const d0 = o ? CS.due(o, P, false) : { c: 0, a: 0 }, p0 = o ? CS.paid(o) : 0; x.ip = d0.c + '-' + (num(s.ia) ? Math.floor((p0 + 0.001) / num(s.ia)) : 0); x.oov = Math.max(0, r2(d0.a - p0)); x.oad = Math.max(0, r2(p0 - d0.a)); const dE = CS.due(s, E, true), pE = CS.paid(s); x.cov = Math.max(0, r2(dE.a - pE)); x.cad = Math.max(0, r2(pE - dE.a)); }
+        else { x.ood = o ? r2(CS.paid(o) - CS.due(o, P, false).a) : null; x.cod = r2(CS.paid(s) - CS.due(s, E, true).a); }
+      } else { x.ob = o ? num(o.b) : null; x.cb = num(s.b); }
+    });
+    for (let i = 0; i < extra; i++) lines.push({ blank: 1, first: true, span: 1, day: {}, seq: [], rec: 0 });
+    const td = (v, r, rs) => `<td${r ? ' class="r"' : ''}${rs > 1 ? ` rowspan="${rs}"` : ''}>${v == null ? '' : v}</td>`;
+    const isL = x => x.s && x.s.k === 'loan';
+    let sl = 0, head, body, foot;
+    const dayCell = (x, i) => { const v = W ? x.seq[i] : x.day[days[i]]; return td(D && v ? CS.int(v) : '', 1); };
+    const dayTot = i => D ? CS.f2(lines.reduce((a, x) => a + num(W ? x.seq[i] : x.day[days[i]]), 0)) : '';
+    const tt = v => `<td class="r"><b>${v}</b></td>`;
+    if (W) {
+      head = `<tr>${CS.th('ক্রমিক নং', 1, 2)}${CS.th('Member Details', 6)}${CS.th('Loan Information', 7)}${CS.th('Opening Balance', 3)}${CS.th('Days', 7)}${CS.th('Total')}${CS.th('Closing Balance', 3)}</tr><tr>${['ID', 'Name', 'Father/ Husband Name', 'Phone', 'AC Type', 'Inst', 'Disb Date', 'Disb Amount', 'Rate', 'Cycle', 'Inst Paid', 'Exp Date', 'Inst', 'Balance', 'Overdue', 'Advance', ...days, 'Rec', 'Balance', 'Overdue', 'Advance'].map(h => CS.th(h)).join('')}</tr>`;
+      body = lines.map(x => {
+        let tr = ''; if (x.first) { sl++; tr += td(sl, 0, x.span) + td(x.blank ? '&nbsp;' : x.m, 0, x.span) + td(x.blank ? '' : nm(x.m), 0, x.span) + td(x.blank ? '' : fa(x.m), 0, x.span) + td(x.blank ? '' : mo(x.m), 0, x.span); }
+        const s = x.s, L = isL(x);
+        tr += td(s ? CS.short(s) : '') + td(L && T ? CS.int(s.ia) : '', 1);
+        tr += td(L ? fmtD(s.od) : '') + td(L ? CS.f2(s.pr) : '', 1) + td(L ? CS.f2(num(s.pr) ? num(s.pf) / num(s.pr) * 100 : 0) : '', 1) + td(L ? cycle(x.m) : '', 1) + td(L ? x.ip : '', 1) + td(L ? fmtD(s.ed) : '') + td(L ? num(s.an) + (num(s.li) ? 1 : 0) : '', 1);
+        tr += td(s && T && x.ob != null ? CS.f2(x.ob) : '', 1) + td(L && T ? CS.f2(x.oov) : '', 1) + td(L && T ? CS.f2(x.oad) : '', 1);
+        tr += days.map((_, i) => dayCell(x, i)).join('') + td(s && D ? CS.f2(x.rec) : '', 1);
+        tr += td(s && D && x.cb ? CS.f2(x.cb) : '', 1) + td(L && D ? CS.f2(x.cov) : '', 1) + td(L && D ? CS.f2(x.cad) : '', 1);
+        return `<tr>${tr}</tr>`;
+      }).join('');
+      const sv = fn => CS.f2(lines.reduce((a, x) => a + num(fn(x)), 0));
+      foot = `<tr><td colspan="14" class="r"><b>Total :</b></td>${tt(T ? sv(x => x.ob) : '')}${tt(T ? sv(x => x.oov) : '')}${tt(T ? sv(x => x.oad) : '')}${days.map((_, i) => tt(dayTot(i))).join('')}${tt(D ? sv(x => x.rec) : '')}${tt(D ? sv(x => x.cb) : '')}${tt(D ? sv(x => x.cov) : '')}${tt(D ? sv(x => x.cad) : '')}</tr>`;
+    } else {
+      const daily = tpl === 'daily';
+      head = `<tr>${CS.th('ক্রমিক নং', 1, 2)}${CS.th('Member Details', 6)}${CS.th('Opening Balance', 2)}${CS.th('Days', days.length)}${daily ? CS.th('Total') : ''}${CS.th('Closing Balance', 2)}</tr><tr>${['ID', 'Name<br>Phone', 'Father/ Husband Name', 'Loan Amount<br>Disb. Date', 'AC Type', 'Inst', 'Balance', 'Overdue<br>Advance', ...days, ...(daily ? ['Rec'] : []), 'Balance', 'Overdue<br>Advance'].map(h => CS.th(h)).join('')}</tr>`;
+      body = lines.map(x => {
+        let tr = ''; if (x.first) { sl++; tr += td(sl, 0, x.span) + td(x.blank ? '&nbsp;' : x.m, 0, x.span) + td(x.blank ? '' : nm(x.m) + (mo(x.m) ? '<br>' + mo(x.m) : ''), 0, x.span) + td(x.blank ? '' : fa(x.m), 0, x.span); }
+        const s = x.s, L = isL(x);
+        tr += td(L ? num(s.pr).toFixed(2) + '<br>' + CS.yy(s.od) : '') + td(s ? CS.short(s) : '') + td(L && T ? CS.int(s.ia) : '', 1);
+        tr += td(s && T && x.ob != null ? CS.f2(x.ob) : '', 1) + td(L && T && x.ood ? CS.f2(x.ood) : '', 1);
+        tr += days.map((_, i) => dayCell(x, i)).join('') + (daily ? td(s && D ? CS.f2(x.rec) : '', 1) : '');
+        tr += td(s && D && x.cb ? CS.f2(x.cb) : '', 1) + td(L && D && x.cod ? CS.f2(x.cod) : '', 1);
+        return `<tr>${tr}</tr>`;
+      }).join('');
+      // মোট: Daily তে টাইপভিত্তিক (GL: .. GS: ..)
+      const byType = fn => { const o = {}; lines.forEach(x => { if (!x.s) return; const v = fn(x); if (v == null) return; const k = CS.short(x.s); o[k] = (o[k] || 0) + num(v); }); return Object.entries(o).map(([k, v]) => k + ': ' + CS.f2(v)).join(' '); };
+      const sv = fn => CS.f2(lines.reduce((a, x) => a + num(fn(x)), 0));
+      foot = `<tr><td colspan="7" class="r"><b>Total :</b></td>${tt(T ? (daily ? byType(x => x.ob) : sv(x => x.ob)) : '')}${tt(T ? sv(x => x.ood) : '')}${days.map((_, i) => tt(dayTot(i))).join('')}${daily ? tt(D ? sv(x => x.rec) : '') : ''}${tt(D ? (daily ? byType(x => x.cb) : sv(x => x.cb)) : '')}${tt(D ? sv(x => x.cod) : '')}</tr>`;
+    }
+    return result(CS.wrap(head, body, foot));
   },
 });
 

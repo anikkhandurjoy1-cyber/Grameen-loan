@@ -8,7 +8,7 @@ async function collectRows(samity, date, memberId) {
   const rows = [];
   Object.entries(snap.a || {}).forEach(([accNo, s]) => {
     if (s.st === 'closed' || s.st === 'cancelled' || (memberId && s.m !== memberId)) return;
-    if (s.k === 'loan') { const l = Loan.fromSnap({ ...s, accNo }); const st = Loan.status(l, date); rows.push({ accNo, memberId: s.m, kind: 'loan', type: s.t, bal: num(s.b), exp: st.asonDue, inst: num(s.ia), overdue: st.overdue, advance: st.advance }); }
+    if (s.k === 'loan') { const l = Loan.fromSnap({ ...s, accNo }); const st = Loan.status(l, date); rows.push({ accNo, memberId: s.m, kind: 'loan', type: s.t, bal: num(s.b), exp: st.asonDue, inst: num(s.ia), overdue: st.overdue, advance: st.advance, instNo: st.dueCnt, nInst: num(s.an) + (num(s.li) ? 1 : 0) }); }
     else if (s.k === 'dep') { const d = REF.DEP[s.t] || {}; if (d.dtype === 'FD') return; rows.push({ accNo, memberId: s.m, kind: 'dep', type: s.t, bal: num(s.b), exp: num(s.ia), inst: num(s.ia) }); }
     else if (s.k === 'share' && num(s.b) > 0) rows.push({ accNo, memberId: s.m, kind: 'share', type: 'share', bal: num(s.b), exp: 0, inst: 0 });
   });
@@ -41,11 +41,53 @@ const collCols = (mem, editable) => [
   { h: 'আদায়', f: r => editable ? `<input type="number" class="ci" data-acc="${r.accNo}" data-m="${r.memberId}" value="${r.exp || ''}" min="0">` : '', r: 1 },
 ];
 
+// ── eKisti এর মতো কালেকশন গ্রিড: প্রতি সদস্য এক সারিতে — Loan Information | Saving Information | Total Amount ──
+const CollGrid = {
+  f: v => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(r2(num(v))),
+  html(rows, mem, pid) {
+    const by = {}; rows.forEach(r => (by[r.memberId] = by[r.memberId] || { L: [], S: [] })[r.kind === 'loan' ? 'L' : 'S'].push(r));
+    const th = (t, cs, rs) => `<th class="c"${cs > 1 ? ` colspan="${cs}"` : ''}${rs > 1 ? ` rowspan="${rs}"` : ''}>${t}</th>`;
+    const chk = (grp, k) => `<input type="checkbox" class="cg-all" data-g="${grp}" data-k="${k}" title="${k === 'F' ? 'সবাইকে পূর্ণ' : 'সবাইকে শূন্য'}">`;
+    const head = `<tr>${th('Member Information', 3)}${th('Loan Information', 6)}${th('Saving Information', 5)}${th('Total Amount', 2)}</tr>
+      <tr>${['ID', 'Name', 'Phone', 'Account', 'Inst No', 'Due'].map(x => th(x)).join('')}${th('F')}${th('Z')}${th('Receive')}${th('Account')}${th('Due')}${th('F')}${th('Z')}${th('Receive')}${th('Total Receive')}${th('Total Due')}</tr>
+      <tr><th colspan="6"></th><th class="c">${chk('L', 'F')}</th><th class="c">${chk('L', 'Z')}</th><th></th><th colspan="2"></th><th class="c">${chk('S', 'F')}</th><th class="c">${chk('S', 'Z')}</th><th colspan="3"></th></tr>`;
+    let alt = false, body = '';
+    Object.entries(by).sort((a, b) => a[0].localeCompare(b[0])).forEach(([m, g]) => {
+      const n = Math.max(g.L.length, g.S.length, 1); alt = !alt; const due = r2(sum(g.L, r => r.exp) + sum(g.S, r => r.exp));
+      const cell = (r, grp) => r ? `<td>${esc(r.accNo)}${r.kind !== 'loan' ? `<br><small>${esc(typeName(r.kind, r.type))}</small>` : ''}</td>${grp === 'L' ? `<td class="c">${r.instNo || 0}/${r.nInst || ''}</td>` : ''}<td class="r">${CollGrid.f(r.exp)}</td><td class="c"><input type="checkbox" class="cg-f" data-acc="${r.accNo}"${r.exp > 0 ? ' checked' : ''}></td><td class="c"><input type="checkbox" class="cg-z" data-acc="${r.accNo}"></td><td><input type="number" class="ci" data-acc="${r.accNo}" data-m="${m}" data-g="${grp}" data-due="${r.exp}" value="${r.exp || ''}" min="0" style="width:90px"></td>` : `<td></td>${grp === 'L' ? '<td></td>' : ''}<td></td><td></td><td></td><td></td>`;
+      for (let i = 0; i < n; i++) {
+        body += `<tr class="cg-row" style="background:${alt ? '#C6D7EB' : '#FFFFFF'}">`;
+        if (i === 0) body += `<td rowspan="${n}">${m}</td><td rowspan="${n}">${esc((mem[m] || [])[0] || '')}</td><td rowspan="${n}">${esc((mem[m] || [])[2] || '')}</td>`;
+        body += cell(g.L[i], 'L') + cell(g.S[i], 'S');
+        if (i === 0) body += `<td rowspan="${n}" class="r"><b class="cg-mt" data-m="${m}">0.00</b></td><td rowspan="${n}" class="r">${CollGrid.f(due)}</td>`;
+        body += '</tr>';
+      }
+    });
+    const card = `<div class="cg-sum"><div class="cg-big"><small>Total Receivable</small><b data-s="due">0.00 Tk</b></div><div><small>Loan Receive</small><b data-s="L">0.00 Tk</b></div><div><small>Deposit Receive</small><b data-s="S">0.00 Tk</b></div><div class="cg-g"><small>Total Receive</small><b data-s="rcv">0.00 TK</b></div><div class="cg-r"><small>Total Dues</small><b data-s="dues">0.00 TK</b></div></div>`;
+    return card + `<div class="table-wrap"><table class="sheet-table cg-table"><thead>${head}</thead><tbody>${body || '<tr><td colspan="16" class="c">কোনো একাউন্ট নেই</td></tr>'}</tbody></table></div>`;
+  },
+  bind(root) {
+    const upd = () => {
+      const ins = $$('.ci', root); const tot = { L: 0, S: 0, due: 0 }; const pm = {};
+      ins.forEach(i => { const v = num(i.value); tot[i.dataset.g] += v; tot.due += num(i.dataset.due); pm[i.dataset.m] = (pm[i.dataset.m] || 0) + v; });
+      $$('.cg-mt', root).forEach(b => b.textContent = CollGrid.f(pm[b.dataset.m]));
+      const set = (k, v, u = ' Tk') => { const e = $(`[data-s="${k}"]`, root); if (e) e.textContent = CollGrid.f(v) + u; };
+      set('due', tot.due); set('L', tot.L); set('S', tot.S); set('rcv', tot.L + tot.S, ' TK'); set('dues', Math.max(0, tot.due - tot.L - tot.S), ' TK');
+    };
+    const inp = acc => $(`.ci[data-acc="${CSS.escape(acc)}"]`, root);
+    $$('.ci', root).forEach(i => i.addEventListener('input', () => { const f = $(`.cg-f[data-acc="${CSS.escape(i.dataset.acc)}"]`, root), z = $(`.cg-z[data-acc="${CSS.escape(i.dataset.acc)}"]`, root); if (f) f.checked = num(i.value) === num(i.dataset.due) && num(i.value) > 0; if (z) z.checked = !num(i.value); upd(); }));
+    $$('.cg-f', root).forEach(c => c.addEventListener('change', () => { const i = inp(c.dataset.acc); if (c.checked) { i.value = num(i.dataset.due) || ''; const z = $(`.cg-z[data-acc="${CSS.escape(c.dataset.acc)}"]`, root); if (z) z.checked = false; } upd(); }));
+    $$('.cg-z', root).forEach(c => c.addEventListener('change', () => { const i = inp(c.dataset.acc); if (c.checked) { i.value = ''; const f = $(`.cg-f[data-acc="${CSS.escape(c.dataset.acc)}"]`, root); if (f) f.checked = false; } upd(); }));
+    $$('.cg-all', root).forEach(c => c.addEventListener('change', () => { if (!c.checked) return; $$(`.ci[data-g="${c.dataset.g}"]`, root).forEach(i => { i.value = c.dataset.k === 'F' ? (num(i.dataset.due) || '') : ''; i.dispatchEvent(new Event('input')); }); const o = $(`.cg-all[data-g="${c.dataset.g}"][data-k="${c.dataset.k === 'F' ? 'Z' : 'F'}"]`, root); if (o) o.checked = false; }));
+    upd();
+  },
+};
+
 // ── শীট পোস্টিং ──
 App.page('sheetPosting', {
   title: 'শীট পোস্টিং (সমিতি কালেকশন)', icon: '🧾',
-  render: () => `<div class="report-filter">${UI.grid([F.branch, { ...F.samity, req: 1 }, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }], 4)}<div class="filter-actions">${UI.btn('🔍 Search Details', 'Sheet.load(this)')}${UI.btn('✅ Submit', 'Sheet.submit(this)', 'btn-success')}${UI.btn('0️⃣ সব শূন্য', "$$('#page-sheetPosting .ci').forEach(i=>i.value='');Sheet.total()", 'btn-outline')}</div></div><div class="card sheet"></div>`,
-  init: async el => { await Pick.branch(el, 'branch'); await Pick.samity(el, 'samity', 'branch', { all: false }); UI.el(el, 'date').value = await businessDate(); UI.el(el, 'date').readOnly = !canBackDate(); },
+  render: () => `<div class="report-filter">${UI.grid([F.branch, { ...F.samity, req: 1 }, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }], 4)}<div class="filter-actions">${UI.btn('🔍 Search Details', 'Sheet.load(this)')}${UI.btn('✅ Submit', 'Sheet.submit(this)', 'btn-success')}</div></div><div class="card sheet"></div>`,
+  init: async el => { await Pick.branch(el, 'branch'); await Pick.samity(el, 'samity', 'branch', { all: false }); UI.el(el, 'date').value = await businessDate(); UI.el(el, 'date').readOnly = !canBackDate(); UI.el(el, 'samity').addEventListener('change', () => { if (UI.el(el, 'samity').value) Sheet.load(); }); },
 });
 const Sheet = {
   load(btn) {
@@ -54,11 +96,11 @@ const Sheet = {
       const f = UI.get(el); if (!f.samity) fail('সমিতি বাছাই করুন');
       const rows = await collectRows(f.samity, f.date); const mem = await Data.memberIdx(f.branch);
       el._rows = rows;
-      $('.sheet', el).innerHTML = `<div class="kv"><div>সদস্য<b>${new Set(rows.map(r => r.memberId)).size}</b></div><div>একাউন্ট<b>${rows.length}</b></div><div>আদায়যোগ্য<b>${amt(sum(rows, r => r.exp))}</b></div><div>মোট আদায় (ইনপুট)<b id="shTotal">0</b></div></div>` + UI.table(collCols(mem, true), rows, { cls: 'sheet-table' });
-      $$('.ci', el).forEach(i => i.addEventListener('input', Sheet.total)); Sheet.total();
+      $('.sheet', el).innerHTML = CollGrid.html(rows, mem) + `<div class="actions">${UI.btn('✅ Submit', 'Sheet.submit(this)', 'btn-success')}</div>`;
+      CollGrid.bind($('.sheet', el));
     });
   },
-  total() { const t = sum($$('#page-sheetPosting .ci'), i => num(i.value)); const e = $('#shTotal'); if (e) e.textContent = amt(t); },
+  total() { const r = $('#page-sheetPosting .sheet'); if (r) $$('.ci', r).slice(0, 1).forEach(i => i.dispatchEvent(new Event('input'))); },
   submit(btn) {
     const el = $('#page-sheetPosting');
     return guard(btn, async () => {
@@ -95,9 +137,8 @@ const MemColl = {
       const m = (await Data.members(f.branch)).find(x => x.id === f.member); if (!m) fail('সদস্য পাওয়া যায়নি');
       const rows = await collectRows(m.samity, f.date, f.member); const mem = await Data.memberIdx(f.branch);
       el._rows = rows;
-      $('.mc', el).innerHTML = `<div class="mini">সমিতি: ${esc(m.samity)} — মোট আদায়: <b id="mcTotal">0</b></div>` + UI.table(collCols(mem, true), rows, { cls: 'sheet-table' });
-      const tot = () => $('#mcTotal').textContent = amt(sum($$('#page-memberColl .ci'), i => num(i.value)));
-      $$('.ci', el).forEach(i => i.addEventListener('input', tot)); tot();
+      $('.mc', el).innerHTML = MemberCard.html() + CollGrid.html(rows, mem) + `<div class="actions">${UI.btn('✅ Submit', 'MemColl.submit(this)', 'btn-success')}</div>`;
+      MemberCard.show($('.mc .mcard', el), f.member, f.branch); CollGrid.bind($('.mc', el));
     });
   },
   submit(btn) {

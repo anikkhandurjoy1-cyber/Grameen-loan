@@ -420,3 +420,11 @@ tr.mig-bad td{background:#fee2e2 !important}
 .mig-act{text-align:center}.mig-act button{width:26px;height:26px;border:none;border-radius:50%;color:#fff;font-weight:bold;cursor:pointer;margin:0 2px}
 .mig-add{background:#16a34a}.mig-rm{background:#dc2626}
 .mig-empty td{text-align:center;color:#64748b;padding:18px !important}
+
+/* ── eKisti কালেকশন গ্রিড (শীট পোস্টিং / সদস্য ভিত্তিক) ── */
+.cg-sum{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;text-align:center;margin:8px 0 12px;border:1px solid #e2e8f0;border-radius:10px;padding:10px;background:#fff}
+.cg-sum div{padding:4px}.cg-sum small{display:block;color:#334155}.cg-sum b{font-size:22px;color:#050503}
+.cg-sum .cg-big{grid-column:1/-1}.cg-sum .cg-g b{color:green;font-size:26px}.cg-sum .cg-r b{color:#7a1414;font-size:26px}
+.cg-table th{background:#1e3a5f;color:#fff;text-align:center;white-space:nowrap}
+.cg-table td{white-space:nowrap;vertical-align:middle}.cg-table input[type=checkbox]{width:18px;height:18px}
+@media(min-width:800px){.cg-sum{grid-template-columns:repeat(4,1fr)}.cg-sum .cg-big{grid-column:auto}}
