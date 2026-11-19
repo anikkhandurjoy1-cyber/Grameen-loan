@@ -17,13 +17,24 @@ const LoanInfo = {
   fields: [{ k: 'asonDue', l: 'আজকের বকেয়া', ro: 1 }, { k: 'penalty', l: 'জরিমানা চার্জ', ro: 1 }, { k: 'totalN', l: 'মোট কিস্তি', ro: 1 }, { k: 'paidN', l: 'মোট কিস্তি পরিশোধ হয়েছে', ro: 1 },
     { k: 'totalLoan', l: 'মোট ঋণের পরিমাণ', ro: 1 }, { k: 'totalPaid', l: 'মোট ঋণ পরিশোধ হয়েছে', ro: 1 }, { k: 'totalDue', l: 'মোট ঋণ বকেয়া', ro: 1 }, { k: 'expDate', l: 'মেয়াদ উত্তীর্নের তারিখ', t: 'date', ro: 1 }],
 };
-async function loanReceiptList(el, accNo, cancelMode) {
+// eKisti "sales-emircv-acinfo-table": Title | Principal | Profit | Total
+function loanAcInfo(el, l, st) {
+  const box = $('.ek-acinfo', el); if (!box) return;
+  if (!l) { box.innerHTML = '<div class="emircv-empty">Select a loan account to view installment details.</div>'; return; }
+  const P = num(l.principal), PR = num(l.profit), T = num(l.totalRepay) || r2(P + PR), ratio = T ? P / T : 1;
+  const sp = x => { x = r2(x); const p = r2(x * ratio); return [p, r2(x - p), x]; };
+  const wvP = num(l.wvP), wvPr = num(l.wvPr);
+  const rows = [['Total Loan Amount', [P, PR, T]], ['Repayment Amount', [r2(num(l.paidP) - wvP), r2(num(l.paidPr) - wvPr), r2(num(l.paidP) - wvP + num(l.paidPr) - wvPr)]], ['Waiver Amount', [wvP, wvPr, r2(wvP + wvPr)]],
+    ['Due Amount', [r2(P - num(l.paidP)), r2(PR - num(l.paidPr)), r2(P - num(l.paidP) + PR - num(l.paidPr))]], ['Instalment Amount', sp(l.instAmount)], ['As on Due', sp(st.overdue)], ['Advance', sp(st.advance)], ['Todays Due', sp(st.asonDue)]];
+  box.innerHTML = `<table class="ek-acinfo-t"><thead><tr><th>Title</th><th>Principal</th><th>Profit</th><th>Total</th></tr></thead><tbody>${rows.map(([t, v]) => `<tr><td class="hd">${t}</td>${v.map(x => `<td>${num(x).toFixed(2)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+async function loanReceiptList(el, accNo, cancelMode, ek) {
   const box = $('.rl', el); if (!box) return;
   if (!accNo) { box.innerHTML = ''; return; }
   const rows = (await db.collection('txns').where('accNo', '==', accNo).get()).docs.map(d => ({ id: d.id, ...d.data() })).filter(t => ['EMI_RCV', 'EMI_MANUAL', 'EMI_TRF', 'EMI_SHEET'].includes(t.tt)).sort((a, b) => (a.date + a.vno).localeCompare(b.date + b.vno));
   rows.forEach((r, i) => r.serial = i + 1);
-  box.innerHTML = UI.table([{ h: 'Branch Code', f: r => r.branch }, { h: 'Member ID', f: r => r.memberId }, { h: 'Member Account', f: r => r.accNo }, { h: 'Installment Date', f: r => fmtD(r.date) }, { h: 'Installment Serial', f: r => r.serial }, { h: 'Installment Amount', f: r => amt(r.amount), r: 1, sum: 1, v: r => r.cancelled ? 0 : r.amount }, { h: 'আসল', f: r => amt(r.principal), r: 1 }, { h: 'মুনাফা', f: r => amt(r.profit), r: 1 }, { h: 'জরিমানা', f: r => amt(r.penalty), r: 1 }, { h: 'Document Number', f: r => esc(r.docNo || r.vno) }, { h: 'Comments', f: r => esc(r.narration || '') }, { h: 'Entry By', f: r => r.byName || '' }, { h: 'Entry On', f: r => tsStr(r.on) }, { h: 'Cancel By', f: r => r.cancelBy || '' }, { h: 'Cancel On', f: r => tsStr(r.cancelOn) },
-    { h: 'Action', f: r => r.cancelled ? `<span class="tag red">ডিলিট</span> <small>${esc(r.cancelBy || '')}${r.cancelOn && r.cancelOn.toDate ? ' • ' + fmtDT(r.cancelOn.toDate()) : ''}</small>` : UI.btn('🧾', `Receipt.print('${r.vno}')`, 'btn-outline btn-sm') + (isBM() ? ' ' + UI.btn(cancelMode ? '✖ বাতিল' : '🗑️', `EmiCancel.run('${r.vno}',this)`, 'btn-danger btn-sm') : '') }], rows, { rowCls: r => r.cancelled ? 'row-cancel' : '' });
+  box.innerHTML = UI.table([{ h: 'Branch Code', f: r => r.branch }, { h: 'Member ID', f: r => r.memberId }, { h: 'Member Account', f: r => r.accNo }, { h: 'Installment Date', f: r => fmtD(r.date) }, { h: 'Installment Serial', f: r => r.serial }, { h: 'Installment Amount', f: r => amt(r.amount), r: 1, sum: 1, v: r => r.cancelled ? 0 : r.amount }, ...(ek ? [] : [{ h: 'আসল', f: r => amt(r.principal), r: 1 }, { h: 'মুনাফা', f: r => amt(r.profit), r: 1 }, { h: 'জরিমানা', f: r => amt(r.penalty), r: 1 }]), { h: 'Document Number', f: r => esc(r.docNo || r.vno) }, { h: 'Comments', f: r => esc(r.narration || '') }, { h: 'Entry By', f: r => r.byName || '' }, { h: 'Entry On', f: r => tsStr(r.on) }, { h: 'Cancel By', f: r => r.cancelBy || '' }, { h: 'Cancel On', f: r => tsStr(r.cancelOn) },
+    { h: 'Action', f: r => r.cancelled ? `<span class="tag red">ডিলিট</span> <small>${esc(r.cancelBy || '')}${r.cancelOn && r.cancelOn.toDate ? ' • ' + fmtDT(r.cancelOn.toDate()) : ''}</small>` : (ek ? UI.btn('Print', `Receipt.print('${r.vno}')`, 'btn-info btn-sm') + (isBM() ? ' ' + UI.btn('Cancel', `EmiCancel.run('${r.vno}',this)`, 'btn-danger btn-sm') : '') : UI.btn('🧾', `Receipt.print('${r.vno}')`, 'btn-outline btn-sm') + (isBM() ? ' ' + UI.btn(cancelMode ? '✖ বাতিল' : '🗑️', `EmiCancel.run('${r.vno}',this)`, 'btn-danger btn-sm') : '')) }], rows, { rowCls: r => r.cancelled ? 'row-cancel' : '' });
 }
 // রসিদ প্রিন্ট
 // রসিদ প্রিন্ট: js/pages/receipts.js (Receipt / Voucher)
@@ -37,16 +48,25 @@ function EMI_LBL(id, fields) {
   return fields.map(f => f && f.k && EN[f.k] ? { ...f, l: EN[f.k] } : f).map(f => f && f.k === 'member' && f.t === 'member' ? { ...f, l: 'Member ID' } : f);
 }
 function EmiPage(id, title, o = {}) {
+  const ek = id === 'emiRcv';
   const memberField = o.staff ? { k: 'member', l: 'Employee Name', t: 'select', req: 1 } : { k: 'member', l: 'সদস্য আইডি', t: 'member', req: 1 };
   const amountFields = o.manual
     ? [{ k: 'principal', l: 'Investment Amount (আসল)', t: 'number' }, { k: 'profit', l: 'Profit Amount (মুনাফা)', t: 'number' }, { k: 'penaltyRcv', l: 'Penalty Charge (জরিমানা)', t: 'number' }]
     : [{ k: 'amount', l: 'জমার পরিমাণ', t: 'number', req: 1 }];
   App.page(id, {
     title, icon: '💵',
-    render: () => UI.card('', UI.grid(EMI_LBL(id, [{ ...F.branch, l: 'শাখা নাম' }, memberField, { k: 'account', l: 'সদস্য অ্যাকাউন্ট', t: 'select', req: 1 }, ...amountFields, { k: 'date', l: 'কিস্তির তারিখ', t: 'date', req: 1 },
+    render: () => {
+      // eKisti "ঋণের কিস্তি জমা" — হুবহু ফিল্ড ক্রম; জমার পরিমাণ = কিস্তির পরিমাণ (অটো), ক্লিক করলে সিলেক্ট
+      if (ek) return UI.card('', UI.grid([{ ...F.branch, l: 'শাখা নাম' }, memberField, { k: 'account', l: 'সদস্য অ্যাকাউন্ট', t: 'select', req: 1 }, { k: 'amount', l: 'জমার পরিমাণ', t: 'number', req: 1 },
+        { k: 'asonDue', l: 'আজকের বকেয়া', ro: 1 }, { k: 'penalty', l: 'জরিমানা চার্জ', ro: 1 }, { k: 'date', l: 'কিস্তির তারিখ', t: 'date', req: 1 },
+        ...LoanInfo.fields.filter(f => !['asonDue', 'penalty'].includes(f.k)), { k: 'fromDep', l: 'Transfer From Same Customer Deposit', t: 'checkbox' }, { k: 'depAcc', l: 'সঞ্চয় অ্যাকাউন্ট', t: 'select' }, { k: 'comments', l: 'মন্তব্য' }], 4)
+        + `<div class="actions">${UI.btn('Receive Installment', `EmiRcv.save('${id}',this)`, 'btn-success')} ${UI.btn('Search Receive Installment', `EmiRcv.search('${id}')`, 'btn-info')} <span class="ek-last"></span></div>`)
+        + UI.card('', '<div class="ek-acinfo"><div class="emircv-empty">Select a loan account to view installment details.</div></div>') + (o.staff ? '' : MemberCard.html()) + '<div class="ek-rl" style="display:none">' + UI.card('', '<div class="rl"></div>') + '</div>';
+      return UI.card('', UI.grid(EMI_LBL(id, [{ ...F.branch, l: 'শাখা নাম' }, memberField, { k: 'account', l: 'সদস্য অ্যাকাউন্ট', t: 'select', req: 1 }, ...amountFields, { k: 'date', l: 'কিস্তির তারিখ', t: 'date', req: 1 },
       ...LoanInfo.fields, { k: 'duePrincipal', l: 'আসল বকেয়া', ro: 1 }, { k: 'dueProfit', l: 'মুনাফা বকেয়া', ro: 1 },
       { k: 'fromDep', l: 'Transfer From Same Customer Deposit', t: 'checkbox' }, { k: 'depAcc', l: 'সঞ্চয় অ্যাকাউন্ট', t: 'select' }, { k: 'docNo', l: 'ডকুমেন্ট নাম্বার' }, { k: 'comments', l: 'মন্তব্য' }]), 4)
-      + (o.staff ? '' : MemberCard.html()) + `<div class="actions">${UI.btn('✅ Receive Installment', `EmiRcv.save('${id}',this)`, 'btn-success')}</div>`) + UI.card('Search Receive Installment', '<div class="rl"></div>'),
+      + (o.staff ? '' : MemberCard.html()) + `<div class="actions">${UI.btn('✅ Receive Installment', `EmiRcv.save('${id}',this)`, 'btn-success')}</div>`) + UI.card('Search Receive Installment', '<div class="rl"></div>');
+    },
     init: async (el, p) => {
       await Pick.branch(el, 'branch');
       if (o.staff) await Pick.employee(el, 'member', 'branch'); else await Pick.member(el, 'member', 'branch');
@@ -55,17 +75,23 @@ function EmiPage(id, title, o = {}) {
       const memberKey = () => o.staff ? (M.value ? 'E' + M.value : '') : M.dataset.val;
       const loadAccs = async () => {
         const mk = memberKey(); const all = mk ? await Data.accountsOf(UI.el(el, 'branch').value, mk) : [];
-        UI.fill(A, all.filter(a => a.kind === 'loan' && a.status === 'active'), a => a.accNo, a => a.accNo + ' - ' + typeName(a.kind, a.type));
+        const MON = ['Jan.', 'Feb.', 'March', 'April', 'May', 'June', 'July', 'Aug.', 'Sept.', 'Oct.', 'Nov.', 'Dec.'];
+        const ekD = d => d ? MON[+d.slice(5, 7) - 1] + ' ' + (+d.slice(8, 10)) + ', ' + d.slice(0, 4) : '';
+        // eKisti: GL0000000012703-1000.00-W-Aug. 23, 2026
+        let loans = all.filter(a => a.kind === 'loan' && a.status === 'active'); if (ek) loans = (await Promise.all(loans.map(a => Data.account(a.accNo)))).map((x, i) => x ? { ...loans[i], ...x, accNo: loans[i].accNo } : loans[i]);
+        UI.fill(A, loans, a => a.accNo, a => ek ? a.accNo + '-' + num(a.instAmount).toFixed(2) + '-' + (a.freq || '') + '-' + ekD(a.openDate || a.disbDate || '') : a.accNo + ' - ' + typeName(a.kind, a.type));
         UI.fill(UI.el(el, 'depAcc'), all.filter(a => (a.kind === 'dep' || a.kind === 'other') && a.status === 'active'), a => a.accNo, a => a.accNo + ' - ' + typeName(a.kind, a.type));
         if (A.options.length === 2) A.selectedIndex = 1; A.dispatchEvent(new Event('change'));
       };
       M.addEventListener(o.staff ? 'change' : 'picked', loadAccs);
       A.addEventListener('change', async () => {
         const r = await LoanInfo.load(el, A.value, UI.el(el, 'date').value);
+        if (ek) { UI.el(el, 'amount').value = r ? num(r.l.instAmount).toFixed(2) : ''; loanAcInfo(el, r && r.l, r && r.st); $('.ek-rl', el).style.display = 'none'; return; }
         if (r && !o.manual) UI.el(el, 'amount').value = r.st.asonDue ? r2(r.st.asonDue + num(r.l.penDue)) : r.l.instAmount;
         loanReceiptList(el, A.value);
       });
       UI.el(el, 'date').addEventListener('change', () => A.value && LoanInfo.load(el, A.value, UI.el(el, 'date').value));
+      if (ek) { const amtEl = UI.el(el, 'amount'); amtEl.value = '0.0'; amtEl.addEventListener('click', () => amtEl.select()); amtEl.addEventListener('focus', () => amtEl.select()); M.addEventListener('picked', () => { UI.el(el, 'fromDep').checked = false; loanAcInfo(el, null); }); }
       if (p.member) { if (o.staff) { M.value = p.member; } else { M.value = p.member; } M.dispatchEvent(new Event('change')); await new Promise(r => setTimeout(r, 300)); if (p.account) { A.value = p.account; A.dispatchEvent(new Event('change')); } }
     },
   });
@@ -73,6 +99,11 @@ function EmiPage(id, title, o = {}) {
 }
 const EmiRcv = {
   opts: {},
+  search(id) {
+    const el = $('#page-' + id), M = UI.el(el, 'member');
+    if (!(M.dataset.val || M.value)) return toast('Please Select Member', 'error');
+    $('.ek-rl', el).style.display = ''; loanReceiptList(el, UI.el(el, 'account').value, false, true);
+  },
   save(id, btn) {
     const el = $('#page-' + id), o = EmiRcv.opts[id];
     return guard(btn, async () => {
@@ -105,8 +136,16 @@ const EmiRcv = {
       toast('✅ কিস্তি জমা হয়েছে — ভাউচার ' + vno);
       ['amount', 'principal', 'profit', 'penaltyRcv', 'docNo', 'comments'].forEach(k => { const e = UI.el(el, k); if (e) e.value = ''; });
       UI.el(el, 'fromDep').checked = false;
-      await LoanInfo.load(el, f.account, f.date); loanReceiptList(el, f.account);
+      await LoanInfo.load(el, f.account, f.date);
       if (el._loan && el._loan.status === 'closed') toast('🎉 ঋণ সম্পূর্ণ পরিশোধ হয়েছে — একাউন্ট ক্লোজড', 'info');
+      if (id === 'emiRcv') {
+        // eKisti: সফল হলে ফর্ম রিসেট + (সেটিং চালু থাকলে) রসিদ অটো প্রিন্ট
+        const M = UI.el(el, 'member'); M.value = ''; M.dataset.val = ''; UI.fill(UI.el(el, 'account'), [], a => a, a => a); UI.fill(UI.el(el, 'depAcc'), [], a => a, a => a);
+        LoanInfo.fields.forEach(x => { const e = UI.el(el, x.k); if (e) e.value = ''; }); UI.el(el, 'amount').value = '0.0'; loanAcInfo(el, null); $('.ek-rl', el).style.display = 'none';
+        const lp = $('.ek-last', el); if (lp) lp.innerHTML = UI.btn('🧾 রসিদ প্রিন্ট (' + vno + ')', `Receipt.print('${vno}')`, 'btn-outline');
+        return;
+      }
+      loanReceiptList(el, f.account);
     });
   },
 };
