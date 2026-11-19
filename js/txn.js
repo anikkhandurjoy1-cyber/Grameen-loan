@@ -85,6 +85,7 @@ const Tx = {
     const agg = {}; const lines = [];
     m.lines.forEach(l => { if (!l.accNo && !l.memo) { const k = l.gl; agg[k] = agg[k] || { gl: k, dr: 0, cr: 0 }; agg[k].dr += num(l.dr); agg[k].cr += num(l.cr); } else lines.push(l); });
     Object.values(agg).forEach(x => { const net = r2(x.dr - x.cr); if (net > 0) lines.push({ gl: x.gl, dr: net }); else if (net < 0) lines.push({ gl: x.gl, cr: -net }); });
+    try { const lm = await Data.ledgerMap(); const cb = lines.filter(l => !l.accNo && (String(l.gl).startsWith('111') || (lm[l.gl] || {}).cashBank)).map(l => l.gl); if (cb.length === 1) m.txns.forEach(t => { if (!t.cgl) t.cgl = cb[0]; }); } catch (e) {}
     return Eng.post({ branch, date, type, narration, lines, txns: m.txns, accOps: m.accOps, ...extra });
   },
 };

@@ -23,7 +23,7 @@ ReportPage({
 // ── এ্যাকাউন্ট রিসিভ পেমেন্ট ──
 ReportPage({
   id: 'rptAccRecPay', title: 'এ্যাকাউন্ট রিসিভ পেমেন্ট', landscape: true, fromDefault: 'month',
-  filters: [F.branch, { k: 'kind', l: 'Account Type', t: 'select', opts: KIND_OPTS }, F.samity, F.employee, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, { k: 'cash', l: 'Cash & Bank', t: 'select', opts: [['all', 'Cash, Bank & Non-Cash All'], ['cb', 'Cash & Bank'], ['nc', 'Non Cash']] }, { k: 'bal', l: 'Balance Type', t: 'select', opts: [['nz', 'All Without Zero Balance'], ['all', 'All With Zero Balance']] }],
+  filters: [F.branch, { k: 'kind', l: 'Account Type', t: 'select', opts: KIND_OPTS }, F.samity, F.employee, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, { k: 'cash', l: 'Cash & Bank', t: 'select', opts: [['cb', 'Cash & Bank'], ['co', 'Cash Only'], ['bo', 'Bank Only'], ['nc', 'Non Cash'], ['all', 'Cash, Bank & Non-Cash All']] }, { k: 'bal', l: 'Balance Type', t: 'select', opts: [['nz', 'All Without Zero Balance'], ['due', 'Due Only'], ['adv', 'Advance Only'], ['all', 'All With Zero Balance']] }],
   buttons: [['🖨️ Print Details Report', 'details'], ['🖨️ Print Type Wise', 'type']],
   run: async (f, mode) => {
     const fo = await foMap(f.branch); const mem = await Data.memberIdx(f.branch);
@@ -31,11 +31,13 @@ ReportPage({
     const closing = await Hist.snapsAt(f.branch, f.upto, f.samity);
     const ts = (await db.collection('txns').where('bd', '>=', f.branch + '_' + f.from).where('bd', '<=', f.branch + '_' + f.upto).get()).docs.map(d => d.data()).filter(t => !t.cancelled && t.accNo && (!f.samity || t.samity === f.samity));
     const nonCash = t => ['DEP_TRF_IN', 'DEP_TRF_OUT', 'EMI_TRF', 'PROFIT_POST', 'LOAN_DISB_TRF', 'JV'].includes(t.tt);
-    const tsf = ts.filter(t => f.cash === 'all' || (f.cash === 'nc' ? nonCash(t) : !nonCash(t)));
+    const isBank = t => !!t.cgl && t.cgl !== REF.GL.cash;
+    const tsf = ts.filter(t => f.cash === 'all' || (f.cash === 'nc' ? nonCash(t) : !nonCash(t) && (f.cash === 'cb' || (f.cash === 'bo' ? isBank(t) : !isBank(t)))));
     const by = {}; const ob = {}; opening.forEach(s => ob[s.accNo] = num(s.b));
     closing.forEach(s => { if (kindMatch(f, s) && (!f.employee || fo[s.samity] === f.employee)) by[s.accNo] = { ...s, open: ob[s.accNo] || 0, close: num(s.b), rcv: 0, pay: 0, list: [] }; });
     tsf.forEach(t => { const r = by[t.accNo]; if (!r) return; const d = num(t.delta); const isRcv = r.k === 'loan' ? d < 0 : d > 0; if (isRcv) r.rcv += Math.abs(d); else r.pay += Math.abs(d); r.list.push(t); });
-    let rows = Object.values(by).filter(r => f.bal === 'all' || r2(r.open) || r2(r.rcv) || r2(r.pay) || r2(r.close));
+    // Due = ঋণে বকেয়া/সঞ্চয়ে ঋণাত্মক, Advance = সঞ্চয়ে জমা/ঋণে অগ্রিম
+    let rows = Object.values(by).filter(r => f.bal === 'all' ? true : f.bal === 'due' ? (r.k === 'loan' ? r2(r.close) > 0 : r2(r.close) < 0) : f.bal === 'adv' ? (r.k === 'loan' ? r2(r.close) < 0 : r2(r.close) > 0) : (r2(r.open) || r2(r.rcv) || r2(r.pay) || r2(r.close)));
     rows.sort((a, b) => a.samity.localeCompare(b.samity) || a.accNo.localeCompare(b.accNo));
     if (mode === 'type') { const g = groupBy(rows, r => typeName(r.k, r.t)); rows = Object.entries(g).map(([t, l]) => ({ accNo: t, m: '', open: sum(l, x => x.open), rcv: sum(l, x => x.rcv), pay: sum(l, x => x.pay), close: sum(l, x => x.close), k: '', t })); }
     const sg = r => r.k === 'loan' ? -1 : 1;

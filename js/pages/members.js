@@ -141,7 +141,7 @@ const Member = {
 // ── সদস্য তালিকা ──
 App.page('memberList', {
   title: 'সদস্য তালিকা', icon: '📋',
-  render: () => `<div class="report-filter">${UI.grid([{ ...F.branch, l: 'শাখার নাম' }, { ...F.samity, l: 'সমিতির নাম' }, { k: 'name', l: 'সদস্যের নাম' }, { k: 'mobile', l: 'সদস্যের ফোন' }, { k: 'id', l: 'সদস্য আইডি' }, { k: 'nid', l: 'সদস্যের এনআইডি' }, { k: 'status', l: 'সদস্যের অবস্থা', t: 'select', opts: [['', 'All'], ['active', 'Active'], ['pending', 'Pending'], ['closed', 'Closed']] }], 4)}
+  render: () => `<div class="report-filter">${UI.grid([{ ...F.branch, l: 'শাখার নাম' }, { ...F.samity, l: 'সমিতির নাম' }, { k: 'name', l: 'সদস্যের নাম' }, { k: 'mobile', l: 'সদস্যের ফোন' }, { k: 'id', l: 'সদস্য আইডি' }, { k: 'nid', l: 'সদস্যের এনআইডি' }, { k: 'status', l: 'সদস্যের অবস্থা', t: 'select', opts: [['', 'All'], ['active', 'Active'], ['inactive', 'Inactive'], ['closed', 'Closed'], ['pending', 'Pending']] }], 4)}
     <div class="filter-actions">${UI.btn('🔍 সদস্য খুঁজুন', 'MemberList.search(this)')}${UI.btn('🖨️ প্রিন্ট', 'MemberList.print()', 'btn-outline')}${UI.btn('📥 Excel', 'MemberList.excel()', 'btn-outline')}</div></div><div class="card ml"></div>`,
   init: async el => { await Pick.branch(el, 'branch'); await Pick.samity(el, 'samity', 'branch'); MemberList.search(); },
 });
