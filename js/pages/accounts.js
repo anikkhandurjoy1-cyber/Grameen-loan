@@ -20,7 +20,7 @@ const SubList = {
   remove(btn, i) { const box = btn.closest('.sublist'); box._items.splice(i, 1); SubList.draw(box); },
   async add(btn, key) {
     const box = btn.closest('.card').querySelector(`[data-sub="${key}"]`) || $(`[data-sub="${key}"]`);
-    const m = UI.modal(key === 'nominee' ? '➕ নমিনি যোগ' : '➕ জামিনদার যোগ', UI.grid(SubList.defs[key], 3), UI.btn('✅ ADD', 'void 0', 'btn-success', 'id="subOk"'));
+    const m = UI.modal(key === 'nominee' ? '➕ নমিনি যোগ' : '➕ জামিনদার যোগ', UI.grid(SubList.defs[key], 3), UI.btn('ADD', 'void 0', 'btn-success', 'id="subOk"'));
     if (key === 'guarantor') {
       const pg = btn.closest('.page'); const branch = UI.el(pg, 'branch') ? UI.el(pg, 'branch').value : App.branch;
       UI.el(m, 'memberId').addEventListener('change', async () => {
@@ -51,7 +51,7 @@ App.page('depOpen', {
     { k: 'openDate', l: 'হিসাব খোলার তারিখ', t: 'date', req: 1 }, { k: 'rate', l: 'Profit Rate', t: 'number', ro: 1 }, { k: 'sched', l: 'Deposit Type', t: 'select', opts: [['', '------------']] },
     { k: 'months', l: 'মেয়াদ (মাস)', t: 'number', hint: 'FDR/DPS এর মেয়াদ' }, { k: 'maturityDate', l: 'মেয়াদপূর্তির তারিখ', t: 'date', ro: 1 },
     { k: 'autoRenew', l: 'Auto Renew', t: 'checkbox' }, { k: 'renewProfit', l: 'Auto Renew With Profit', t: 'checkbox' },
-  ], 3) + MemberCard.html() + SubList.render('nominee', '👤 Nominee') + `<div class="actions">${UI.btn('✅ Open Deposit Account', 'DepOpen.save(this)', 'btn-success')}</div>`) + UI.card('এই সদস্যের একাউন্টসমূহ', '<div class="macc"></div>'),
+  ], 3) + MemberCard.html() + SubList.render('nominee', '👤 Nominee') + `<div class="actions">${UI.btn('Open Deposit Account', 'DepOpen.save(this)', 'btn-success')}</div>`) + UI.card('এই সদস্যের একাউন্টসমূহ', '<div class="macc"></div>'),
   init: async (el, p) => {
     await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch');
     UI.el(el, 'openDate').value = await businessDate();
@@ -195,7 +195,7 @@ const LoanForm = {
     const seen = new Set(); const gs = [];
     accs.forEach(a => (a.guarantors || []).forEach(g => { const k = (g.name || '') + '|' + (g.mobile || g.phone || ''); if (!seen.has(k)) { seen.add(k); gs.push({ ...g, ref: a.accNo }); } }));
     el._oldG = gs; if (!gs.length) return;
-    box.innerHTML = `<div class="alert alert-info" style="margin-top:8px">🤝 এই সদস্যের আগের জামিনদার আছে — এই একাউন্টে যোগ করবেন?${gs.map((g, i) => `<div class="og-it"><b>${esc(g.name || '')}</b> <small>📞 ${esc(g.mobile || g.phone || '-')} • ${esc(g.ref)}</small> ${UI.btn('➕ Add', `LoanForm.addOldG(this,${i})`, 'btn-success btn-sm')}</div>`).join('')}</div>`;
+    box.innerHTML = `<div class="alert alert-info" style="margin-top:8px">🤝 এই সদস্যের আগের জামিনদার আছে — এই একাউন্টে যোগ করবেন?${gs.map((g, i) => `<div class="og-it"><b>${esc(g.name || '')}</b> <small>📞 ${esc(g.mobile || g.phone || '-')} • ${esc(g.ref)}</small> ${UI.btn('Add', `LoanForm.addOldG(this,${i})`, 'btn-success btn-sm')}</div>`).join('')}</div>`;
   },
   addOldG(btn, i) {
     const el = btn.closest('.page'); const g = { ...el._oldG[i] }; delete g.ref; const sl = $('[data-sub="guarantor"]', el);
@@ -301,7 +301,7 @@ function loanSchedulePrint(acc) {
 
 App.page('loanOpen', {
   title: 'লোন এ্যাকাউন্ট ওপেনিং', icon: '💳',
-  render: () => { const fs = LoanForm.fields().filter(Boolean); const i = fs.findIndex(f => f.t === 'hr' && f.l.includes('টাকা প্রদান')); return UI.card('', '<div class="loan-wrap"><div class="loan-main"><div class="form-sep">👤 সদস্য ও ঋণের তথ্য</div>' + UI.grid(fs.slice(0, i), 3) + SubList.render('guarantor', '🤝 জামিনদার') + '<div class="oldguar"></div>' + UI.grid(fs.slice(i), 3) + '</div><div class="loan-side">' + MemberCard.html() + '</div></div>' + `<div class="actions">${UI.btn('✅ Open Loan Account', 'LoanOpen.save(this)', 'btn-success')}${UI.btn('📅 কিস্তি সূচী দেখুন', 'LoanOpen.preview()', 'btn-outline')}</div>`); },
+  render: () => { const fs = LoanForm.fields().filter(Boolean); const i = fs.findIndex(f => f.t === 'hr' && f.l.includes('টাকা প্রদান')); return UI.card('', '<div class="loan-wrap"><div class="loan-main"><div class="form-sep">👤 সদস্য ও ঋণের তথ্য</div>' + UI.grid(fs.slice(0, i), 3) + SubList.render('guarantor', '🤝 জামিনদার') + '<div class="oldguar"></div>' + UI.grid(fs.slice(i), 3) + '</div><div class="loan-side">' + MemberCard.html() + '</div></div>' + `<div class="actions">${UI.btn('Open Loan Account', 'LoanOpen.save(this)', 'btn-success')}${UI.btn('📅 কিস্তি সূচী দেখুন', 'LoanOpen.preview()', 'btn-outline')}</div>`); },
   init: async (el, p) => {
     await LoanForm.bind(el);
     if (p.proposal) {
@@ -337,7 +337,7 @@ const LoanOpen = {
 // ── ঋণ আবেদন / প্রস্তাব ──
 App.page('loanProposal', {
   title: 'ঋন আবেদন', icon: '📝',
-  render: () => UI.card('', UI.grid(LoanForm.fields({ proposal: true }), 3) + MemberCard.html() + SubList.render('guarantor', '🤝 জামিনদার') + '<div class="oldguar"></div>' + `<div class="actions">${UI.btn('✅ Submit Application', 'Proposal.save(this)', 'btn-success')}</div>`),
+  render: () => UI.card('', UI.grid(LoanForm.fields({ proposal: true }), 3) + MemberCard.html() + SubList.render('guarantor', '🤝 জামিনদার') + '<div class="oldguar"></div>' + `<div class="actions">${UI.btn('Submit Application', 'Proposal.save(this)', 'btn-success')}</div>`),
   init: el => LoanForm.bind(el, { proposal: true }),
 });
 const PROPOSAL_ST = ['Pending Review', 'Review Completed', 'Approved', 'Disbursed', 'Reject', 'Disbursed Cancel'];
@@ -365,8 +365,8 @@ ReportPage({
     rows = rows.filter(r => (!f.samity || r.samity === f.samity) && (!f.employee || r.foId === f.employee) && (!f.member || r.member === f.member) && (!f.status || r.status === f.status) && r.openDate >= f.from && r.openDate <= f.upto).sort((a, b) => a.openDate.localeCompare(b.openDate));
     const act = r => {
       const b = [];
-      if (r.status === 'Pending Review') b.push(UI.btn('✔ Review', `Proposal.setStatus('${r.id}','Review Completed')`, 'btn-outline btn-sm'));
-      if (['Pending Review', 'Review Completed'].includes(r.status)) b.push(UI.btn('✅ Approve', `Proposal.setStatus('${r.id}','Approved')`, 'btn-success btn-sm'), UI.btn('✖ Reject', `Proposal.setStatus('${r.id}','Reject')`, 'btn-danger btn-sm'));
+      if (r.status === 'Pending Review') b.push(UI.btn('Review', `Proposal.setStatus('${r.id}','Review Completed')`, 'btn-outline btn-sm'));
+      if (['Pending Review', 'Review Completed'].includes(r.status)) b.push(UI.btn('Approve', `Proposal.setStatus('${r.id}','Approved')`, 'btn-success btn-sm'), UI.btn('Reject', `Proposal.setStatus('${r.id}','Reject')`, 'btn-danger btn-sm'));
       if (r.status === 'Approved') b.push(UI.btn('💳 বিতরণ', `App.go('loanOpen',{proposal:'${r.id}'})`, 'btn-primary btn-sm'));
       return `<span class="list-actions no-print">${b.join('')}</span>`;
     };
@@ -377,7 +377,7 @@ ReportPage({
 // ── অন্যান্য এ্যাকাউন্ট ওপেনিং ──
 App.page('otherOpen', {
   title: 'অন্যান্য এ্যাকাউন্ট ওপেনিং', icon: '📁',
-  render: () => UI.card('', UI.grid([F.branch, { k: 'type', l: 'Account Type', t: 'select', req: 1, opts: [['', '------------'], ...OTHER_TYPES] }, { k: 'openDate', l: 'Account Opening Date', t: 'date', req: 1 }, { k: 'ref', l: 'Account ID (কর্মী/পরিচালক আইডি)', t: 'select' }, { k: 'title', l: 'Account Title', req: 1 }, { k: 'phone', l: 'Phone Number', req: 1 }, { k: 'address', l: 'Account Address', req: 1 }, { k: 'creditLimit', l: 'Credit Limit', t: 'number' }], 4) + `<div class="actions">${UI.btn('✅ Open New Account', 'OtherOpen.save(this)', 'btn-success')}</div>`)
+  render: () => UI.card('', UI.grid([F.branch, { k: 'type', l: 'Account Type', t: 'select', req: 1, opts: [['', '------------'], ...OTHER_TYPES] }, { k: 'openDate', l: 'Account Opening Date', t: 'date', req: 1 }, { k: 'ref', l: 'Account ID (কর্মী/পরিচালক আইডি)', t: 'select' }, { k: 'title', l: 'Account Title', req: 1 }, { k: 'phone', l: 'Phone Number', req: 1 }, { k: 'address', l: 'Account Address', req: 1 }, { k: 'creditLimit', l: 'Credit Limit', t: 'number' }], 4) + `<div class="actions">${UI.btn('Open New Account', 'OtherOpen.save(this)', 'btn-success')}</div>`)
     + UI.card('🔍 Search Account', '<div class="ol"></div>'),
   init: async el => {
     await Pick.branch(el, 'branch'); UI.el(el, 'openDate').value = await businessDate();
@@ -409,7 +409,7 @@ const OtherOpen = {
 // ── সঞ্চয়ের পরিমান নির্ধারন ──
 App.page('depInstUpdate', {
   title: 'সঞ্চয়ের পরিমান নির্ধারন (Update Deposit Installment)', icon: '✏️',
-  render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'account', l: 'Member Account', t: 'select', req: 1 }, { k: 'cur', l: 'বর্তমান কিস্তি', ro: 1 }, { k: 'instAmount', l: 'Installment Amount', t: 'number', req: 1 }], 3) + `<div class="actions">${UI.btn('✅ Update Installment', 'DepInst.save(this)', 'btn-success')}</div>`),
+  render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'account', l: 'Member Account', t: 'select', req: 1 }, { k: 'cur', l: 'বর্তমান কিস্তি', ro: 1 }, { k: 'instAmount', l: 'Installment Amount', t: 'number', req: 1 }], 3) + `<div class="actions">${UI.btn('Update Installment', 'DepInst.save(this)', 'btn-success')}</div>`),
   init: async el => { await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch'); await Pick.account(el, 'account', 'member', 'branch', { kind: 'dep' }); UI.el(el, 'account').addEventListener('change', async () => { const a = await Data.account(UI.el(el, 'account').value); UI.el(el, 'cur').value = a ? a.instAmount || 0 : ''; }); },
 });
 const DepInst = {
@@ -545,7 +545,7 @@ CrudPage({
 // ── এ্যাকাউন্ট লাভ সেটআপ ──
 App.page('accProfitRate', {
   title: 'এ্যাকাউন্ট লাভ সেটআপ (Deposit Account Profit)', icon: '📈',
-  render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'account', l: 'Accont Number', t: 'select', req: 1 }, { k: 'cur', l: 'বর্তমান হার', ro: 1 }, { k: 'date', l: 'Effective Date', t: 'date', req: 1 }, { k: 'rate', l: 'Profit Rate', t: 'number', req: 1 }], 3) + `<div class="actions">${UI.btn('✅ Set Profit Rate', 'AccRate.save(this)', 'btn-success')}</div>`) + UI.card('Search Profit Rate', '<div class="rl"></div>'),
+  render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'account', l: 'Accont Number', t: 'select', req: 1 }, { k: 'cur', l: 'বর্তমান হার', ro: 1 }, { k: 'date', l: 'Effective Date', t: 'date', req: 1 }, { k: 'rate', l: 'Profit Rate', t: 'number', req: 1 }], 3) + `<div class="actions">${UI.btn('Set Profit Rate', 'AccRate.save(this)', 'btn-success')} ${UI.btn('Search Profit Rate', 'EK.show(this)', 'btn-info')}</div>`) + '<div class="ek-rl" style="display:none">' + UI.card('', '<div class="rl"></div>') + '</div>',
   init: async el => {
     await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch'); await Pick.account(el, 'account', 'member', 'branch', { kind: 'dep' });
     UI.el(el, 'date').value = await businessDate();

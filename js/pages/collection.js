@@ -94,7 +94,7 @@ const CollGrid = {
 // ── শীট পোস্টিং ──
 App.page('sheetPosting', {
   title: 'শীট পোস্টিং (সমিতি কালেকশন)', icon: '🧾',
-  render: () => `<div class="report-filter">${UI.grid([F.branch, { ...F.samity, req: 1 }, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }], 4)}<div class="filter-actions">${UI.btn('🔍 Search Details', 'Sheet.load(this)')}${UI.btn('✅ Submit', 'Sheet.submit(this)', 'btn-success')}</div></div><div class="card sheet"></div>`,
+  render: () => `<div class="report-filter">${UI.grid([F.branch, { ...F.samity, req: 1 }, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }], 4)}<div class="filter-actions">${UI.btn('Search Details', 'Sheet.load(this)')}${UI.btn('Submit', 'Sheet.submit(this)', 'btn-success')}</div></div><div class="card sheet"></div>`,
   init: async el => { await Pick.branch(el, 'branch'); await Pick.samity(el, 'samity', 'branch', { all: false }); UI.el(el, 'date').value = await businessDate(); UI.el(el, 'date').readOnly = !canBackDate(); UI.el(el, 'samity').addEventListener('change', () => { if (UI.el(el, 'samity').value) Sheet.load(); }); },
 });
 const Sheet = {
@@ -104,7 +104,7 @@ const Sheet = {
       const f = UI.get(el); if (!f.samity) fail('সমিতি বাছাই করুন');
       const rows = await collectRows(f.samity, f.date); const mem = await Data.memberIdx(f.branch);
       el._rows = rows;
-      $('.sheet', el).innerHTML = CollGrid.html(rows, mem) + `<div class="actions">${UI.btn('✅ Submit', 'Sheet.submit(this)', 'btn-success')}</div>`;
+      $('.sheet', el).innerHTML = CollGrid.html(rows, mem) + `<div class="actions">${UI.btn('Submit', 'Sheet.submit(this)', 'btn-success')}</div>`;
       CollGrid.bind($('.sheet', el));
     });
   },
@@ -134,7 +134,7 @@ const Sheet = {
 // ── সদস্য ভিত্তিক কালেকশন ──
 App.page('memberColl', {
   title: 'সদস্য ভিত্তিক কালেকশন', icon: '👤',
-  render: () => `<div class="report-filter">${UI.grid([F.branch, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }], 4)}<div class="filter-actions">${UI.btn('🔍 Search Details', 'MemColl.load(this)')}${UI.btn('✅ Submit', 'MemColl.submit(this)', 'btn-success')}</div></div><div class="card mc"></div>`,
+  render: () => `<div class="report-filter">${UI.grid([F.branch, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }], 4)}<div class="filter-actions">${UI.btn('Search Details', 'MemColl.load(this)')}${UI.btn('Submit', 'MemColl.submit(this)', 'btn-success')}</div></div><div class="card mc"></div>`,
   init: async el => { await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch'); UI.el(el, 'date').value = await businessDate(); UI.el(el, 'date').readOnly = !canBackDate(); UI.el(el, 'member').addEventListener('picked', () => MemColl.load()); },
 });
 const MemColl = {
@@ -145,7 +145,7 @@ const MemColl = {
       const m = (await Data.members(f.branch)).find(x => x.id === f.member); if (!m) fail('সদস্য পাওয়া যায়নি');
       const rows = await collectRows(m.samity, f.date, f.member); const mem = await Data.memberIdx(f.branch);
       el._rows = rows;
-      $('.mc', el).innerHTML = MemberCard.html() + CollGrid.html(rows, mem) + `<div class="actions">${UI.btn('✅ Submit', 'MemColl.submit(this)', 'btn-success')}</div>`;
+      $('.mc', el).innerHTML = MemberCard.html() + CollGrid.html(rows, mem) + `<div class="actions">${UI.btn('Submit', 'MemColl.submit(this)', 'btn-success')}</div>`;
       MemberCard.show($('.mc .mcard', el), f.member, f.branch); CollGrid.bind($('.mc', el));
     });
   },
@@ -176,7 +176,7 @@ ReportPage({
 // ── নতুন পাসবুক বিক্রয় ──
 App.page('passbookIssue', {
   title: 'নতুন পাসবুক বিক্রয়', icon: '📘',
-  render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'book', l: 'Book Number', req: 1 }, { k: 'fee', l: 'Fee Amount', t: 'number' }, { k: 'date', l: 'Issue Date', t: 'date', req: 1 }, { k: 'docNo', l: 'Document Number' }], 3) + `<div class="actions">${UI.btn('📘 Issue Book', 'Passbook.save(this)', 'btn-success')}</div>`) + UI.card('Search Book', '<div class="tl"></div>'),
+  render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'book', l: 'Book Number', req: 1 }, { k: 'fee', l: 'Fee Amount', t: 'number' }, { k: 'date', l: 'Issue Date', t: 'date', req: 1 }, { k: 'docNo', l: 'Document Number' }], 3) + `<div class="actions">${UI.btn('Issue Book', 'Passbook.save(this)', 'btn-success')} ${UI.btn('Search Book', 'EK.show(this)', 'btn-info')}</div>`) + '<div class="ek-rl" style="display:none">' + UI.card('', '<div class="tl"></div>') + '</div>',
   init: async el => { await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch'); UI.el(el, 'date').value = await businessDate(); UI.el(el, 'member').addEventListener('picked', () => Passbook.list(el)); Passbook.list(el); },
 });
 const Passbook = {
@@ -204,7 +204,7 @@ const Passbook = {
 App.page('collReceive', {
   title: 'কালেকশন গ্রহণ (Collection Receive)', icon: '🤝',
   render: () => UI.card('', UI.grid([F.branch, { k: 'user', l: 'কালেকশনকারী ইউজার/ফিল্ড অফিসার', t: 'select', req: 1 }, { k: 'date', l: 'Collection Date', t: 'date', req: 1 }, { k: 'collected', l: 'সিস্টেমে আদায় (নগদ)', ro: 1 }, { k: 'received', l: 'আগে গ্রহণ', ro: 1 }, { k: 'amount', l: 'Collection Amount (এখন গ্রহণ)', t: 'number', req: 1 }, { k: 'docNo', l: 'Document Number' }, { k: 'comments', l: 'Comments', t: 'textarea' }], 4)
-    + `<div class="mini">ফিল্ড অফিসার মাঠে যা আদায় করে সিস্টেমে পোস্ট করেছেন, সেই নগদ শাখায় বুঝে নেওয়ার রেকর্ড। পার্থক্য থাকলে রিপোর্টে দেখাবে।</div><div class="actions">${UI.btn('✅ Collection Receive', 'CollRcv.save(this)', 'btn-success')}</div>`) + UI.card('Search Collection Receive', '<div class="tl"></div>'),
+    + `<div class="mini">ফিল্ড অফিসার মাঠে যা আদায় করে সিস্টেমে পোস্ট করেছেন, সেই নগদ শাখায় বুঝে নেওয়ার রেকর্ড। পার্থক্য থাকলে রিপোর্টে দেখাবে।</div><div class="actions">${UI.btn('Collection Receive', 'CollRcv.save(this)', 'btn-success')} ${UI.btn('Search Collection Receive', 'EK.show(this)', 'btn-info')}</div>`) + '<div class="ek-rl" style="display:none">' + UI.card('', '<div class="tl"></div>') + '</div>',
   init: async el => {
     await Pick.branch(el, 'branch'); UI.el(el, 'date').value = await businessDate();
     const us = (await db.collection('users').get()).docs.map(d => ({ id: d.id, ...d.data() }));

@@ -49,7 +49,7 @@ App.page('accTxn', {
   render: () => UI.card('', UI.grid([F.branch, { k: 'tt', l: 'Transaction Type', t: 'select', req: 1, opts: [['', '----------'], ...REF.ACC_TT.map(x => [x[0], x[1]])] }, { k: 'method', l: 'Receipt/Payment Method', t: 'select', req: 1 }, { k: 'account', l: 'Transaction Account', t: 'select', req: 1 },
     { k: 'balance', l: 'Current Balance', ro: 1 }, { k: 'amount', l: 'Transaction Amount', t: 'number', req: 1 }, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }, { k: 'billId', l: 'Bill ID' }, { k: 'docNo', l: 'Document Number (Bank Cheque)' },
     { k: 'comments', l: 'Comments', t: 'textarea' }, { k: 'payerPhone', l: 'Receiver/Payer Phone' }, { k: 'payerName', l: 'Receiver/Payer Name' }, { k: 'file', l: 'Upload Documents', t: 'file', accept: 'image/*' }], 4)
-    + `<div class="actions">${UI.btn('✅ Post Transaction', 'AccTxn.save(this)', 'btn-success')}</div>`) + UI.card('সাম্প্রতিক লেনদেন', '<div class="tl"></div>'),
+    + `<div class="actions">${UI.btn('Post Transaction', 'AccTxn.save(this)', 'btn-success')}</div>`) + UI.card('সাম্প্রতিক লেনদেন', '<div class="tl"></div>'),
   init: async el => {
     await Pick.branch(el, 'branch'); await Pick.ledger(UI.el(el, 'method'), l => l.cashBank && l.leaf); UI.el(el, 'method').value = REF.GL.cash;
     UI.el(el, 'date').value = await businessDate();
@@ -83,7 +83,7 @@ App.page('ledgerTxn', {
   render: () => UI.card('', UI.grid([F.branch, { k: 'tt', l: 'Transaction Type', t: 'select', req: 1, opts: [['', '----------'], ...REF.LEDGER_TT.map(x => [x[0], x[1]])] }, { k: 'ledger', l: 'Transaction Ledger', t: 'select', req: 1 }, { k: 'balance', l: 'Current Balance', ro: 1 },
     { k: 'amount', l: 'Transaction Amount', t: 'number', req: 1 }, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }, { k: 'docNo', l: 'Document Number (Bank Cheque)' }, { k: 'comments', l: 'Comments', t: 'textarea' },
     { k: 'payerPhone', l: 'Receiver/Payer Phone' }, { k: 'payerName', l: 'Receiver/Payer Name' }, { k: 'file', l: 'Upload Documents', t: 'file' }], 4)
-    + `<div class="actions">${UI.btn('✅ Post Transaction', 'LedgerTxn.save(this)', 'btn-success')}</div>`) + UI.card('আজকের লেজার লেনদেন', '<div class="vl"></div>'),
+    + `<div class="actions">${UI.btn('Post Transaction', 'LedgerTxn.save(this)', 'btn-success')}</div>`) + UI.card('আজকের লেজার লেনদেন', '<div class="vl"></div>'),
   init: async el => {
     await Pick.branch(el, 'branch'); UI.el(el, 'date').value = await businessDate();
     UI.el(el, 'tt').addEventListener('change', async () => {
@@ -122,8 +122,8 @@ function MultiLinePage(id, title, contra) {
       + `<div class="card-title">লাইন যোগ করুন</div>` + UI.grid(contra
         ? [{ k: 'drGl', l: 'Debit Ledger', t: 'select' }, { k: 'crGl', l: 'Credit Ledger', t: 'select' }, { k: 'amt', l: 'Transaction Amount', t: 'number' }, { k: 'memo', l: 'Comments' }]
         : [{ k: 'side', l: 'Transaction Type', t: 'select', opts: [['dr', 'Debit'], ['cr', 'Credit']] }, { k: 'gl', l: 'Transaction Ledger', t: 'select' }, { k: 'acc', l: 'Transaction Account (ঐচ্ছিক)', t: 'select' }, { k: 'amt', l: 'Transaction Amount', t: 'number' }, { k: 'memo', l: 'Comments' }], 4)
-      + `<div class="actions">${UI.btn('➕ Add Item', `ML.add('${id}',${contra})`, 'btn-outline')}${contra ? '' : UI.btn('🔁 Add Recurrent Bill', `ML.saveBill('${id}',this)`, 'btn-outline')}${UI.btn('🗑️ Clear All', `ML.clear('${id}')`, 'btn-secondary')}</div><div class="ml-lines" style="margin-top:8px"></div>
-      <div class="kv"><div>Total Debit<b class="tdr">0</b></div><div>Total Credit<b class="tcr">0</b></div></div><div class="actions">${UI.btn('✅ Submit Voucher', `ML.submit('${id}',this)`, 'btn-success')}</div>`)
+      + `<div class="actions">${UI.btn('Add Item', `ML.add('${id}',${contra})`, 'btn-outline')}${contra ? '' : UI.btn('Add Recurrent Bill', `ML.saveBill('${id}',this)`, 'btn-outline')}${UI.btn('Clear All', `ML.clear('${id}')`, 'btn-secondary')}</div><div class="ml-lines" style="margin-top:8px"></div>
+      <div class="kv"><div>Total Debit<b class="tdr">0</b></div><div>Total Credit<b class="tcr">0</b></div></div><div class="actions">${UI.btn('Submit Voucher', `ML.submit('${id}',this)`, 'btn-success')}</div>`)
       + (contra ? UI.card('📘 Accounting Entry Help / হিসাব এন্ট্রি সহায়তা', UI.table([{ h: 'Account Type / অ্যাকাউন্টের ধরন', f: r => r[0] }, { h: 'Example / উদাহরণ', f: r => r[1] }, { h: 'If Increased / বৃদ্ধি হলে', f: r => r[2] }, { h: 'If Decreased / হ্রাস হলে', f: r => r[3] }], [['Asset / সম্পদ', 'Cash, Bank, Loan', 'Debit', 'Credit'], ['Liability / দায়', 'Savings, Payable', 'Credit', 'Debit'], ['Income / আয়', 'Service Charge, Fee', 'Credit', 'Debit'], ['Expense / ব্যয়', 'Salary, Rent', 'Debit', 'Credit']])) : ''),
     init: async el => {
       await Pick.branch(el, 'branch'); UI.el(el, 'date').value = await businessDate(); el._lines = [];
@@ -187,7 +187,7 @@ const ML = {
 function AuthPage(id, title, types) {
   App.page(id, {
     title, icon: '🛂',
-    render: () => `<div class="report-filter">${UI.grid([{ ...F.branch }, { k: 'user', l: 'User ID', t: 'select' }, types === 'member' ? { k: 'atype', l: 'Transaction Type', t: 'select', opts: [['', '----------'], ['Member Admission', 'Member Admission'], ['Deposit Payment', 'Deposit Payment'], ['Deposit Receive', 'Deposit Receive']] } : null].filter(Boolean), 4)}<div class="filter-actions">${UI.btn('🔍 Search Transaction', `AuthL.load('${id}',this)`)}</div></div><div class="card al"></div>`,
+    render: () => `<div class="report-filter">${UI.grid([{ ...F.branch }, { k: 'user', l: 'User ID', t: 'select' }, types === 'member' ? { k: 'atype', l: 'Transaction Type', t: 'select', opts: [['', '----------'], ['Member Admission', 'Member Admission'], ['Deposit Payment', 'Deposit Payment'], ['Deposit Receive', 'Deposit Receive']] } : null].filter(Boolean), 4)}<div class="filter-actions">${UI.btn('Search Transaction', `AuthL.load('${id}',this)`)}</div></div><div class="card al"></div>`,
     init: async el => { await Pick.branch(el, 'branch'); const us = (await db.collection('users').get()).docs.map(d => ({ id: d.id, ...d.data() })); UI.fill(UI.el(el, 'user'), us, u => u.id, u => u.userId || u.email, '— সব —'); el._types = types; AuthL.load(id); },
   });
 }
@@ -202,7 +202,7 @@ const AuthL = {
       rows = rows.filter(v => el._types === 'ais' ? v.authType === 'AIS' : v.authType !== 'AIS').filter(v => !f.atype || v.authType === f.atype);
       const lm = await Data.ledgerMap();
       $('.al', el).innerHTML = UI.table([{ h: 'Branch Code', f: v => v.branch }, { h: 'Transaction Type', f: v => esc(v.authType || v.type) }, { h: 'Transaction Date', f: v => fmtD(v.date) }, { h: 'Details', f: v => esc(v.narration) + '<div class="mini">' + v.lines.map(l => `${esc((lm[l.gl] || {}).name || l.gl)} ${l.dr ? 'Dr ' + amt(l.dr) : 'Cr ' + amt(l.cr)}`).join(' | ') + '</div>' }, { h: 'Amount', f: v => amt(v.total), r: 1 }, { h: 'Entered By', f: v => v.byName }, { h: 'Entry Time', f: v => tsStr(v.on) },
-        { h: 'Action', f: v => `<span class="list-actions">${UI.btn('✅ Approve', `AuthL.approve('${id}','${v.vno}',this)`, 'btn-success btn-sm')}${UI.btn('✖ Reject', `AuthL.reject('${id}','${v.vno}',this)`, 'btn-danger btn-sm')}</span>` }], rows, { empty: 'অনুমোদনের অপেক্ষায় কিছু নেই' });
+        { h: 'Action', f: v => `<span class="list-actions">${UI.btn('Approve', `AuthL.approve('${id}','${v.vno}',this)`, 'btn-success btn-sm')}${UI.btn('Reject', `AuthL.reject('${id}','${v.vno}',this)`, 'btn-danger btn-sm')}</span>` }], rows, { empty: 'অনুমোদনের অপেক্ষায় কিছু নেই' });
     });
   },
   approve(id, vno, btn) {
@@ -289,7 +289,7 @@ ReportPage({
 App.page('glManage', {
   title: 'Manage General Ledger', icon: '📚',
   render: () => UI.card('', UI.grid([{ k: 'name', l: 'Ledger Name', req: 1 }, { k: 'repCode', l: 'Reporting Ledger Code' }, { k: 'serial', l: 'Reporting Order Serial', t: 'number' }, { k: 'parent', l: 'Group Ledger', t: 'select', req: 1 }, { k: 'isGroup', l: 'Group Ledger (হেডিং)', t: 'checkbox' }, { k: 'cashBank', l: 'Cash/Bank লেজার', t: 'checkbox' }], 3)
-    + `<div class="actions">${UI.btn('✅ Create New Ledger', 'GLM.save(this)', 'btn-success')}${UI.btn('🖨️ Print COA', 'GLM.print()', 'btn-outline')}</div>`) + UI.card('Search Ledger', `<input id="glq" placeholder="নাম/কোড" oninput="GLM.list()" class="full" style="margin-bottom:8px"><div class="gl"></div>`),
+    + `<div class="actions">${UI.btn('Create New Ledger', 'GLM.save(this)', 'btn-success')} ${UI.btn('Search Ledger', 'EK.show(this)', 'btn-info')} ${UI.btn('Print COA', 'GLM.print()', 'btn-outline')}</div>`) + '<div class="ek-rl" style="display:none">' + UI.card('', `<input id="glq" placeholder="নাম/কোড" oninput="GLM.list()" class="full" style="margin-bottom:8px"><div class="gl"></div>`) + '</div>',
   init: async el => { await Pick.ledger(UI.el(el, 'parent'), l => !l.leaf); GLM.list(); },
 });
 const GLM = {

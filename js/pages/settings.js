@@ -170,7 +170,7 @@ function SamityChangePage(id, title, field, label, optsFn) {
     render: () => UI.card('', UI.grid([
       { k: 'branch', l: 'Branch Name', t: 'select', req: 1 }, { k: 'samity', l: 'Samity Name', t: 'select', req: 1 }, { k: 'date', l: 'Effective From Date', t: 'date', req: 1 },
       { k: 'current', l: 'Current ' + label, ro: 1 }, { k: 'newVal', l: 'New ' + label, t: 'select', req: 1 }, { k: 'comments', l: 'Comments', req: 1 },
-    ], 3) + `<div class="actions">${UI.btn('✅ Submit', `SamityChange.save('${id}','${field}',this)`, 'btn-success')}</div>`) + UI.card('পরিবর্তনের ইতিহাস', '<div class="hist"></div>'),
+    ], 3) + `<div class="actions">${UI.btn('Submit', `SamityChange.save('${id}','${field}',this)`, 'btn-success')}</div>`) + UI.card('পরিবর্তনের ইতিহাস', '<div class="hist"></div>'),
     init: async el => {
       await Pick.branch(el, 'branch'); await Pick.samity(el, 'samity', 'branch', { all: false });
       await optsFn(el);
@@ -205,7 +205,7 @@ SamityChangePage('samityFoChange', 'সমিতি/সেন্টার ফি
 App.page('branchSamityTransfer', {
   title: 'শাখা সমিতি স্থানান্তর', icon: '🔀',
   render: () => UI.card('', UI.grid([{ k: 'branch', l: 'Present Branch Name', t: 'select', req: 1 }, { k: 'samity', l: 'Samity Name', t: 'select', req: 1 }, { k: 'toBranch', l: 'Transfer to Branch', t: 'select', req: 1 }], 3)
-    + `<div class="alert alert-warning">সমিতির সব সদস্য, একাউন্ট ও ব্যালেন্স নতুন শাখায় যাবে। হিসাব (GL) আন্তঃ শাখা লেজার দিয়ে স্থানান্তর হবে।</div><div class="actions">${UI.btn('🔀 Submit Transfer', 'BranchSamityTransfer.run(this)', 'btn-danger')}</div>`),
+    + `<div class="alert alert-warning">সমিতির সব সদস্য, একাউন্ট ও ব্যালেন্স নতুন শাখায় যাবে। হিসাব (GL) আন্তঃ শাখা লেজার দিয়ে স্থানান্তর হবে।</div><div class="actions">${UI.btn('Submit Transfer', 'BranchSamityTransfer.run(this)', 'btn-danger')}</div>`),
   init: async el => { await Pick.branch(el, 'branch'); await Pick.samity(el, 'samity', 'branch', { all: false }); const bs = await Data.branches(); UI.fill(UI.el(el, 'toBranch'), bs, b => b.code, b => b.code + ' - ' + b.name); },
 });
 const BranchSamityTransfer = {
@@ -252,8 +252,8 @@ App.page('holidaySetup', {
   title: 'ছুটির দিন সেটআপ', icon: '🏖️',
   render: () => UI.card('', UI.grid([{ k: 'date', l: 'Holiday Date', t: 'date' }, { k: 'from', l: 'From Date', t: 'date' }, { k: 'upto', l: 'Upto Date', t: 'date' }, { k: 'details', l: 'Holiday Details', req: 1 }], 4)
     + `<div class="fgrid c2"><div class="form-group"><label>Branch Name (খালি = সব শাখা)</label><select data-k="branches" multiple size="5"></select></div><div class="form-group"><label>Samity Name (খালি = সব সমিতি)</label><select data-k="samities" multiple size="5"></select></div></div>
-    <div class="actions">${UI.btn('➕ Add New Holiday', 'Holiday.save(this)', 'btn-success')}</div><div class="mini">একক তারিখ অথবা From–Upto দিন। শুক্রবার সাপ্তাহিক ছুটি হিসেবে আলাদা যোগ করতে হবে না।</div>`)
-    + UI.card('ছুটির তালিকা', `<div class="actions"><input type="number" id="hYear" value="${new Date().getFullYear()}" style="width:90px">${UI.btn('🔍 Search Holiday', 'Holiday.list()')}</div><div class="hl" style="margin-top:8px"></div>`),
+    <div class="actions">${UI.btn('Add New Holiday', 'Holiday.save(this)', 'btn-success')}</div><div class="mini">একক তারিখ অথবা From–Upto দিন। শুক্রবার সাপ্তাহিক ছুটি হিসেবে আলাদা যোগ করতে হবে না।</div>`)
+    + UI.card('ছুটির তালিকা', `<div class="actions"><input type="number" id="hYear" value="${new Date().getFullYear()}" style="width:90px">${UI.btn('Search Holiday', 'Holiday.list()')}</div><div class="hl" style="margin-top:8px"></div>`),
   init: async el => {
     const bs = await Data.branches(); const bsel = UI.el(el, 'branches'); bsel.innerHTML = UI.opts(bs, b => b.code, b => b.code + '-' + b.name, null);
     const loadS = async () => { const codes = [...bsel.selectedOptions].map(o => o.value); const all = []; for (const c of (codes.length ? codes : [App.branch])) all.push(...await Data.samities(c)); UI.el(el, 'samities').innerHTML = UI.opts(all, s => s.code, s => s.code + '-' + s.name, null); };
@@ -293,7 +293,7 @@ CrudPage({
 App.page('dayClose', {
   title: 'ক্লোজিং বিজনেস ডে', icon: '🔒',
   render: () => UI.card('', UI.grid([{ k: 'branch', l: 'Branch Name', t: 'select', req: 1 }, { k: 'cur', l: 'Current Business Date', t: 'date', ro: 1 }, { k: 'next', l: 'Next Business Date', t: 'date', ro: 1 }], 3)
-    + `<div class="alert alert-info">দিন বন্ধ করলে বিজনেস ডেট পরের কর্মদিবসে যাবে (ছুটি বাদ দিয়ে)। অনুমোদনের অপেক্ষায় থাকা লেনদেন থাকলে দিন বন্ধ হবে না।</div><div class="actions">${UI.btn('🔒 Start Closing', 'DayClose.run(this)', 'btn-danger')}</div>`)
+    + `<div class="alert alert-info">দিন বন্ধ করলে বিজনেস ডেট পরের কর্মদিবসে যাবে (ছুটি বাদ দিয়ে)। অনুমোদনের অপেক্ষায় থাকা লেনদেন থাকলে দিন বন্ধ হবে না।</div><div class="actions">${UI.btn('Start Closing', 'DayClose.run(this)', 'btn-danger')}</div>`)
     + UI.card('ক্লোজিং লগ', '<div class="dl"></div>'),
   init: async el => {
     await Pick.branch(el, 'branch');

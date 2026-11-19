@@ -6,7 +6,7 @@
 App.page('ibRequest', {
   title: 'তহবিল স্থানান্তর অনুরোধ', icon: '📨',
   render: () => UI.card('', UI.grid([{ k: 'branch', l: 'গ্রাহক শাখা (Receiver)', t: 'select', req: 1 }, { k: 'sender', l: 'Sender Branch', t: 'select', req: 1 }, { k: 'date', l: 'Transaction Date', t: 'date', ro: 1 }, { k: 'ledger', l: 'Transaction Ledger (গ্রাহকের নগদ/ব্যাংক)', t: 'select', req: 1 }, { k: 'amount', l: 'Transaction Amount', t: 'number', req: 1 }, { k: 'comments', l: 'Comments', req: 1 }], 3)
-    + `<div class="mini">অনুরোধ পাঠানোর পর প্রেরক শাখা "স্থানান্তর অনুরোধের তালিকা" থেকে Approve করলে দুই শাখার হিসাবে পোস্ট হবে।</div><div class="actions">${UI.btn('📨 Post Transaction', 'IB.request(this)', 'btn-success')}</div>`),
+    + `<div class="mini">অনুরোধ পাঠানোর পর প্রেরক শাখা "স্থানান্তর অনুরোধের তালিকা" থেকে Approve করলে দুই শাখার হিসাবে পোস্ট হবে।</div><div class="actions">${UI.btn('Post Transaction', 'IB.request(this)', 'btn-success')}</div>`),
   init: async el => {
     await Pick.branch(el, 'branch'); const bs = await Data.branches(); UI.fill(UI.el(el, 'sender'), bs, b => b.code, b => b.code + ' - ' + b.name);
     await Pick.ledger(UI.el(el, 'ledger'), l => l.cashBank && l.leaf); UI.el(el, 'ledger').value = REF.GL.cash;
@@ -54,7 +54,7 @@ ReportPage({
   filters: [{ k: 'receiver', l: 'Receiver Branch', t: 'select' }, { k: 'sender', l: 'Sender Branch', t: 'select' }, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, { k: 'status', l: 'Transaction Status', t: 'select', opts: [['', '-------------'], ...['Approve Pending', 'Approve Completed', 'Rejected', 'Authorization Cancel'].map(s => [s, s])] }],
   init: async (el, f) => { const bs = await Data.branches(); ['receiver', 'sender'].forEach(k => UI.fill(UI.el(f, k), bs, b => b.code, b => b.code + ' - ' + b.name, '— সব —')); setTimeout(() => ReportPage.run('ibList'), 0); },
   run: async f => ({ landscape: true, noSig: true, html: UI.table([{ h: 'Receiver Branch', f: r => r.receiver }, { h: 'Sender Branch', f: r => r.sender }, { h: 'Transaction ID', f: r => r.id }, { h: 'Date', f: r => fmtD(r.date) }, { h: 'Amount', f: r => amt(r.amount), r: 1, sum: 1, v: r => r.amount }, { h: 'Status', f: r => `<span class="tag">${r.status}</span>` }, { h: 'Request By', f: r => r.by }, { h: 'Authorized By', f: r => r.authBy || '' }, { h: 'Cancel By', f: r => r.cancelBy || '' }, { h: 'Cancel Reason', f: r => esc(r.cancelReason || '') },
-    { h: 'Action', f: r => `<span class="list-actions no-print">${r.status === 'Approve Pending' ? UI.btn('✅ Approve', `IB.approve('${r.id}',this)`, 'btn-success btn-sm') : ''}${['Approve Pending', 'Approve Completed'].includes(r.status) ? UI.btn('✖', `IB.reject('${r.id}',this)`, 'btn-danger btn-sm') : ''}</span>` }], await IB.rows(f)) }),
+    { h: 'Action', f: r => `<span class="list-actions no-print">${r.status === 'Approve Pending' ? UI.btn('Approve', `IB.approve('${r.id}',this)`, 'btn-success btn-sm') : ''}${['Approve Pending', 'Approve Completed'].includes(r.status) ? UI.btn('✖', `IB.reject('${r.id}',this)`, 'btn-danger btn-sm') : ''}</span>` }], await IB.rows(f)) }),
 });
 ReportPage({
   id: 'rptIbBalance', title: 'শাখা অনুযায়ী প্রাপ্তি প্রদান (Inter Branch Balance)', icon: '⚖️',

@@ -71,7 +71,7 @@ const Mig = {
     return UI.card(title, UI.grid(fields, 4)
       + `<div class="mig-up"><label class="mig-zone">📎 <span class="mig-fname">Attach Excel</span><small>xls, xlsx</small><input type="file" data-k="excel" accept=".xls,.xlsx,.csv" hidden onchange="this.closest('.mig-zone').querySelector('.mig-fname').textContent=this.files.length?this.files[0].name:'Attach Excel';this.closest('.mig-zone').classList.toggle('on',this.files.length>0)"></label>
       <div class="filter-actions">${btns}</div></div>
-      <div class="mig-map" hidden><div class="form-sep">Mapping Excel Data</div><table class="tbl mig-mtbl"><thead><tr><th>Excel Column</th><th>Migration Column</th></tr></thead><tbody class="mig-map-body"></tbody></table><div class="actions">${UI.btn('⚙️ Process Excel File', model, 'btn-success')}</div></div>`);
+      <div class="mig-map" hidden><div class="form-sep">Mapping Excel Data</div><table class="tbl mig-mtbl"><thead><tr><th>Excel Column</th><th>Migration Column</th></tr></thead><tbody class="mig-map-body"></tbody></table><div class="actions">${UI.btn('Process Excel File', model, 'btn-success')}</div></div>`);
   },
 };
 
@@ -88,14 +88,14 @@ const BAL_NUM = ['n', 'inst', 'loan', 'down', 'rate', 'recv', 'gs', 'ss'];
 App.page('balMigration', {
   title: 'Balance Migrations', icon: '🔁',
   render: () => Mig.form('Balance Migrations', [{ k: 'branch', l: 'Branch Name', t: 'select' }, { k: 'samity', l: 'Samity Name', t: 'select' }, { k: 'txDate', l: 'Transaction Date', t: 'date', req: 1 }, { k: 'addMembers', l: 'Add Members', t: 'select', req: 1, opts: [['Y', 'Yes'], ['N', 'No']] }],
-    UI.btn('🔍 Search', 'BalMig.search(this)') + UI.btn('📤 Upload Excel File', 'BalMig.upload(this)', 'btn-outline'), 'BalMig.process(this)')
+    UI.btn('Search', 'BalMig.search(this)') + UI.btn('Upload Excel File', 'BalMig.upload(this)', 'btn-outline'), 'BalMig.process(this)')
     + UI.card('', Mig.head(null, 'Balance Migration Data', 'Red rows need a loan type, opening date, and frequency when the loan amount is entered, or they contain a negative amount.')
       + `<div class="mig-strip">${[['inst', 'Inst Amount'], ['loan', 'Loan Amount'], ['down', 'Down Payment'], ['tl', 'Total Loan'], ['recv', 'Total Receive'], ['due', 'Total Due'], ['gs', 'General Savings'], ['ss', 'Security Savings']].map(([k, l]) => `<div><small>${l}</small><b data-s="${k}">0.00</b></div>`).join('')}</div>
       <div class="mig-grid"><table class="tbl mig-tbl"><thead><tr><th colspan="2">Member</th><th colspan="12">Loan Information</th><th colspan="2">Deposit Information</th><th>Action</th></tr>
       <tr><th class="mig-sid">ID</th><th class="mig-sname">Name</th><th>Loan ACType</th><th>OpeningDate</th><th>No OfInst</th><th>InstFreq</th><th>InstAmount</th><th>Inst FromDate</th><th>LoanAmount</th><th>DownPayment</th><th>ProfitRate</th><th>TotalLoan</th><th>TotalReceive</th><th>TotalDue</th><th>GeneralSavings</th><th>SecuritySavings</th><th>Action</th></tr></thead>
       <tbody class="mig-body"><tr class="mig-empty"><td colspan="17">Search a samity to load balance migration data.</td></tr></tbody>
       <tfoot><tr><th colspan="6" style="text-align:right">Total:</th><th data-t="inst">0.00</th><th></th><th data-t="loan">0.00</th><th data-t="down">0.00</th><th></th><th data-t="tl">0.00</th><th data-t="recv">0.00</th><th data-t="due">0.00</th><th data-t="gs">0.00</th><th data-t="ss">0.00</th><th></th></tr></tfoot></table></div>
-      <div class="actions">${UI.btn('✅ Submit Balance Migration', 'BalMig.submit(this)', 'btn-success')}</div>`),
+      <div class="actions">${UI.btn('Submit Balance Migration', 'BalMig.submit(this)', 'btn-success')}</div>`),
   async init(el) {
     if (!isAdmin()) { el.innerHTML = '<div class="card"><div class="alert alert-danger">শুধু Super Admin Balance Migration করতে পারবেন।</div></div>'; return; }
     el._model = BAL_MODEL; el._rows = [];
@@ -270,12 +270,12 @@ const MEM_PRODUCTS = Object.entries(REF.DEP).map(([c, d]) => [c, d.name]);
 App.page('memMigration', {
   title: 'Member Migrations', icon: '👥',
   render: () => Mig.form('Member Migrations', [{ k: 'branch', l: 'Branch Name', t: 'select' }, { k: 'samity', l: 'Samity Name', t: 'select' }, { k: 'rows', l: 'Number of Member', t: 'number' }],
-    UI.btn('🔍 Search', 'MemMig.search(this)') + UI.btn('➕ Create Blank Rows', 'MemMig.createRows(this)', 'btn-outline') + UI.btn('📤 Upload Excel File', 'MemMig.upload(this)', 'btn-outline'), 'MemMig.process(this)')
+    UI.btn('Search', 'MemMig.search(this)') + UI.btn('Create Blank Rows', 'MemMig.createRows(this)', 'btn-outline') + UI.btn('Upload Excel File', 'MemMig.upload(this)', 'btn-outline'), 'MemMig.process(this)')
     + UI.card('', Mig.head(null, 'Member Migration Data', 'Red rows need a member name, samity, gender, father or husband name, mobile, present address, and admission date.')
       + `<div class="mig-grid"><table class="tbl mig-tbl"><thead><tr><th colspan="3">Member</th><th colspan="7">Personal</th><th colspan="2">Product</th><th>Action</th></tr>
       <tr><th class="mig-ssl">SL</th><th class="mig-sid">ID</th><th class="mig-sname">Name</th><th>Somity</th><th>Gender</th><th>Father's/Husband's Name</th><th>Mobile</th><th>Present Address</th><th>Admission Date</th><th>NID</th><th>Primary Product</th><th>Share Amount</th><th>Action</th></tr></thead>
       <tbody class="mig-body"><tr class="mig-empty"><td colspan="13">Search a samity to load member migration data.</td></tr></tbody></table></div>
-      <div class="actions">${UI.btn('➕ Add New Row', 'MemMig.addRow(this)', 'btn-outline')}${UI.btn('✅ Submit Migration', 'MemMig.submit(this)', 'btn-success')}</div>`),
+      <div class="actions">${UI.btn('Add New Row', 'MemMig.addRow(this)', 'btn-outline')}${UI.btn('Submit Migration', 'MemMig.submit(this)', 'btn-success')}</div>`),
   async init(el) {
     if (!isAdmin()) { el.innerHTML = '<div class="card"><div class="alert alert-danger">শুধু Super Admin Member Migration করতে পারবেন।</div></div>'; return; }
     el._model = MEM_MODEL; el._rows = [];

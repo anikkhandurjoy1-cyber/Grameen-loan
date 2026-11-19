@@ -21,7 +21,7 @@ const USER_FIELDS = [
 ];
 App.page('userCreate', {
   title: 'নতুন ইউজার তৈরি', icon: '👤',
-  render: () => UI.card('', UI.grid(USER_FIELDS, 3) + `<div class="actions">${UI.btn('✅ Create New User', 'Users.create(this)', 'btn-success')}</div><div class="newcred"></div>`),
+  render: () => UI.card('', UI.grid(USER_FIELDS, 3) + `<div class="actions">${UI.btn('Create New User', 'Users.create(this)', 'btn-success')}</div><div class="newcred"></div>`),
   init: async el => {
     await Pick.branch(el, 'branch'); await Pick.employee(el, 'empId', 'branch', { blank: '- Select an option -' });
     UI.fill(UI.el(el, 'group'), await groupNames(), g => g, g => g, '- Select an option -');
@@ -145,7 +145,7 @@ const Users = {
 };
 App.page('userList', {
   title: 'ইউজার তালিকা', icon: '👥',
-  render: () => `<div class="report-filter">${UI.grid([{ k: 'branch', l: 'Branch Name', t: 'select' }, { k: 'q', l: 'User ID / নাম' }], 4)}<div class="filter-actions">${UI.btn('🔍 Search User', "App.render('userList')")}</div></div><div class="card ul"></div>`,
+  render: () => `<div class="report-filter">${UI.grid([{ k: 'branch', l: 'Branch Name', t: 'select' }, { k: 'q', l: 'User ID / নাম' }], 4)}<div class="filter-actions">${UI.btn('Search User', "App.render('userList')")}</div></div><div class="card ul"></div>`,
   init: async el => {
     await Pick.branch(el, 'branch', { all: true });
     const f = UI.get(el); let rows = (await db.collection('users').get()).docs.map(d => ({ id: d.id, ...d.data() }));
@@ -174,7 +174,7 @@ function permChecklist(selected) {
 const readPerms = root => [...new Set($$('input[data-p]:checked', root).map(c => c.dataset.p))];
 App.page('groupPerm', {
   title: 'পদ ভিত্তিক পারমিশন', icon: '🛡️',
-  render: () => UI.card('', UI.grid([{ k: 'group', l: 'Group Name', t: 'select' }, { k: 'newGroup', l: 'নতুন Group Name (ঐচ্ছিক)' }], 3) + '<div class="pl"></div>' + `<div class="actions">${UI.btn('💾 Save', 'GroupPerm.save(this)', 'btn-success')}</div>`),
+  render: () => UI.card('', UI.grid([{ k: 'group', l: 'Group Name', t: 'select' }, { k: 'newGroup', l: 'নতুন Group Name (ঐচ্ছিক)' }], 3) + '<div class="pl"></div>' + `<div class="actions">${UI.btn('Save', 'GroupPerm.save(this)', 'btn-success')}</div>`),
   init: async el => {
     UI.fill(UI.el(el, 'group'), await groupNames(), g => g, g => g, null);
     const load = async () => { const g = await db.collection('permGroups').doc(UI.el(el, 'group').value).get(); $('.pl', el).innerHTML = UI.el(el, 'group').value === 'Super Admin' ? '<div class="alert alert-info">Super Admin সব পেজ দেখতে পারে।</div>' : permChecklist(g.exists ? g.data().pages : []); };
@@ -194,7 +194,7 @@ const GroupPerm = {
 };
 App.page('userPerm', {
   title: 'ইউজার ভিত্তিক পারমিশন', icon: '🛡️',
-  render: () => UI.card('', UI.grid([{ k: 'branch', l: 'Branch Name', t: 'select' }, { k: 'user', l: 'User Name', t: 'select' }], 3) + '<div class="mini">টিক দেওয়া থাকলে গ্রুপের বদলে এই পারমিশন কাজ করবে। সব টিক তুলে সংরক্ষণ করলে আবার গ্রুপের পারমিশন চলবে।</div><div class="pl" style="margin-top:8px"></div>' + `<div class="actions">${UI.btn('💾 Save', 'UserPerm.save(this)', 'btn-success')}</div>`),
+  render: () => UI.card('', UI.grid([{ k: 'branch', l: 'Branch Name', t: 'select' }, { k: 'user', l: 'User Name', t: 'select' }], 3) + '<div class="mini">টিক দেওয়া থাকলে গ্রুপের বদলে এই পারমিশন কাজ করবে। সব টিক তুলে সংরক্ষণ করলে আবার গ্রুপের পারমিশন চলবে।</div><div class="pl" style="margin-top:8px"></div>' + `<div class="actions">${UI.btn('Save', 'UserPerm.save(this)', 'btn-success')}</div>`),
   init: async el => {
     await Pick.branch(el, 'branch', { all: true });
     const users = (await db.collection('users').get()).docs.map(d => ({ id: d.id, ...d.data() }));

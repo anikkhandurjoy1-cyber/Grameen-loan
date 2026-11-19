@@ -21,7 +21,7 @@ async function salEmployees(f) { return (await Data.employees(f.branch)).filter(
 
 App.page('salSetup', {
   title: 'কর্মচারী বেতন সেটআপ', icon: '💼',
-  render: () => `<div class="report-filter">${UI.grid([F.branch, { k: 'dept', l: 'Department', t: 'select', opts: DEPTS }, F.employee, { k: 'date', l: 'Effective Date', t: 'date', req: 1 }], 4)}<div class="filter-actions">${UI.btn('🔍 Search', 'SalSetup.load(this)')}${UI.btn('💾 Submit Salary Setup', 'SalSetup.save(this)', 'btn-success')}</div></div><div class="card ss"></div>`,
+  render: () => `<div class="report-filter">${UI.grid([F.branch, { k: 'dept', l: 'Department', t: 'select', opts: DEPTS }, F.employee, { k: 'date', l: 'Effective Date', t: 'date', req: 1 }], 4)}<div class="filter-actions">${UI.btn('Search', 'SalSetup.load(this)')}${UI.btn('Submit Salary Setup', 'SalSetup.save(this)', 'btn-success')}</div></div><div class="card ss"></div>`,
   init: async el => { await Pick.branch(el, 'branch'); await Pick.employee(el, 'employee', 'branch', { blank: '— সব —' }); UI.el(el, 'date').value = await businessDate(); SalSetup.load(); },
 });
 const SalSetup = {
@@ -46,7 +46,7 @@ const SalSetup = {
 App.page('salProcess', {
   title: 'বেতন অনুমোদন/বিতরন', icon: '💵',
   render: () => `<div class="report-filter">${UI.grid([F.branch, { k: 'dept', l: 'Department', t: 'select', opts: DEPTS }, F.employee, { k: 'year', l: 'Salary Year', t: 'number', req: 1 }, { k: 'month', l: 'Month Name', t: 'select', req: 1, opts: MONTHS.map((m, i) => [String(i + 1).padStart(2, '0'), m]) }, { k: 'from', l: 'From Date', t: 'date', req: 1 }, { k: 'upto', l: 'Upto Date', t: 'date', req: 1 }, { k: 'date', l: 'Posting Date', t: 'date', req: 1 }, { k: 'ledger', l: 'Payment Ledger', t: 'select' }], 4)}
-    <div class="filter-actions">${UI.btn('🔍 Search', 'SalProc.load(this)')}${UI.btn('✅ Disbursment Submit', 'SalProc.submit(this)', 'btn-success')}</div></div><div class="card sp"></div>`,
+    <div class="filter-actions">${UI.btn('Search', 'SalProc.load(this)')}${UI.btn('Disbursment Submit', 'SalProc.submit(this)', 'btn-success')}</div></div><div class="card sp"></div>`,
   init: async el => {
     await Pick.branch(el, 'branch'); await Pick.employee(el, 'employee', 'branch', { blank: '— সব —' }); await Pick.ledger(UI.el(el, 'ledger'), l => l.cashBank && l.leaf, null); UI.el(el, 'ledger').value = REF.GL.cash;
     const bd = await businessDate(); const d = parseD(bd); UI.set(el, { year: d.getFullYear(), month: pad(d.getMonth() + 1, 2), date: bd, from: bd.slice(0, 8) + '01', upto: ymd(new Date(d.getFullYear(), d.getMonth() + 1, 0)) });

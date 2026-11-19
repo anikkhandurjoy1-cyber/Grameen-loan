@@ -804,3 +804,6 @@ const F = { // সাধারণ ফিল্টার স্পেক
   btype: { k: 'btype', l: 'Branch Type', t: 'select', opts: [['me', 'Only Me'], ['all', 'All Branch'], ['others', 'All Others Branch']] },
   user: { k: 'user', l: 'User Name', t: 'select', opts: [['', '— সব —']] },
 };
+
+// eKisti: "Search ..." বাটন চাপলে নিচের তালিকা দেখায়
+const EK = { show(btn) { const pg = btn.closest('.page'); const box = pg && pg.querySelector('.ek-rl'); if (box) { box.style.display = ''; box.scrollIntoView({ behavior: 'smooth', block: 'start' }); } } };

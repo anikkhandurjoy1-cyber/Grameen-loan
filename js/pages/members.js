@@ -21,7 +21,7 @@ const MEMBER_FIELDS = [
 App.page('memberAdd', {
   title: 'সদস্য ভর্তি', icon: '➕',
   render: p => `<div class="member-form">`
-    + UI.card(`<span>👤 ${p.edit ? 'সদস্য এডিট — ' + esc(p.edit) : 'সদস্য তথ্য'}</span>`, UI.grid(MEMBER_FIELDS, 3), `<span class="card-title-act">${UI.btn('📍 Set Map Location', 'Member.geo()', 'btn-success btn-sm')}</span>`)
+    + UI.card(`<span>👤 ${p.edit ? 'সদস্য এডিট — ' + esc(p.edit) : 'সদস্য তথ্য'}</span>`, UI.grid(MEMBER_FIELDS, 3), `<span class="card-title-act">${UI.btn('Set Map Location', 'Member.geo()', 'btn-success btn-sm')}</span>`)
     + UI.card('<span>📎 সদস্য নথি</span>', UI.grid(MEMBER_DOC_FIELDS, 3))
     + UI.card('<span>👥 নমিনির তথ্য</span>', UI.grid(MEMBER_NOM_FIELDS, 3))
     + UI.card('<span>📎 নমিনির নথি</span>', UI.grid(MEMBER_NOMDOC_FIELDS, 3))
@@ -143,7 +143,7 @@ const Member = {
 App.page('memberList', {
   title: 'সদস্য তালিকা', icon: '📋',
   render: () => `<div class="report-filter">${UI.grid([{ ...F.branch, l: 'শাখার নাম' }, { ...F.samity, l: 'সমিতির নাম' }, { k: 'name', l: 'সদস্যের নাম' }, { k: 'mobile', l: 'সদস্যের ফোন' }, { k: 'id', l: 'সদস্য আইডি' }, { k: 'nid', l: 'সদস্যের এনআইডি' }, { k: 'status', l: 'সদস্যের অবস্থা', t: 'select', opts: [['', 'All'], ['active', 'Active'], ['inactive', 'Inactive'], ['closed', 'Closed'], ['pending', 'Pending']] }], 4)}
-    <div class="filter-actions">${UI.btn('🔍 সদস্য খুঁজুন', 'MemberList.search(this)')}${UI.btn('🖨️ প্রিন্ট', 'MemberList.print()', 'btn-outline')}${UI.btn('📥 Excel', 'MemberList.excel()', 'btn-outline')}</div></div><div class="card ml"></div>`,
+    <div class="filter-actions">${UI.btn('🔍 সদস্য খুঁজুন', 'MemberList.search(this)')}${UI.btn('🖨️ প্রিন্ট', 'MemberList.print()', 'btn-outline')}${UI.btn('Excel', 'MemberList.excel()', 'btn-outline')}</div></div><div class="card ml"></div>`,
   init: async el => { await Pick.branch(el, 'branch'); await Pick.samity(el, 'samity', 'branch'); MemberList.search(); },
 });
 const MemberList = {
@@ -191,8 +191,8 @@ const MemberList = {
 App.page('memberClosing', {
   title: 'সদস্য ক্লোজিং', icon: '🚪',
   render: () => UI.card('', UI.grid([{ ...F.branch, l: 'শাখার নাম' }, { k: 'member', l: 'সদস্য আইডি', t: 'member', req: 1 }, { k: 'date', l: 'ক্লোজিং তারিখ', t: 'date', req: 1 }, { k: 'reason', l: 'ক্লোজিং মন্তব্য', req: 1 }], 4) + '<div class="maccs"></div>'
-    + `<div class="actions">${UI.btn('✅ Submit Closing', 'MemberClose.save(this)', 'btn-danger')}${UI.btn('🗑️ Delete Member', 'MemberClose.del(this)', 'btn-outline')}</div>`)
-    + UI.card('🔍 Search Closing', '<div class="cl"></div>'),
+    + `<div class="actions">${UI.btn('Search Closing', 'EK.show(this)', 'btn-info')} ${UI.btn('Delete Member', 'MemberClose.del(this)', 'btn-outline')} ${UI.btn('Submit Closing', 'MemberClose.save(this)', 'btn-danger')}</div>`)
+    + '<div class="ek-rl" style="display:none">' + UI.card('', '<div class="cl"></div>') + '</div>',
   init: async el => {
     await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch');
     UI.el(el, 'date').value = await businessDate();
@@ -261,7 +261,7 @@ const MemberClose = {
 // ── সদস্য সমিতি স্থানান্তর ──
 App.page('memberTransfer', {
   title: 'সদস্য সমিতি স্থানান্তর', icon: '🔀',
-  render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Member Name', t: 'member', req: 1 }, { k: 'cur', l: 'বর্তমান সমিতি', ro: 1 }, { k: 'samity', l: 'Transfer Samity', t: 'select', req: 1 }], 4) + `<div class="actions">${UI.btn('🔀 Submit Transfer', 'MemberTransfer.run(this)', 'btn-success')}</div>`),
+  render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Member Name', t: 'member', req: 1 }, { k: 'cur', l: 'বর্তমান সমিতি', ro: 1 }, { k: 'samity', l: 'Transfer Samity', t: 'select', req: 1 }], 4) + `<div class="actions">${UI.btn('Submit Transfer', 'MemberTransfer.run(this)', 'btn-success')}</div>`),
   init: async el => {
     await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch'); await Pick.samity(el, 'samity', 'branch', { all: false });
     UI.el(el, 'member').addEventListener('picked', e => { UI.el(el, 'cur').value = e.detail ? e.detail.samity : ''; });

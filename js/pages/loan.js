@@ -33,7 +33,7 @@ async function loanReceiptList(el, accNo, cancelMode, ek) {
   if (!accNo) { box.innerHTML = ''; return; }
   const rows = (await db.collection('txns').where('accNo', '==', accNo).get()).docs.map(d => ({ id: d.id, ...d.data() })).filter(t => ['EMI_RCV', 'EMI_MANUAL', 'EMI_TRF', 'EMI_SHEET'].includes(t.tt)).sort((a, b) => (a.date + a.vno).localeCompare(b.date + b.vno));
   rows.forEach((r, i) => r.serial = i + 1);
-  box.innerHTML = UI.table([{ h: 'Branch Code', f: r => r.branch }, { h: 'Member ID', f: r => r.memberId }, { h: 'Member Account', f: r => r.accNo }, { h: 'Installment Date', f: r => fmtD(r.date) }, { h: 'Installment Serial', f: r => r.serial }, { h: 'Installment Amount', f: r => amt(r.amount), r: 1, sum: 1, v: r => r.cancelled ? 0 : r.amount }, ...(ek ? [] : [{ h: 'আসল', f: r => amt(r.principal), r: 1 }, { h: 'মুনাফা', f: r => amt(r.profit), r: 1 }, { h: 'জরিমানা', f: r => amt(r.penalty), r: 1 }]), { h: 'Document Number', f: r => esc(r.docNo || r.vno) }, { h: 'Comments', f: r => esc(r.narration || '') }, { h: 'Entry By', f: r => r.byName || '' }, { h: 'Entry On', f: r => tsStr(r.on) }, { h: 'Cancel By', f: r => r.cancelBy || '' }, { h: 'Cancel On', f: r => tsStr(r.cancelOn) },
+  const stf = ek === 'staffc'; box.innerHTML = UI.table([{ h: 'Branch Code', f: r => r.branch }, { h: stf ? 'Staff ID' : 'Member ID', f: r => r.memberId }, { h: stf ? 'Staff Account' : 'Member Account', f: r => r.accNo }, { h: 'Installment Date', f: r => fmtD(r.date) }, { h: 'Installment Serial', f: r => r.serial }, { h: 'Installment Amount', f: r => amt(r.amount), r: 1, sum: 1, v: r => r.cancelled ? 0 : r.amount }, ...(ek ? [] : [{ h: 'আসল', f: r => amt(r.principal), r: 1 }, { h: 'মুনাফা', f: r => amt(r.profit), r: 1 }, { h: 'জরিমানা', f: r => amt(r.penalty), r: 1 }]), { h: 'Document Number', f: r => esc(r.docNo || r.vno) }, ...(ek === 'cancel' || ek === 'staffc' ? [] : [{ h: 'Comments', f: r => esc(r.narration || '') }]), { h: 'Entry By', f: r => r.byName || '' }, { h: 'Entry On', f: r => tsStr(r.on) }, { h: 'Cancel By', f: r => r.cancelBy || '' }, { h: 'Cancel On', f: r => tsStr(r.cancelOn) },
     { h: 'Action', f: r => r.cancelled ? `<span class="tag red">ডিলিট</span> <small>${esc(r.cancelBy || '')}${r.cancelOn && r.cancelOn.toDate ? ' • ' + fmtDT(r.cancelOn.toDate()) : ''}</small>` : (ek ? UI.btn('Print', `Receipt.print('${r.vno}')`, 'btn-info btn-sm') + (isBM() ? ' ' + UI.btn('Cancel', `EmiCancel.run('${r.vno}',this)`, 'btn-danger btn-sm') : '') : UI.btn('🧾', `Receipt.print('${r.vno}')`, 'btn-outline btn-sm') + (isBM() ? ' ' + UI.btn(cancelMode ? '✖ বাতিল' : '🗑️', `EmiCancel.run('${r.vno}',this)`, 'btn-danger btn-sm') : '')) }], rows, { rowCls: r => r.cancelled ? 'row-cancel' : '' });
 }
 // রসিদ প্রিন্ট
@@ -48,7 +48,7 @@ function EMI_LBL(id, fields) {
   return fields.map(f => f && f.k && EN[f.k] ? { ...f, l: EN[f.k] } : f).map(f => f && f.k === 'member' && f.t === 'member' ? { ...f, l: 'Member ID' } : f);
 }
 function EmiPage(id, title, o = {}) {
-  const ek = id === 'emiRcv';
+  const ek = ['emiRcv', 'emiManual', 'staffEmiRcv'].includes(id);
   const memberField = o.staff ? { k: 'member', l: 'Employee Name', t: 'select', req: 1 } : { k: 'member', l: 'সদস্য আইডি', t: 'member', req: 1 };
   const amountFields = o.manual
     ? [{ k: 'principal', l: 'Investment Amount (আসল)', t: 'number' }, { k: 'profit', l: 'Profit Amount (মুনাফা)', t: 'number' }, { k: 'penaltyRcv', l: 'Penalty Charge (জরিমানা)', t: 'number' }]
@@ -57,15 +57,20 @@ function EmiPage(id, title, o = {}) {
     title, icon: '💵',
     render: () => {
       // eKisti "ঋণের কিস্তি জমা" — হুবহু ফিল্ড ক্রম; জমার পরিমাণ = কিস্তির পরিমাণ (অটো), ক্লিক করলে সিলেক্ট
-      if (ek) return UI.card('', UI.grid([{ ...F.branch, l: 'শাখা নাম' }, memberField, { k: 'account', l: 'সদস্য অ্যাকাউন্ট', t: 'select', req: 1 }, { k: 'amount', l: 'জমার পরিমাণ', t: 'number', req: 1 },
-        { k: 'asonDue', l: 'আজকের বকেয়া', ro: 1 }, { k: 'penalty', l: 'জরিমানা চার্জ', ro: 1 }, { k: 'date', l: 'কিস্তির তারিখ', t: 'date', req: 1 },
-        ...LoanInfo.fields.filter(f => !['asonDue', 'penalty'].includes(f.k)), { k: 'fromDep', l: 'Transfer From Same Customer Deposit', t: 'checkbox' }, { k: 'depAcc', l: 'সঞ্চয় অ্যাকাউন্ট', t: 'select' }, { k: 'comments', l: 'মন্তব্য' }], 4)
-        + `<div class="actions">${UI.btn('Receive Installment', `EmiRcv.save('${id}',this)`, 'btn-success')} ${UI.btn('Search Receive Installment', `EmiRcv.search('${id}')`, 'btn-info')} <span class="ek-last"></span></div>`)
-        + UI.card('', '<div class="ek-acinfo"><div class="emircv-empty">Select a loan account to view installment details.</div></div>') + (o.staff ? '' : MemberCard.html()) + '<div class="ek-rl" style="display:none">' + UI.card('', '<div class="rl"></div>') + '</div>';
+      if (ek) {
+        const BN = id === 'emiRcv';   // eKisti: সাধারণ কিস্তি জমা বাংলা, ম্যানুয়াল/কর্মী ইংরেজি
+        const info = BN ? LoanInfo.fields.filter(f => !['asonDue', 'penalty'].includes(f.k)) : EMI_LBL(id, LoanInfo.fields).filter(f => !['asonDue', 'penalty'].includes(f.k));
+        const amtF = o.manual ? [{ k: 'principal', l: 'Investment Amount', t: 'number' }, { k: 'profit', l: 'Profit Amount', t: 'number' }, { k: 'penaltyRcv', l: 'Penalty Charge', t: 'number' }] : [{ k: 'amount', l: BN ? 'জমার পরিমাণ' : 'Installment Amount', t: 'number', req: 1 }];
+        const mid = o.manual ? [{ k: 'asonDue', l: 'Todays Due', ro: 1 }] : [{ k: 'asonDue', l: BN ? 'আজকের বকেয়া' : 'Todays Due', ro: 1 }, { k: 'penalty', l: BN ? 'জরিমানা চার্জ' : 'Penalty Charge', ro: 1 }];
+        const fields = [{ ...F.branch, l: BN ? 'শাখা নাম' : 'Branch Name' }, o.staff ? memberField : { ...memberField, l: BN ? 'সদস্য আইডি' : 'Member ID' }, { k: 'account', l: BN ? 'সদস্য অ্যাকাউন্ট' : 'Member Account', t: 'select', req: 1 }, ...amtF, ...mid,
+          { k: 'date', l: BN ? 'কিস্তির তারিখ' : 'Installment Date', t: 'date', req: 1 }, ...info, { k: 'fromDep', l: 'Transfer From Same Customer Deposit', t: 'checkbox' }, { k: 'depAcc', l: BN ? 'সঞ্চয় অ্যাকাউন্ট' : 'Deposit Account', t: 'select' }, BN ? { k: 'comments', l: 'মন্তব্য' } : null];
+        return UI.card('', UI.grid(fields, 4) + `<div class="actions">${UI.btn('Receive Installment', `EmiRcv.save('${id}',this)`, 'btn-success')} ${UI.btn(o.staff ? 'Search Installment' : 'Search Receive Installment', `EmiRcv.search('${id}')`, 'btn-info')} <span class="ek-last"></span></div>`)
+          + UI.card('', '<div class="ek-acinfo"><div class="emircv-empty">Select a loan account to view installment details.</div></div>') + (o.staff ? '' : MemberCard.html()) + '<div class="ek-rl" style="display:none">' + UI.card('', '<div class="rl"></div>') + '</div>';
+      }
       return UI.card('', UI.grid(EMI_LBL(id, [{ ...F.branch, l: 'শাখা নাম' }, memberField, { k: 'account', l: 'সদস্য অ্যাকাউন্ট', t: 'select', req: 1 }, ...amountFields, { k: 'date', l: 'কিস্তির তারিখ', t: 'date', req: 1 },
       ...LoanInfo.fields, { k: 'duePrincipal', l: 'আসল বকেয়া', ro: 1 }, { k: 'dueProfit', l: 'মুনাফা বকেয়া', ro: 1 },
       { k: 'fromDep', l: 'Transfer From Same Customer Deposit', t: 'checkbox' }, { k: 'depAcc', l: 'সঞ্চয় অ্যাকাউন্ট', t: 'select' }, { k: 'docNo', l: 'ডকুমেন্ট নাম্বার' }, { k: 'comments', l: 'মন্তব্য' }]), 4)
-      + (o.staff ? '' : MemberCard.html()) + `<div class="actions">${UI.btn('✅ Receive Installment', `EmiRcv.save('${id}',this)`, 'btn-success')}</div>`) + UI.card('Search Receive Installment', '<div class="rl"></div>');
+      + (o.staff ? '' : MemberCard.html()) + `<div class="actions">${UI.btn('Receive Installment', `EmiRcv.save('${id}',this)`, 'btn-success')} ${UI.btn('Search Receive Installment', 'EK.show(this)', 'btn-info')}</div>`) + '<div class="ek-rl" style="display:none">' + UI.card('', '<div class="rl"></div>') + '</div>';
     },
     init: async (el, p) => {
       await Pick.branch(el, 'branch');
@@ -86,12 +91,18 @@ function EmiPage(id, title, o = {}) {
       M.addEventListener(o.staff ? 'change' : 'picked', loadAccs);
       A.addEventListener('change', async () => {
         const r = await LoanInfo.load(el, A.value, UI.el(el, 'date').value);
-        if (ek) { UI.el(el, 'amount').value = r ? num(r.l.instAmount).toFixed(2) : ''; loanAcInfo(el, r && r.l, r && r.st); $('.ek-rl', el).style.display = 'none'; return; }
+        if (ek) {
+          if (o.manual) {   // eKisti: Investment/Profit = আজকের বকেয়ার আসল/মুনাফা ভাগ, Penalty = জরিমানা বকেয়া
+            const due = r ? r.st.asonDue : 0, T = r ? num(r.l.totalRepay) : 0, pr = T ? r2(due * num(r.l.principal) / T) : due;
+            UI.el(el, 'principal').value = r ? pr.toFixed(2) : ''; UI.el(el, 'profit').value = r ? r2(due - pr).toFixed(2) : ''; UI.el(el, 'penaltyRcv').value = r ? num(r.l.penDue).toFixed(2) : '';
+          } else UI.el(el, 'amount').value = r ? num(r.l.instAmount).toFixed(2) : '';
+          loanAcInfo(el, r && r.l, r && r.st); $('.ek-rl', el).style.display = 'none'; return;
+        }
         if (r && !o.manual) UI.el(el, 'amount').value = r.st.asonDue ? r2(r.st.asonDue + num(r.l.penDue)) : r.l.instAmount;
         loanReceiptList(el, A.value);
       });
       UI.el(el, 'date').addEventListener('change', () => A.value && LoanInfo.load(el, A.value, UI.el(el, 'date').value));
-      if (ek) { const amtEl = UI.el(el, 'amount'); amtEl.value = '0.0'; amtEl.addEventListener('click', () => amtEl.select()); amtEl.addEventListener('focus', () => amtEl.select()); M.addEventListener('picked', () => { UI.el(el, 'fromDep').checked = false; loanAcInfo(el, null); }); }
+      if (ek) { ['amount', 'principal', 'profit', 'penaltyRcv'].forEach(k => { const e = UI.el(el, k); if (!e) return; if (k === 'amount') e.value = '0.0'; e.addEventListener('click', () => e.select()); e.addEventListener('focus', () => e.select()); }); M.addEventListener(o.staff ? 'change' : 'picked', () => { UI.el(el, 'fromDep').checked = false; loanAcInfo(el, null); }); }
       if (p.member) { if (o.staff) { M.value = p.member; } else { M.value = p.member; } M.dispatchEvent(new Event('change')); await new Promise(r => setTimeout(r, 300)); if (p.account) { A.value = p.account; A.dispatchEvent(new Event('change')); } }
     },
   });
@@ -101,7 +112,7 @@ const EmiRcv = {
   opts: {},
   search(id) {
     const el = $('#page-' + id), M = UI.el(el, 'member');
-    if (!(M.dataset.val || M.value)) return toast('Please Select Member', 'error');
+    if (!(M.dataset.val || M.value)) return toast(EmiRcv.opts[id].staff ? 'Please Select Employee' : 'Please Select Member', 'error');
     $('.ek-rl', el).style.display = ''; loanReceiptList(el, UI.el(el, 'account').value, false, true);
   },
   save(id, btn) {
@@ -138,10 +149,10 @@ const EmiRcv = {
       UI.el(el, 'fromDep').checked = false;
       await LoanInfo.load(el, f.account, f.date);
       if (el._loan && el._loan.status === 'closed') toast('🎉 ঋণ সম্পূর্ণ পরিশোধ হয়েছে — একাউন্ট ক্লোজড', 'info');
-      if (id === 'emiRcv') {
-        // eKisti: সফল হলে ফর্ম রিসেট + (সেটিং চালু থাকলে) রসিদ অটো প্রিন্ট
-        const M = UI.el(el, 'member'); M.value = ''; M.dataset.val = ''; UI.fill(UI.el(el, 'account'), [], a => a, a => a); UI.fill(UI.el(el, 'depAcc'), [], a => a, a => a);
-        LoanInfo.fields.forEach(x => { const e = UI.el(el, x.k); if (e) e.value = ''; }); UI.el(el, 'amount').value = '0.0'; loanAcInfo(el, null); $('.ek-rl', el).style.display = 'none';
+      if (['emiRcv', 'emiManual', 'staffEmiRcv'].includes(id)) {
+        // eKisti: সফল হলে ফর্ম রিসেট + রসিদ প্রিন্ট বাটন
+        const M = UI.el(el, 'member'); M.value = ''; if (M.dataset) M.dataset.val = ''; UI.fill(UI.el(el, 'account'), [], a => a, a => a); UI.fill(UI.el(el, 'depAcc'), [], a => a, a => a);
+        LoanInfo.fields.forEach(x => { const e = UI.el(el, x.k); if (e) e.value = ''; }); if (UI.el(el, 'amount')) UI.el(el, 'amount').value = '0.0'; loanAcInfo(el, null); $('.ek-rl', el).style.display = 'none';
         const lp = $('.ek-last', el); if (lp) lp.innerHTML = UI.btn('🧾 রসিদ প্রিন্ট (' + vno + ')', `Receipt.print('${vno}')`, 'btn-outline');
         return;
       }
@@ -157,25 +168,31 @@ EmiPage('staffEmiRcv', 'কর্মী ঋণের কিস্তি জম�
 function EmiCancelPage(id, title, staff) {
   App.page(id, {
     title, icon: '✖',
-    render: () => UI.card('', UI.grid([F.branch, staff ? { k: 'member', l: 'Employee Name', t: 'select', req: 1 } : { k: 'member', l: 'Select Member', t: 'member', req: 1 }, { k: 'account', l: 'Select Account', t: 'select', req: 1 }], 3) + '<div class="mini">যে কিস্তি বাতিল করবেন তার পাশে "বাতিল" চাপুন। একই ভাউচারের সব লেনদেন (যেমন সঞ্চয় থেকে স্থানান্তর) একসাথে বাতিল হবে।</div><div class="rl" style="margin-top:8px"></div>'),
+    render: () => UI.card('', UI.grid([F.branch, staff ? { k: 'member', l: 'Employee Name', t: 'select', req: 1 } : { k: 'member', l: 'Select Member', t: 'member', req: 1 }, { k: 'account', l: 'Select Account', t: 'select', req: 1 }], 3) + `<div class="actions">${UI.btn('Search Installment', `EmiCancel.search('${id}')`, 'btn-info')}</div>`) + '<div class="ek-rl" style="display:none">' + UI.card('', '<div class="rl"></div>') + '</div>',
     init: async el => {
       await Pick.branch(el, 'branch'); if (staff) await Pick.employee(el, 'member', 'branch'); else await Pick.member(el, 'member', 'branch', { closed: true });
       const M = UI.el(el, 'member'), A = UI.el(el, 'account');
       M.addEventListener(staff ? 'change' : 'picked', async () => { const mk = staff ? 'E' + M.value : M.dataset.val; UI.fill(A, (await Data.accountsOf(UI.el(el, 'branch').value, mk, 'loan')).filter(a => a.status !== 'cancelled'), a => a.accNo, a => a.accNo + ' - ' + typeName(a.kind, a.type) + ' (' + a.status + ')'); if (A.options.length === 2) A.selectedIndex = 1; A.dispatchEvent(new Event('change')); });
-      A.addEventListener('change', () => loanReceiptList(el, A.value, true));
+      A.addEventListener('change', () => { $('.ek-rl', el).style.display = 'none'; });
     },
   });
 }
 EmiCancelPage('emiCancel', 'কিস্তি জমা বাতিল');
 EmiCancelPage('staffEmiCancel', 'কর্মী ঋণের কিস্তি বাতিল', true);
 const EmiCancel = {
+  search(id) {
+    const el = $('#page-' + id), M = UI.el(el, 'member');
+    if (!(M.dataset.val || M.value)) return toast(id === 'staffEmiCancel' ? 'Please Select Employee' : 'Please Select Member', 'error');
+    if (!UI.el(el, 'account').value) return toast('Please Select Account', 'error');
+    $('.ek-rl', el).style.display = ''; loanReceiptList(el, UI.el(el, 'account').value, true, id === 'staffEmiCancel' ? 'staffc' : 'cancel');
+  },
   run(vno, btn) {
     if (!confirm('এই কিস্তি জমা ডিলিট করবেন? (ভাউচার ' + vno + ')')) return; const reason = prompt('ডিলিটের কারণ লিখুন:', ''); if (reason === null) return;
     return guard(btn, async () => {
       if (!isBM()) fail('কিস্তি বাতিলের অনুমতি শুধু Branch Manager/Admin এর');
       await Eng.cancel(vno, reason); toast('🗑️ কিস্তি ডিলিট হয়েছে — ' + (App.user.userId || '')); Cache.drop('aidx_');
       const el = btn.closest('.page'); const acc = UI.el(el, 'account').value;
-      if (el.id === 'page-emiCancel' || el.id === 'page-staffEmiCancel') loanReceiptList(el, acc, true);
+      if (el.id === 'page-emiCancel' || el.id === 'page-staffEmiCancel') loanReceiptList(el, acc, true, el.id === 'page-staffEmiCancel' ? 'staffc' : 'cancel');
       else { if (window.LoanInfo) await LoanInfo.load(el, acc, UI.el(el, 'date').value); loanReceiptList(el, acc); }
     });
   },
@@ -215,7 +232,7 @@ App.page('emiReschedule', {
     { k: 'freq', l: 'Installment Frequency', t: 'select', req: 1, opts: [['', 'Select'], ...['D', 'W', 'M', 'Q', 'H', 'Y', 'F', 'S'].map(x => [x, REF.FREQ[x]])] }, { k: 'addProfit', l: 'Additional Profit Amount', t: 'number', v: 0 }, { k: 'newProfit', l: 'Loan Profit Amount', ro: 1 },
     { k: 'date', l: 'Reschedule Date', t: 'date', req: 1 }, { k: 'newTotal', l: 'Total Loan Amount', ro: 1 }, { k: 'instAmount', l: 'Installment Amount', t: 'number', req: 1 }, { k: 'newN', l: 'No of Installment', ro: 1 }, { k: 'firstDate', l: '1st Installment Date', t: 'date', req: 1 }, { k: 'newExp', l: 'Installment Expiry Date', ro: 1 },
     { k: 'formFee', l: 'Form Fee', t: 'number' }, { k: 'healthFee', l: 'Health Service Fee', t: 'number' }, { k: 'riskFee', l: 'Risk Insurance', t: 'number' }, { k: 'docFee', l: 'Document Fee', t: 'number' }, { k: 'lockerFee', l: 'EMI Locker Fee', t: 'number' }, { k: 'othersFee', l: 'Others Fee', t: 'number' }], 3)
-    + `<div class="actions">${UI.btn('✅ Submit Reschedule', 'Resched.save(this)', 'btn-success')}</div>`) + UI.card('Search Reschedule', '<div class="rsl"></div>'),
+    + `<div class="actions">${UI.btn('Submit Reschedule', 'Resched.save(this)', 'btn-success')} ${UI.btn('Search Reschedule', 'EK.show(this)', 'btn-info')}</div>`) + '<div class="ek-rl" style="display:none">' + UI.card('', '<div class="rsl"></div>') + '</div>',
   init: async el => {
     await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch'); await Pick.account(el, 'account', 'member', 'branch', { kind: 'loan' });
     UI.el(el, 'date').value = await businessDate();
@@ -268,7 +285,7 @@ App.page('emiWaive', {
   render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'account', l: 'Loan Account', t: 'select', req: 1 }, { k: 'expDate', l: 'Installment Expire Date', ro: 1 }, { k: 'date', l: 'Waiver Date', t: 'date', req: 1 },
     { k: 'totalN', l: 'Total Installment', ro: 1 }, { k: 'paidN', l: 'Total Installment Paid', ro: 1 }, { k: 'totalLoan', l: 'Total Loan Amount', ro: 1 }, { k: 'totalPaid', l: 'Total Loan Paid', ro: 1 }, { k: 'duePrincipal', l: 'Loan Due Investment', ro: 1 }, { k: 'dueProfit', l: 'Loan Due Profit', ro: 1 }, { k: 'penalty', l: 'Total Penalty Charge', ro: 1 }, { k: 'totalDue', l: 'Total Loan Due', ro: 1 },
     { k: 'wvP', l: 'Principal Waive Amount', t: 'number' }, { k: 'wvPr', l: 'Profit Waive Amount', t: 'number' }, { k: 'wvC', l: 'Charge Waive Amount', t: 'number' }, { k: 'total', l: 'Total Waiver', ro: 1 }, { k: 'comments', l: 'Waiver Comments', req: 1 }], 4)
-    + `<div class="actions">${UI.btn('✅ Submit Waiver', 'Waive.save(this)', 'btn-danger')}</div>`) + UI.card('Search Waiver', '<div class="wl"></div>'),
+    + `<div class="actions">${UI.btn('Submit Waiver', 'Waive.save(this)', 'btn-danger')} ${UI.btn('Search Waiver', 'EK.show(this)', 'btn-info')}</div>`) + '<div class="ek-rl" style="display:none">' + UI.card('', '<div class="wl"></div>') + '</div>',
   init: async el => {
     await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch'); await Pick.account(el, 'account', 'member', 'branch', { kind: 'loan' });
     UI.el(el, 'date').value = await businessDate();
@@ -308,7 +325,7 @@ App.page('emiPenalty', {
   title: 'অতিরিক্ত ঋণের জরিমানা', icon: '⚡',
   render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'account', l: 'Loan Account', t: 'select', req: 1 }, { k: 'date', l: 'Entry Date', t: 'date', req: 1 },
     { k: 'addProfit', l: 'Additional Profit', t: 'number' }, { k: 'penaltyAmt', l: 'Penalty Amount', t: 'number' }, { k: 'instAmount', l: 'Installment Amount', ro: 1 }, { k: 'totalLoan', l: 'Total EMI Amount', ro: 1 }, { k: 'totalPaid', l: 'Total EMI Paid', ro: 1 }, { k: 'totalDue', l: 'Total EMI Due', ro: 1 }, { k: 'penalty', l: 'বর্তমান জরিমানা বকেয়া', ro: 1 }, { k: 'comments', l: 'Comments', req: 1 }], 4)
-    + `<div class="actions">${UI.btn('⚡ Submit Penalty', 'Penalty.save(this)', 'btn-danger')}</div>`) + UI.card('Search Penalty', '<div class="pl"></div>'),
+    + `<div class="actions">${UI.btn('Submit Penalty', 'Penalty.save(this)', 'btn-danger')} ${UI.btn('Search Penalty', 'EK.show(this)', 'btn-info')}</div>`) + '<div class="ek-rl" style="display:none">' + UI.card('', '<div class="pl"></div>') + '</div>',
   init: async el => {
     await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch'); await Pick.account(el, 'account', 'member', 'branch', { kind: 'loan' });
     UI.el(el, 'date').value = await businessDate();
@@ -369,7 +386,7 @@ ReportPage({
 // ── ঋণের উদ্দেশ্য পরিবর্তন ──
 App.page('emiPurposeUpdate', {
   title: 'ঋণের উদ্দেশ্য পরিবর্তন (Loan Purpose Update)', icon: '🎯',
-  render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Select Member', t: 'member', req: 1 }, { k: 'account', l: 'Select Account', t: 'select', req: 1 }, { k: 'cur', l: 'Present Purpose Name', ro: 1 }, { k: 'purpose', l: 'Loan Purpose', t: 'select', req: 1 }], 3) + `<div class="actions">${UI.btn('✅ Update Purpose', 'PurposeUpd.save(this)', 'btn-success')}</div>`),
+  render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Select Member', t: 'member', req: 1 }, { k: 'account', l: 'Select Account', t: 'select', req: 1 }, { k: 'cur', l: 'Present Purpose Name', ro: 1 }, { k: 'purpose', l: 'Loan Purpose', t: 'select', req: 1 }], 3) + `<div class="actions">${UI.btn('Update Purpose', 'PurposeUpd.save(this)', 'btn-success')}</div>`),
   init: async el => {
     await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch'); await Pick.account(el, 'account', 'member', 'branch', { kind: 'loan' });
     UI.fill(UI.el(el, 'purpose'), await Data.purposes(), p => p.code, p => p.name);
@@ -386,7 +403,7 @@ const PurposeUpd = {
 // ── কর্মী ঋণ তৈরি ──
 App.page('staffLoanOpen', {
   title: 'কর্মী ঋণ তৈরি (Staff Loan)', icon: '👔',
-  render: () => UI.card('', UI.grid(LoanForm.fields({ staff: true }), 3) + SubList.render('guarantor', '🤝 জামিনদার') + `<div class="actions">${UI.btn('✅ Open Loan Account', 'StaffLoan.save(this)', 'btn-success')}</div>`) + UI.card('কর্মী ঋণসমূহ', '<div class="sl"></div>'),
+  render: () => UI.card('', UI.grid(LoanForm.fields({ staff: true }), 3) + SubList.render('guarantor', '🤝 জামিনদার') + `<div class="actions">${UI.btn('Open Loan Account', 'StaffLoan.save(this)', 'btn-success')}</div>`) + UI.card('কর্মী ঋণসমূহ', '<div class="sl"></div>'),
   init: async el => { await LoanForm.bind(el, { staff: true }); StaffLoan.list(el); },
 });
 const StaffLoan = {
