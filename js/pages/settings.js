@@ -293,7 +293,7 @@ CrudPage({
 App.page('dayClose', {
   title: 'ক্লোজিং বিজনেস ডে', icon: '🔒',
   render: () => UI.card('', UI.grid([{ k: 'branch', l: 'Branch Name', t: 'select', req: 1 }, { k: 'cur', l: 'Current Business Date', t: 'date', ro: 1 }, { k: 'next', l: 'Next Business Date', t: 'date', ro: 1 }], 3)
-    + `<div class="alert alert-info">দিন বন্ধ করলে বিজনেস ডেট পরের কর্মদিবসে যাবে (ছুটি বাদ দিয়ে)। অনুমোদনের অপেক্ষায় থাকা লেনদেন থাকলে দিন বন্ধ হবে না।</div><div class="actions">${UI.btn('Start Closing', 'DayClose.run(this)', 'btn-danger')}</div>`)
+    + `<div class="alert alert-info">দিন বন্ধ করলে বিজনেস ডেট পরের কর্মদিবসে যাবে (শুক্রবার ও ছুটি বাদ দিয়ে)। অনুমোদনের অপেক্ষায় থাকা লেনদেন থাকলে দিন বন্ধ হবে না।</div><div class="actions">${UI.btn('Start Closing', 'DayClose.run(this)', 'btn-danger')}</div>`)
     + UI.card('ক্লোজিং লগ', '<div class="dl"></div>'),
   init: async el => {
     await Pick.branch(el, 'branch');
@@ -302,7 +302,7 @@ App.page('dayClose', {
   },
 });
 const DayClose = {
-  async next(cur, branch) { let d = addDays(cur, 1); for (let i = 0; i < 30; i++) { if (!(await isHoliday(d, branch))) return d; d = addDays(d, 1); } return d; },
+  async next(cur, branch) { let d = addDays(cur, 1); for (let i = 0; i < 30; i++) { if (!isFriday(d) && !(await isHoliday(d, branch))) return d; d = addDays(d, 1); } return d; },   // শুক্রবার বন্ধ
   run(btn) {
     const el = $('#page-dayClose');
     return guard(btn, async () => {

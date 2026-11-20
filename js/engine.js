@@ -161,8 +161,13 @@ const Loan = {
     const last = r2(total - fullN * actual);
     return { profit, total, inst, actualInst: actual, extra: r2(inst - actual), lastInst: last, actualN: fullN, totalN: fullN + (last > 0 ? 1 : 0) };
   },
+  // eKisti: শুক্রবার সাপ্তাহিক বন্ধ — দৈনিক কিস্তিতে শুক্রবার বাদ, অন্য কিস্তি শুক্রবারে পড়লে শনিবার
   nextDate(d, freq, i) {
-    if (freq === 'D') return addDays(d, i);
+    const r = Loan._nextDate(d, freq, i);
+    return freq === 'D' || !isFriday(r) ? r : addDays(r, 1);
+  },
+  _nextDate(d, freq, i) {
+    if (freq === 'D') { let x = isFriday(d) ? addDays(d, 1) : d; for (let k = 0; k < i; k++) { x = addDays(x, 1); if (isFriday(x)) x = addDays(x, 1); } return x; }
     if (freq === 'W') return addDays(d, 7 * i);
     if (freq === 'F') return addDays(d, 15 * i);
     if (freq === 'M') return addMonths(d, i);

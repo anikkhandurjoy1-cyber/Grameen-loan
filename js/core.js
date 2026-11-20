@@ -172,6 +172,8 @@ async function businessDate(branch) {
   const b = await Data.branch(branch || App.branch);
   return (b && b.businessDate) || today();
 }
+// শুক্রবার = সাপ্তাহিক ছুটি (eKisti এর মতো)
+const isFriday = d => !!d && new Date(d + 'T00:00:00Z').getUTCDay() === 5;
 async function isHoliday(date, branch, samity) {
   const hs = await Data.holidays();
   return hs.some(h => h.date === date && (!h.branches || !h.branches.length || h.branches.includes(branch)) && (!h.samities || !h.samities.length || !samity || h.samities.includes(samity)));
