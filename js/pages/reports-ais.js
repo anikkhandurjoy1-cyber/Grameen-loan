@@ -318,8 +318,13 @@ ReportPage({
       const rows = Object.entries(v).filter(([, x]) => r2(x)).sort(([a], [b]) => a.localeCompare(b)).map(([c, x]) => ({ c, inc: c[0] === '3' ? x : 0, exp: c[0] === '4' ? x : 0 }));
       return { title: 'Statement of Profit & Loss (Ledger Wise)', html: UI.table([SL, { h: 'Ledger Code', f: r => r.c }, { h: 'Ledger Name', f: r => esc((lm[r.c] || {}).name || r.c) }, { h: 'Income', f: r => r.inc ? amt(r.inc) : '', r: 1, sum: 1, v: r => r.inc }, { h: 'Expense', f: r => r.exp ? amt(r.exp) : '', r: 1, sum: 1, v: r => r.exp }], rows) };
     } const vals = [natMap(await GLX.range(bs, f.from, f.upto), ['3', '4']), await ieVals(bs, f.upto)];
-    let I = await treeMulti(vals, ['3']), E = await treeMulti(vals, ['4']); if (mode === 'inc') E = []; if (mode === 'exp') I = [];
+    const I = await treeMulti(vals, ['3']), E = await treeMulti(vals, ['4']);
     const tI = vals.map(v => sum(Object.entries(v).filter(([c]) => c[0] === '3'), ([, x]) => x)), tE = vals.map(v => sum(Object.entries(v).filter(([c]) => c[0] === '4'), ([, x]) => x));
+    // Income / Expense Statement — শুধু এক অংশ, নিচে মোট (Net Profit/Loss নয়)
+    if (mode === 'inc' || mode === 'exp') {
+      const inc = mode === 'inc', rows = inc ? I : E, tot = inc ? tI : tE;
+      return { title: inc ? 'Income Statement' : 'Expense Statement', html: treeTable(rows, ['This Period', 'Cumulative'], { nameHead: inc ? 'INCOME' : 'EXPENSES', foot: `<tfoot><tr><td><b>${inc ? 'Total Income :' : 'Total Expense :'}</b></td>${tot.map(v => `<td class="r"><b>${GLFMT(v)}</b></td>`).join('')}</tr></tfoot>` }) };
+    }
     const np = tI.map((v, i) => Math.max(0, r2(v - tE[i]))), nl = tI.map((v, i) => Math.max(0, r2(tE[i] - v)));
     return { title: 'Statement of Profit & Loss', html: sideBySide('INCOME', 'EXPENSES', ['This Period', 'Cumulative'], I, E, [['Net Profit :', np]], [['Net Loss :', nl]]) };
   },
