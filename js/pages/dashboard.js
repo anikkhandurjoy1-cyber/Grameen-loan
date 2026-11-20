@@ -7,9 +7,7 @@
 // ═══════════════════════════════════════════════════════════════
 App.page('dashboard', {
   title: 'ড্যাশবোর্ড', icon: '🏠', always: true,
-  render: () => `<div class="today-band" id="todayBand"><div><div class="tb-hello">${esc(Dash.hello())}, ${esc((App.user && (App.user.name || App.user.userId)) || '')}</div><div class="tb-meta">আজকের হিসাব লোড হচ্ছে…</div></div><div class="tb-sun">${Dash.sun(0)}<div class="tb-fig"><b>—</b><span>আজকের ঋণ আদায়</span></div></div><div class="tb-stats"></div></div>
-    <div class="db-feed"><div class="card"><div class="card-title">আজকের কার্যক্রম</div><div class="feed-list"><div class="feed-empty">লোড হচ্ছে…</div></div></div>
-    <div><div class="pend ok"><span>অনুমোদনের অপেক্ষায়</span><b data-pend>—</b></div><div class="card"><div class="card-title">নতুন যা এসেছে</div><ul class="news">${APP_NEWS.map(([v, t]) => `<li><span>${v}</span>${esc(t)}</li>`).join('')}</ul></div></div></div>`
+  render: () => `<div class="today-band" id="todayBand"><div><div class="tb-hello">${esc(Dash.hello())}, ${esc((App.user && (App.user.name || App.user.userId)) || '')}</div><div class="tb-meta">আজকের হিসাব লোড হচ্ছে…</div></div><div class="tb-sun">${Dash.sun(0)}<div class="tb-fig"><b>—</b><span>আজকের ঋণ আদায়</span></div></div><div class="tb-stats"></div></div>`
     + Home.html() + `<div class="card db-filter"><div class="db-welcome"><h3>Welcome back, ${esc((App.user && (App.user.name || App.user.userId)) || '')} !</h3><div class="mini">Track your somity activity here.</div></div>
     ${UI.grid([{ ...F.branch, l: 'Branch Name' }, { k: 'btype', l: 'Branch Type', t: 'select', opts: [['me', 'Only Me'], ['all', 'All Branch'], ['others', 'All Others Branch']] }, { k: 'employee', l: 'Employee Name', t: 'select' }, { k: 'date', l: 'Business Date', t: 'date', req: 1 }], 4)}
     <div class="actions">${UI.btn('Refresh Dashboard', 'Dash.load(this,true)', 'btn-info')}</div></div><div class="dash-out"><div class="mini">লোড হচ্ছে...</div></div>`,
@@ -160,7 +158,6 @@ const Dash = {
       if (!f.branch) { $('.dash-out', el).innerHTML = '<div class="card"><div class="alert">প্রথমে "সেটিংস → প্রাথমিক সেটআপ" চালান এবং শাখা যোগ করুন।</div></div>'; return; }
       const key = 'dash_' + JSON.stringify(f); if (force) Cache.drop(key);
       $('.dash-out', el).innerHTML = '<div class="mini">লোড হচ্ছে...</div>';
-      Dash.feed(f).catch(e => console.warn(e));
       const d = await Cache.get(key, () => Dash.compute(f), 10 * 60000);
       Dash.band(f, d).catch(e => console.warn(e));
       const en = await R.empName(); const emps = await Data.employees('');

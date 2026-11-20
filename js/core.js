@@ -469,8 +469,8 @@ body{font-family:'Hind Siliguri',Arial,sans-serif;color:#000;margin:0;background
   .ig{display:flex;flex-wrap:wrap;margin-bottom:6px}.ig p{margin:3px 0;font-size:14px;width:33%}.ig p:nth-child(3n){text-align:right}.ig p:nth-child(3n+2){width:34%}
   table{width:100%;border-collapse:collapse;border:solid #000;border-width:1px 0 0 1px;margin-top:4px}
   th,td{border:solid #000;border-width:0 1px 1px 0;font-size:12px;padding:3px 4px;vertical-align:middle}
-  th{background:#f5f5f5;font-size:12px;font-weight:700;text-align:center}td.r,th.r{text-align:right}td.c,th.c{text-align:center}
-  tfoot td{font-weight:700}.empty{text-align:center;color:#666}.grp td{background:#f3f3f3;font-weight:700}
+  html,body{background:#fff!important}th{background:#fff;font-size:12px;font-weight:700;text-align:center}td.r,th.r{text-align:right}td.c,th.c{text-align:center}
+  tfoot td{font-weight:700}.empty{text-align:center;color:#666}.grp td{background:#fff;font-weight:700}
   .sig{display:flex;justify-content:space-between;margin-top:40px;font-size:13px}.sig div{width:32%}.sig div:nth-child(2){text-align:center}.sig div:nth-child(3){text-align:right}.sig p{margin:4px 0}
   .pf{font-size:10px;color:#555;margin-top:10px}.btnp{display:block;width:100%;background:#337ab7;color:#fff;border:0;padding:10px;font-size:15px;margin-top:14px;cursor:pointer;text-transform:uppercase}
   .sheetp .ig p,.sheetp .ig p:nth-child(3n),.sheetp .ig p:nth-child(3n+2){width:20%;text-align:left;font-size:14px}
@@ -763,8 +763,8 @@ function ReportPage(o) {
   App.page(o.id, {
     title: o.title, icon: o.icon || '📄',
     render: () => `<div class="report-filter">${UI.grid(o.filters, o.cols || 4)}
-      <div class="filter-actions">${o.ek ? UI.btn(o.ek, `ReportPage.run('${o.id}',this)`, 'btn-success') : UI.btn('🔍 দেখুন', `ReportPage.run('${o.id}',this)`) + UI.btn('🖨️ Print Report', `ReportPage.run('${o.id}',this,true)`, 'btn-print') + UI.btn('📥 Excel', `ReportPage.excel('${o.id}')`, 'btn-outline')}${(o.buttons || []).map(([l, m]) => UI.btn(l, `ReportPage.run('${o.id}',this,true,'${m}')`, 'btn-outline')).join('')}</div></div>
-      <div class="card rpt-out"><div class="mini">${o.ek ? '"' + o.ek + '" চাপুন' : 'ফিল্টার দিয়ে "দেখুন" চাপুন'}</div></div>`,
+      <div class="filter-actions">${o.ek ? UI.btn(o.ek, `ReportPage.run('${o.id}',this)`, 'btn-success') : UI.btn('Print Report', `ReportPage.run('${o.id}',this,true)`, 'btn-print') + UI.btn('Excel', `ReportPage.excel('${o.id}')`, 'btn-outline')}${(o.buttons || []).map(([l, m]) => UI.btn(l, `ReportPage.run('${o.id}',this,true,'${m}')`, 'btn-outline')).join('')}</div></div>
+      <div class="card rpt-out"${o.ek ? '' : ' hidden'}><div class="mini">${o.ek ? '"' + o.ek + '" চাপুন' : ''}</div></div>`,
     init: async (el) => {
       const f = $('.report-filter', el);
       const keys = o.filters.map(x => x.k);
@@ -808,7 +808,7 @@ ReportPage.info = async function (o, f, el) {
   if (o.infoMap) out.forEach(p => { if (o.infoMap[p[0]]) p[0] = o.infoMap[p[0]]; });
   return out;
 };
-ReportPage.excel = function (id) { const el = $('#page-' + id); if (!el._last) return toast('আগে "দেখুন" চাপুন', 'error'); downloadExcel(ReportPage.defs[id].title, el._last.html); };
+ReportPage.excel = async function (id) { const el = $('#page-' + id); await ReportPage.run(id, null, false); if (el._last) downloadExcel(ReportPage.defs[id].title, el._last.html); };
 const F = { // সাধারণ ফিল্টার স্পেক
   branch: { k: 'branch', l: 'Branch Name', t: 'select' },
   samity: { k: 'samity', l: 'Samity Name', t: 'select' },

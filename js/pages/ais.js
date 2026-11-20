@@ -83,7 +83,7 @@ App.page('ledgerTxn', {
   render: () => UI.card('', UI.grid([F.branch, { k: 'tt', l: 'Transaction Type', t: 'select', req: 1, opts: [['', '----------'], ...REF.LEDGER_TT.map(x => [x[0], x[1]])] }, { k: 'ledger', l: 'Transaction Ledger', t: 'select', req: 1 },
     { k: 'amount', l: 'Transaction Amount', t: 'number', req: 1 }, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }, { k: 'docNo', l: 'Document Number (Bank Cheque)' }, { k: 'comments', l: 'Comments', t: 'textarea' },
     { k: 'payerPhone', l: 'Receiver/Payer Phone' }, { k: 'payerName', l: 'Receiver/Payer Name' }, { k: 'balance', l: 'Current Balance', ro: 1 }, { k: 'file', l: 'Upload Documents', t: 'file' }], 4)
-    + `<div class="actions">${UI.btn('Post Transaction', 'LedgerTxn.save(this)', 'btn-success')}</div>`) + UI.card('আজকের লেজার লেনদেন', '<div class="vl"></div>'),
+    + `<div class="actions">${UI.btn('Post Transaction', 'LedgerTxn.save(this)', 'btn-success')}</div>`),   // eKisti: নিচে কোনো তালিকা নেই
   init: async el => {
     await Pick.branch(el, 'branch'); UI.el(el, 'date').value = await businessDate();
     UI.el(el, 'tt').addEventListener('change', async () => {

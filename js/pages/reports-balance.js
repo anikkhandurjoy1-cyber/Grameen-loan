@@ -8,11 +8,12 @@ ReportPage({
   filters: [F.branch, { ...F.member, req: 1 }, { k: 'dacc', l: 'Deposit Account', t: 'select' }, { k: 'lacc', l: 'Loan Account', t: 'select' }, F.from, F.upto, { k: 'alld', l: 'All Date', t: 'select', opts: [['yes', 'Yes'], ['no', 'No']] }, { k: 'ast', l: 'Account Status', t: 'select', opts: [['active', 'Active'], ['closed', 'Closed'], ['all', 'All Account']] }],
   init: async (el, f) => {
     const load = async () => {
-      const mid = UI.el(f, 'member').dataset.val; const list = mid ? await Data.accountsOf(UI.el(f, 'branch').value, mid) : [];
+      const ast = UI.el(f, 'ast').value;   // পুরনো (ক্লোজড) ঋণ/হিসাব শুধু Account Status = Closed/All দিলে
+      const mid = UI.el(f, 'member').dataset.val; const list = (mid ? await Data.accountsOf(UI.el(f, 'branch').value, mid) : []).filter(a => a.status !== 'cancelled' && (ast === 'all' || (ast === 'closed' ? a.status === 'closed' : a.status !== 'closed')));
       UI.fill(UI.el(f, 'dacc'), list.filter(a => a.kind !== 'loan'), a => a.accNo, a => a.accNo + ' - ' + typeName(a.kind, a.type), '— সব —');
       UI.fill(UI.el(f, 'lacc'), list.filter(a => a.kind === 'loan'), a => a.accNo, a => a.accNo + ' - ' + typeName(a.kind, a.type), '— সব —');
     };
-    UI.el(f, 'member').addEventListener('picked', load);
+    UI.el(f, 'member').addEventListener('picked', load); UI.el(f, 'ast').addEventListener('change', load);
     const p = App._params || {}; if (p.member) { const m = UI.el(f, 'member'); m.value = p.member; m.dispatchEvent(new Event('change')); }
   },
   run: async f => {

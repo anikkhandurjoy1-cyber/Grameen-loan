@@ -443,6 +443,8 @@ ReportPage({
   filters: [F.branch, F.samity, { k: 'kind', l: 'Account Type', t: 'select', opts: [['', '— সব —'], ['dep', 'Deposit'], ['loan', 'Loan'], ['share', 'Share'], ['other', 'Others'], ...DEP_TYPES.map(([c, t]) => ['dep:' + c, t]), ...LOAN_TYPES.map(([c, t]) => ['loan:' + c, t])] }, F.member, { k: 'ofrom', l: 'From Date', t: 'date' }, { k: 'oupto', l: 'Upto Date', t: 'date' }, { k: 'phone', l: 'Phone Number' }, { k: 'accNo', l: 'Select Account' }, { k: 'status', l: 'অবস্থা', t: 'select', opts: [['', 'All'], ['active', 'Active'], ['closed', 'Closed']] }],
   run: async f => {
     const [kind, type] = (f.kind || '').split(':');
+    // শুধু যার একাউন্ট দেখতে চান তারটাই — সদস্য / একাউন্ট নং / ফোন ছাড়া পুরো তালিকা দেখাবে না
+    if (!f.member && !(f.accNo || '').trim() && !(f.phone || '').trim()) fail('Member ID, Account নম্বর বা Phone Number দিন');
     let accs = await Data.accountsOf(f.branch, f.member || null, kind || null, type || null);
     if (f.samity) accs = accs.filter(a => a.samity === f.samity);
     if (f.status) accs = accs.filter(a => (a.status || 'active') === f.status);

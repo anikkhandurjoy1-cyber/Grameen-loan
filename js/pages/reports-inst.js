@@ -44,7 +44,7 @@ const R = {
   },
   // গ্রুপিং অপশন
   GROUP: { k: 'grp', l: 'Report Group', t: 'select', opts: [['member', 'Member'], ['branch', 'Branch'], ['center', 'Center'], ['employee', 'Employee']] },
-  SHEET: { k: 'sheet', l: 'Sheet Type', t: 'select', opts: [['blank', 'Blank Sheet'], ['target', 'Target Sheet'], ['data', 'With Data']] },
+  SHEET: { k: 'sheet', l: 'Sheet Type', t: 'select', opts: [['data', 'With Data'], ['target', 'Target Sheet'], ['blank', 'Blank Sheet']] },
   async empName(branch) { const m = {}; (await Data.employees('')).forEach(e => m[e.empId] = e.name); return id => id ? id + ' - ' + esc(m[id] || '') : '—'; },
   async branchesFor(f) { if (!f.btype || f.btype === 'me') return [f.branch]; const all = (await Data.branches()).map(b => b.code); const allowed = allowedBranches(); const list = allowed ? all.filter(c => allowed.includes(c)) : all; return f.btype === 'others' ? list.filter(c => c !== f.branch) : list; },
   // গ্রুপ কী
@@ -128,7 +128,7 @@ const CS = {
 };
 ReportPage({
   id: 'rptCollSheet', title: 'কালেকশন শীট', landscape: true,
-  filters: [F.branch, { ...F.samity, req: 1 }, { ...F.date, l: 'Report Date' }, { k: 'tpl', l: 'Report Name', t: 'select', opts: COLL_TPL, v: 'monthly' }, { k: 'sheet', l: 'Sheet Type', t: 'select', opts: [['blank', 'Blank Sheet'], ['target', 'Target Sheet'], ['data', 'With Data']] }, { k: 'extra', l: 'Extra Row', t: 'number', v: 0 }],
+  filters: [F.branch, { ...F.samity, req: 1 }, { ...F.date, l: 'Report Date' }, { k: 'tpl', l: 'Report Name', t: 'select', opts: COLL_TPL, v: 'monthly' }, { k: 'sheet', l: 'Sheet Type', t: 'select', opts: [['data', 'With Data'], ['target', 'Target Sheet'], ['blank', 'Blank Sheet']] }, { k: 'extra', l: 'Extra Row', t: 'number', v: 0 }],
   run: async f => {
     if (!f.samity) fail('সমিতি বাছাই করুন');
     const tpl = f.tpl || 'monthly';
