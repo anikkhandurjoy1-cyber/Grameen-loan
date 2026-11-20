@@ -21,6 +21,8 @@ App.page('dashboard', {
   },
 });
 
+// ── হোম (eKisti appauth-home): হেডারের লোগো/নামে ট্যাপ করলে — সার্চ + গোল আইকন ──
+App.page('home', { title: 'হোম', icon: '', always: true, render: () => Home.html(), init: el => Home.bind(el) });
 // ── eKisti হোম: মডিউল সার্চ + আইকন টাইল ──
 const HOME_TILES = [
   ['সদস্য ভর্তি', 'memberAdd', '🧑‍💼', '#dbeafe'], ['সদস্য তালিকা', 'memberList', '👥', '#fde68a'], ['সদস্য পাসবই', 'rptPassbook', '📘', '#e0e7ff'], ['নতুন সঞ্চয়ী হিসাব', 'depOpen', '🌱', '#dcfce7'],
