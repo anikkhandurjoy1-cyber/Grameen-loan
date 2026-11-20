@@ -459,3 +459,18 @@ tr.mig-bad td{background:#fee2e2 !important}
 .mc-ek-tbl .btn-warning{background:#f08a2c!important;color:#fff!important;border:0}
 @media(max-width:1100px){.mc-ek{grid-template-columns:1fr 1fr}.mc-ek-s{grid-column:1/-1}}
 @media(max-width:700px){.mc-ek{grid-template-columns:1fr}.mc-ek-m{flex-direction:column}.mc-ek-t{overflow-x:auto}}
+/* eKisti শীট পোস্টিং টেবিল */
+.sp-ek{grid-template-columns:minmax(260px,1fr) minmax(0,1fr) minmax(280px,1fr)}
+.sp-ek .mc-ek-s{padding-top:6px!important}
+.sp-scroll{overflow-x:auto}
+table.cg-ek{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:auto}
+table.cg-ek th{background:#f1f3f6!important;color:#222!important;font-weight:600;padding:8px 5px;border:1px solid #dde1e7;white-space:normal;text-align:center}
+table.cg-ek td{padding:6px 5px;border:1px solid #e5e7eb;background:#fff;white-space:normal;vertical-align:middle}
+table.cg-ek tr.cg-row:nth-child(even) td{background:#f7f9fc}
+table.cg-ek tr.cg-selrow td{background:#fafafa}
+table.cg-ek td.c{text-align:center}
+table.cg-ek input.ci{width:100%;min-width:64px;max-width:110px;text-align:right;padding:5px;border:1px solid #ccc;border-radius:4px;background:#fff}
+table.cg-ek td.cg-tot{text-align:right;font-weight:600}
+@media(max-width:1100px){.sp-ek{grid-template-columns:1fr 1fr}.sp-ek>div:nth-child(2){display:none}}
+@media(max-width:700px){.sp-ek{grid-template-columns:1fr}}
+.btn.btn-info{background:#1f9ad6;color:#fff;border-color:#1f9ad6}.btn.btn-info:hover{background:#1784bb}
