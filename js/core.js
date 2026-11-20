@@ -95,11 +95,18 @@ const allowedBranches = () => {
 // ─────────────── ক্যাশ ───────────────
 const Cache = {
   _m: {},
+  // stale-while-revalidate: মেয়াদ শেষ হলেও পুরনো ডেটা সাথে সাথে দেয়, পেছনে নতুন আনে — ট্যাপ করলেই পেজ খোলে
   async get(key, loader, ttl = 5 * 60000) {
     const e = this._m[key];
     if (e && Date.now() - e.t < ttl) return e.p;
+    if (e && e.ok && !e.busy) {
+      e.busy = true;
+      loader().then(v => { this._m[key] = { t: Date.now(), p: Promise.resolve(v), ok: true }; }).catch(() => { e.busy = false; });
+      return e.p;
+    }
     const p = loader().catch(err => { delete this._m[key]; throw err; });
-    this._m[key] = { t: Date.now(), p };
+    const ent = { t: Date.now(), p }; this._m[key] = ent;
+    p.then(() => { ent.ok = true; }, () => {});
     return p;
   },
   drop(prefix) { Object.keys(this._m).forEach(k => { if (!prefix || k.startsWith(prefix)) delete this._m[k]; }); },
@@ -627,6 +634,13 @@ async function startApp() {
   if (window.innerWidth >= 768) { sidebarOpen = false; toggleSidebar(); }
   if (App.user.mustChangePass) { App.render('profile'); toast('🔑 নিরাপত্তার জন্য প্রথমে আপনার পাসওয়ার্ড পরিবর্তন করুন', 'info'); return; }
   App.render(location.hash.slice(1) || 'dashboard');
+  setTimeout(prefetchData, 800);
+}
+// লগইনের পর পেছনে প্রয়োজনীয় তালিকা আগেই আনা — পরে পেজ খুললে সাথে সাথে দেখায়
+function prefetchData() {
+  const b = App.branch, q = [() => Data.branches(), () => Data.ledgers(), () => Data.holidays(), () => Data.purposes(), () => Data.instSettings(), () => Data.employees('')];
+  if (b) q.push(() => Data.samities(b), () => Data.employees(b), () => Data.memberIdx(b), () => Data.accIdx(b));
+  q.reduce((pr, f) => pr.then(() => f().catch(() => {})), Promise.resolve());
 }
 async function refreshBranchBadge() {
   const b = await Data.branch(App.branch);

@@ -7,7 +7,10 @@
 // ═══════════════════════════════════════════════════════════════
 App.page('dashboard', {
   title: 'ড্যাশবোর্ড', icon: '🏠', always: true,
-  render: () => Home.html() + `<div class="card db-filter"><div class="db-welcome"><h3>Welcome back, ${esc((App.user && (App.user.name || App.user.userId)) || '')} !</h3><div class="mini">Track your somity activity here.</div></div>
+  render: () => `<div class="today-band" id="todayBand"><div><div class="tb-hello">${esc(Dash.hello())}, ${esc((App.user && (App.user.name || App.user.userId)) || '')}</div><div class="tb-meta">আজকের হিসাব লোড হচ্ছে…</div></div><div class="tb-sun">${Dash.sun(0)}<div class="tb-fig"><b>—</b><span>আজকের ঋণ আদায়</span></div></div><div class="tb-stats"></div></div>
+    <div class="db-feed"><div class="card"><div class="card-title">আজকের কার্যক্রম</div><div class="feed-list"><div class="feed-empty">লোড হচ্ছে…</div></div></div>
+    <div><div class="pend ok"><span>অনুমোদনের অপেক্ষায়</span><b data-pend>—</b></div><div class="card"><div class="card-title">নতুন যা এসেছে</div><ul class="news">${APP_NEWS.map(([v, t]) => `<li><span>${v}</span>${esc(t)}</li>`).join('')}</ul></div></div></div>`
+    + Home.html() + `<div class="card db-filter"><div class="db-welcome"><h3>Welcome back, ${esc((App.user && (App.user.name || App.user.userId)) || '')} !</h3><div class="mini">Track your somity activity here.</div></div>
     ${UI.grid([{ ...F.branch, l: 'Branch Name' }, { k: 'btype', l: 'Branch Type', t: 'select', opts: [['me', 'Only Me'], ['all', 'All Branch'], ['others', 'All Others Branch']] }, { k: 'employee', l: 'Employee Name', t: 'select' }, { k: 'date', l: 'Business Date', t: 'date', req: 1 }], 4)}
     <div class="actions">${UI.btn('Refresh Dashboard', 'Dash.load(this,true)', 'btn-info')}</div></div><div class="dash-out"><div class="mini">লোড হচ্ছে...</div></div>`,
   init: async el => {
@@ -56,10 +59,50 @@ const Home = {
     box.addEventListener('pointerdown', e => { const it = e.target.closest('.hs-it[data-p]'); if (it) { e.preventDefault(); App.go(it.dataset.p); } });
   },
 };
+// নতুন যা এসেছে (সংক্ষেপে, নতুনটি আগে)
+const APP_NEWS = [
+  ['2.8', 'নতুন ডিজাইন, মোবাইলে পুরো লেখা দেখা যায়, পেজ খোলে সাথে সাথে'],
+  ['2.7.8', 'ক্লোজড ঋণ আর নতুন ঋণের সাথে দেখায় না'],
+  ['2.7.6', 'শুক্রবার বন্ধ — দৈনিক কিস্তিতে শুক্রবার বাদ, ডে ক্লোজে শুক্রবার বাদ'],
+  ['2.7.4', 'বেতন পোস্টিং কর্মীর একাউন্টে জমা, টাকা দেওয়ার সময় নগদ কাটে'],
+  ['2.7.3', 'শীট পোস্টিং ও সদস্য ভিত্তিক কালেকশন eKisti এর মতো'],
+  ['2.7.0', 'হাওলাদ গ্রহন/ফেরত লেজার লেনদেনে'],
+];
+const VT_NAME = { EMI_RCV: 'কিস্তি জমা', COLLECTION: 'কালেকশন', SHEET: 'শীট পোস্টিং', DEP_RCV: 'সঞ্চয় জমা', DEP_PAY: 'সঞ্চয় ফেরত', LOAN_DISB: 'ঋণ বিতরণ', LOAN_OPEN: 'ঋণ বিতরণ', ACC_TXN: 'একাউন্ট লেনদেন', LEDGER_TXN: 'লেজার লেনদেন', JV: 'জার্নাল', SALARY: 'বেতন পোস্টিং', MEMBER_ADMISSION: 'সদস্য ভর্তি', PASSBOOK_ISSUE: 'পাসবুক বিক্রয়', DEP_CLOSING: 'ডিপোজিট ক্লোজিং', LOAN_WAIVER: 'ঋণ মওকুফ', LOAN_PENALTY: 'ঋণ জরিমানা', LOAN_RESCHEDULE: 'ঋণ পুনঃ বিতরণ', DEP_TRANSFER: 'ডিপোজিট স্থানান্তর', SHARE_RCV: 'শেয়ার জমা', SHARE_PAY: 'শেয়ার ফেরত', PROFIT_DIST: 'মুনাফা বন্টন', PROFIT_PAYMENT: 'লভ্যাংশ প্রদান', IB_SEND: 'তহবিল প্রেরণ', IB_RECEIVE: 'তহবিল গ্রহণ', OPENING: 'ওপেনিং', OPENING_ACC: 'ওপেনিং ব্যালেন্স' };
 const DEP_GROUP = t => { const d = REF.DEP[t] || {}; return d.dtype === 'FD' ? 'fd' : d.dtype === 'RD' ? 'rd' : t === '2002' || d.comp ? 'ss' : 'gs'; };
 const DEP_GROUP_NAME = { gs: 'সাধারণ সঞ্চয়', ss: 'বিশেষ সঞ্চয়', fd: 'স্থায়ী আমানত', rd: 'মেয়াদী আমানত' };
 const Dash = {
   charts: [],
+  hello() { const h = new Date().getHours(); return h < 12 ? 'শুভ সকাল' : h < 17 ? 'শুভ অপরাহ্ন' : 'শুভ সন্ধ্যা'; },
+  // সূর্যোদয় অর্ধবৃত্ত: আজকের আদায় / আদায়যোগ্য
+  sun(pct) {
+    const p = Math.max(0, Math.min(100, pct)) / 100, L = Math.PI * 96;
+    return `<svg viewBox="0 0 220 122" aria-hidden="true"><path d="M14 112 A96 96 0 0 1 206 112" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="12" stroke-linecap="round"/><path d="M14 112 A96 96 0 0 1 206 112" fill="none" stroke="#D8A01E" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(L * p).toFixed(1)} ${L.toFixed(1)}"/></svg>`;
+  },
+  async band(f, d) {
+    const el = $('#todayBand'); if (!el) return;
+    const n0 = x => Math.round(x).toLocaleString('en-IN');
+    const b = await Data.branch(f.branch); const pct = d.receivable ? d.rcv / d.receivable * 100 : 0;
+    el.querySelector('.tb-meta').innerHTML = `<b>${esc(b ? b.code + ' - ' + b.name : f.branch)}</b><br>বিজনেস ডেট <b>${fmtD(f.date)}</b>${isFriday(f.date) ? ' (শুক্রবার — বন্ধ)' : ''}`;
+    el.querySelector('.tb-sun').innerHTML = Dash.sun(pct) + `<div class="tb-fig"><b>${n0(d.rcv)}</b><span>${n0(d.receivable)} টাকার মধ্যে আদায় (${Math.round(pct)}%)</span></div>`;
+    el.querySelector('.tb-stats').innerHTML = [['হাতে নগদ', d.cash], ['আজ নগদ গ্রহণ', d.cashRcv], ['আজ নগদ প্রদান', d.cashPay], ['আজকের বকেয়া', Math.max(0, d.receivable - d.rcv), 'warn']].map(([l, v, c]) => `<div class="${c || ''}"><small>${l}</small><b>${n0(v)}</b></div>`).join('');
+  },
+  // আজকের ভাউচার তালিকা + অনুমোদনের অপেক্ষা
+  async feed(f) {
+    const el = $('#page-dashboard'); if (!el) return;
+    const bs = await R.branchesFor(f); let vs = [];
+    for (const b of bs) vs = vs.concat((await db.collection('vouchers').where('bd', '==', b + '_' + f.date).get()).docs.map(x => x.data()));
+    const pend = vs.filter(v => v.status === 'pending').length; const pe = $('[data-pend]', el);
+    if (pe) { pe.textContent = pend; pe.closest('.pend').classList.toggle('ok', !pend); pe.closest('.pend').onclick = pend ? () => App.go('authList') : null; pe.closest('.pend').style.cursor = pend ? 'pointer' : ''; }
+    const cash = REF.GL.cash;
+    const rows = vs.filter(v => v.status !== 'cancelled').sort((a, b) => ((b.on && b.on.seconds) || 0) - ((a.on && a.on.seconds) || 0)).slice(0, 12).map(v => {
+      const c = (v.lines || []).filter(l => l.gl === cash); const inA = sum(c, l => num(l.dr)), outA = sum(c, l => num(l.cr));
+      const t = v.on && v.on.seconds ? new Date(v.on.seconds * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '';
+      const amtTxt = inA || outA ? (inA >= outA ? `<span class="fa in">+${amt(inA - outA)}</span>` : `<span class="fa out">−${amt(outA - inA)}</span>`) : `<span class="fa">${amt(v.total)}</span>`;
+      return `<div class="feed-it"><time>${t}</time><div style="min-width:0"><div class="ft">${esc(VT_NAME[v.type] || v.type || 'লেনদেন')}${v.status === 'pending' ? ' <span class="tag orange">অপেক্ষায়</span>' : ''}</div><div class="fd">${esc(v.narration || '')} — ${esc(v.byName || '')}</div></div>${amtTxt}</div>`;
+    });
+    $('.feed-list', el).innerHTML = rows.join('') || '<div class="feed-empty">আজ এখনো কোনো লেনদেন হয়নি।</div>';
+  },
   async compute(f) {
     const bs = await R.branchesFor(f);
     const z = () => ({ gs: 0, ss: 0, fd: 0, rd: 0 });
@@ -117,7 +160,9 @@ const Dash = {
       if (!f.branch) { $('.dash-out', el).innerHTML = '<div class="card"><div class="alert">প্রথমে "সেটিংস → প্রাথমিক সেটআপ" চালান এবং শাখা যোগ করুন।</div></div>'; return; }
       const key = 'dash_' + JSON.stringify(f); if (force) Cache.drop(key);
       $('.dash-out', el).innerHTML = '<div class="mini">লোড হচ্ছে...</div>';
+      Dash.feed(f).catch(e => console.warn(e));
       const d = await Cache.get(key, () => Dash.compute(f), 10 * 60000);
+      Dash.band(f, d).catch(e => console.warn(e));
       const en = await R.empName(); const emps = await Data.employees('');
       const n0 = x => Math.round(x).toLocaleString('en-IN');
       const pct = d.receivable ? Math.min(100, r2(d.rcv / d.receivable * 100)) : 0;
@@ -156,7 +201,7 @@ const Dash = {
   },
   draw(d, C) {
     Dash.charts.forEach(c => { try { c.destroy(); } catch (e) {} }); Dash.charts = [];
-    if (!window.ApexCharts) return;
+    if (!window.ApexCharts) { window.addEventListener('load', () => window.ApexCharts && Dash.draw(d, C), { once: true }); return; }
     const tot = n => Math.round(n).toLocaleString('en-IN');
     const donut = (id, series, labels, colors, center) => { const c = new ApexCharts($(id), { chart: { type: 'donut', height: 260, fontFamily: 'Hind Siliguri' }, series: series.map(x => Math.max(0, Math.round(x))), labels, colors, legend: { show: false }, dataLabels: { enabled: true, formatter: v => v.toFixed(1) + '%' }, plotOptions: { pie: { donut: { size: '62%', labels: { show: true, total: { show: true, label: center, formatter: () => tot(sum(series)) } } } } } }); c.render(); Dash.charts.push(c); };
     const bars = (id, g, color) => { const c = new ApexCharts($(id), { chart: { type: 'bar', height: 200, toolbar: { show: false }, fontFamily: 'Hind Siliguri' }, series: [{ name: 'টাকা', data: ['gs', 'ss', 'fd', 'rd'].map(k => Math.round(g[k])) }], xaxis: { categories: ['GS', 'SS', 'FDR', 'DPS'] }, colors: [color], plotOptions: { bar: { borderRadius: 4, columnWidth: '45%' } }, dataLabels: { enabled: false } }); c.render(); Dash.charts.push(c); };

@@ -1,0 +1,195 @@
+/* ═══════════════════════════════════════════════════════════════
+   গ্রামীন আশার আলো — প্রিমিয়াম থিম (v2.8)
+   ধারণা: ধানক্ষেতের উপর সূর্যোদয় — গাঢ় পাইন সবুজ ভিত্তি, একটিমাত্র সোনালি "আলোর রেখা"
+   app.css এর পরে লোড হয়; কাজের লজিক বদলায় না, শুধু চেহারা
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  --pine:#0E3B33; --pine-2:#14503F; --paddy:#137A5B; --paddy-2:#0F6A4E;
+  --gold:#D8A01E; --gold-soft:#F6E7BF;
+  --mist:#EDF2F0; --paper:#FFFFFF; --line:#D5E0DB; --line-2:#E6EDEA;
+  --ink:#172723; --muted:#5B6F69; --rust:#B4442F; --steel:#23708F;
+  /* app.css ভেরিয়েবল ম্যাপ */
+  --primary:var(--pine); --primary-light:var(--paddy); --secondary:var(--paddy); --accent:var(--gold);
+  --danger:var(--rust); --success:var(--paddy); --warning:#C98A12;
+  --bg:var(--mist); --card:var(--paper); --text:var(--ink); --text-light:var(--muted); --border:var(--line);
+  --shadow:0 1px 2px rgba(14,59,51,.06),0 6px 18px -8px rgba(14,59,51,.12);
+  --radius:14px; --header-h:60px;
+}
+html,body{overflow-x:hidden}
+body{font-family:'Anek Bangla','Hind Siliguri',sans-serif;font-size:14.5px;line-height:1.5;color:var(--ink);background:var(--mist);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+::selection{background:var(--gold-soft)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+/* ── হেডার: পাইন + সোনালি আলোর রেখা ── */
+.header{background:var(--pine);box-shadow:inset 0 -2px 0 var(--gold);padding:0 14px;gap:10px}
+.header .logo-area{min-width:0}
+.header .logo-area img{width:38px;height:38px;background:#fff;padding:2px}
+.header .logo-area .org-name{font-size:16px;font-weight:600;letter-spacing:.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header .logo-area .org-sub{color:rgba(255,255,255,.66);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header .user-btn,.header .menu-btn{border-radius:12px}
+.header .user-btn{background:rgba(255,255,255,.1);width:38px;height:38px}
+.header .user-btn:hover{background:rgba(255,255,255,.18)}
+.hdr-info{font-size:12px}.hdr-info b{font-size:13px;color:#fff}
+
+/* ── সাইডবার ── */
+.sidebar{background:var(--paper);border-right:1px solid var(--line)}
+.menu-search{background:var(--paper);padding:10px 12px}
+.menu-search input{border-radius:10px;border:1px solid var(--line);background:var(--mist);padding:9px 12px}
+.nav-section{border-bottom:1px solid var(--line-2)}
+.nav-item{padding:11px 16px;font-size:14.5px;color:var(--ink)}
+.nav-item:hover{background:var(--mist)}
+.nav-item.active,.nav-item.open{color:var(--pine);background:transparent;font-weight:600}
+.submenu{background:#F7FAF9}
+.sub-item{font-size:14px;color:var(--muted);padding:9px 16px 9px 48px;border-left:3px solid transparent}
+.sub-item:hover{color:var(--ink);background:var(--mist)}
+.sub-item.active{color:var(--pine);background:#E7F1ED;border-left-color:var(--gold);font-weight:600}
+.sidebar-overlay{background:rgba(14,59,51,.38)}
+
+/* ── মূল অংশ ── */
+.main{padding:20px 22px}
+.page-title{font-size:21px;font-weight:600;color:var(--pine);border-bottom:none;margin-bottom:14px;padding-bottom:0;letter-spacing:-.1px}
+.card,.report-filter{background:var(--paper);border:1px solid var(--line-2);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+.card-title{font-size:15.5px;font-weight:600;color:var(--pine);border-bottom:1px solid var(--line-2);padding-bottom:10px;margin-bottom:14px}
+
+/* ── ফর্ম: লেবেল সাধারণ লেখায় (ALL CAPS নয়) ── */
+.fgrid{gap:12px 14px}
+.fgrid>*,.filter-grid>*,.form-row>*{min-width:0}
+.form-group{gap:5px}
+.form-group label{text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;color:var(--muted)}
+.form-group input,.form-group select,.form-group textarea,.full{width:100%;min-width:0;max-width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14.5px;background:var(--paper);color:var(--ink);transition:border-color .15s,box-shadow .15s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--paddy);box-shadow:0 0 0 3px rgba(19,122,91,.14)}
+.form-group input[readonly],.form-group select:disabled{background:#F3F6F5;color:var(--muted);border-style:dashed}
+.form-group.check label{font-size:14px;color:var(--ink)}
+.form-sep{color:var(--pine);border-bottom:1px solid var(--line);font-weight:600}
+select{text-overflow:ellipsis}
+
+/* ── বাটন ── */
+.btn{border-radius:10px;padding:10px 18px;font-size:14px;font-weight:600;letter-spacing:.1px;transition:background .15s,transform .05s,box-shadow .15s;line-height:1.2}
+.btn:active{transform:translateY(1px)}
+.btn-success,.btn-primary,.btn-print{background:var(--paddy);color:#fff}
+.btn-success:hover,.btn-primary:hover,.btn-print:hover{background:var(--paddy-2);opacity:1}
+.btn.btn-info{background:var(--steel);border-color:var(--steel);color:#fff}
+.btn.btn-info:hover{background:#1C5D77}
+.btn-warning{background:#C98A12;color:#fff}
+.btn-danger{background:var(--rust)}
+.btn-secondary{background:var(--mist);color:var(--ink);border:1px solid var(--line)}
+.btn-outline{border:1px solid var(--line);color:var(--pine);background:var(--paper)}
+.btn-outline:hover{border-color:var(--paddy);background:#F3F8F6}
+.btn-sm{padding:6px 12px;font-size:12.5px;border-radius:8px}
+.actions,.filter-actions{gap:10px}
+
+/* ── টেবিল: হালকা মাথা, স্টিকি, মোবাইলে স্ক্রল ── */
+.table-wrap,.rpt-out,.crud-list,.tl,.rl,.ll,.gl,.cl,.hist,.hl,.dl{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+table{font-size:13.5px}
+table th{background:#EEF4F1;color:var(--pine);font-weight:600;border-bottom:1px solid var(--line);padding:10px 12px}
+table td{border-bottom:1px solid var(--line-2);padding:9px 12px}
+table tbody tr:nth-child(even) td{background:#FAFCFB}
+table tr:hover td{background:#F2F8F5}
+table tfoot td{background:#E7F0EC;color:var(--pine)}
+.badge,.tag{border-radius:999px}
+
+/* ── মোডাল, টোস্ট, অ্যালার্ট ── */
+.modal{background:rgba(14,59,51,.45)}
+.modal-box{border-radius:16px;box-shadow:0 30px 80px -20px rgba(14,59,51,.45)}
+.modal-header h3{color:var(--pine);font-weight:600}
+.toast{border-radius:12px;font-weight:500;padding:11px 18px;max-width:92vw}
+.toast-success{background:var(--pine)}.toast-error{background:var(--rust)}
+.alert{border-radius:10px}
+.alert-info{background:#E8F2EE;color:var(--pine);border-left-color:var(--paddy)}
+.alert-warning{background:#FBF3DF;color:#7A5608;border-left-color:var(--gold)}
+#noticeBar{background:var(--gold-soft);border-bottom-color:#E8CF87;color:#5E4300}
+
+/* ── লগইন ── */
+#loginScreen{background:var(--pine)}
+#loginScreen::before{content:'';position:absolute;left:0;right:0;bottom:0;height:46%;background:radial-gradient(120% 90% at 50% 100%,rgba(216,160,30,.32),transparent 60%);pointer-events:none}
+.login-box{border-radius:18px;position:relative;box-shadow:0 40px 90px -30px rgba(0,0,0,.55)}
+.login-box .logo h2{color:var(--pine);font-weight:600}
+.login-box input{border:1px solid var(--line);border-radius:10px}
+.login-box input:focus{border-color:var(--paddy);box-shadow:0 0 0 3px rgba(19,122,91,.14)}
+.login-box .btn-login{background:var(--paddy);border-radius:10px}
+.login-box .btn-login:hover{background:var(--paddy-2)}
+#loader{background:var(--pine)}#loader .bar span{background:var(--gold)}
+
+/* ── বটম নেভ (মোবাইল) ── */
+.bottom-nav{background:var(--paper);border-top:1px solid var(--line);padding:4px 0 calc(4px + env(safe-area-inset-bottom))}
+.bottom-nav .nav-items a{font-size:12px}.bottom-nav .nav-items a.active{color:var(--pine);font-weight:600}
+
+/* ── eKisti হোম টাইল ── */
+.home-card{padding:16px}
+.home-grid{gap:10px!important}
+.home-tile{border:1px solid var(--line-2);border-radius:12px;background:var(--paper);transition:border-color .15s,background .15s}
+.home-tile:hover{border-color:var(--paddy);background:#F5FAF7}
+.ht-l{font-size:13px!important;color:var(--ink)!important;line-height:1.35}
+.home-search input,.hs-inp{border-radius:10px!important;border:1px solid var(--line)!important;background:var(--mist)!important}
+
+/* ── ড্যাশবোর্ড: "আজকের দিন" ব্যান্ড ── */
+.today-band{position:relative;overflow:hidden;background:var(--pine);color:#fff;border-radius:18px;padding:22px 24px;margin-bottom:16px;display:grid;grid-template-columns:1.1fr 1fr 1.1fr;gap:20px;align-items:center}
+.today-band::after{content:'';position:absolute;left:-10%;right:-10%;bottom:-70%;height:120%;background:radial-gradient(closest-side,rgba(216,160,30,.18),transparent);pointer-events:none}
+.tb-hello{font-size:22px;font-weight:600;line-height:1.25}
+.tb-meta{color:rgba(255,255,255,.72);font-size:14px;margin-top:6px}
+.tb-meta b{color:#fff;font-weight:600}
+.tb-sun{position:relative;justify-self:center;width:220px;height:122px}
+.tb-sun svg{width:220px;height:122px;display:block}
+.tb-sun .tb-fig{position:absolute;left:0;right:0;bottom:2px;text-align:center}
+.tb-sun .tb-fig b{display:block;font-size:26px;font-weight:600;line-height:1.1}
+.tb-sun .tb-fig span{font-size:12.5px;color:rgba(255,255,255,.72)}
+.tb-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;position:relative;z-index:1}
+.tb-stats div{border-left:2px solid rgba(255,255,255,.18);padding-left:10px}
+.tb-stats small{display:block;color:rgba(255,255,255,.66);font-size:12.5px}
+.tb-stats b{font-size:17px;font-weight:600}
+.tb-stats .warn b{color:#FFD56A}
+.db-filter{padding:12px 16px}
+.db-filter .db-welcome{display:none}
+.db-filter .fgrid{margin-bottom:6px}
+
+/* আজকের কার্যক্রম + অনুমোদন + নতুন যা এসেছে */
+.db-feed{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:16px}
+.feed-list{display:flex;flex-direction:column}
+.feed-it{display:grid;grid-template-columns:54px 1fr auto;gap:10px;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line-2)}
+.feed-it:last-child{border-bottom:none}
+.feed-it time{font-size:12.5px;color:var(--muted)}
+.feed-it .ft{font-weight:600;font-size:14px;color:var(--ink)}
+.feed-it .fd{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.feed-it .fa{font-weight:600;text-align:right;white-space:nowrap}
+.feed-it .fa.in{color:var(--paddy)}.feed-it .fa.out{color:var(--rust)}
+.feed-empty{color:var(--muted);padding:14px 0}
+.pend{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#FBF3DF;border:1px solid #F0DDA6;border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.pend b{font-size:22px;color:#7A5608}.pend.ok{background:#E8F2EE;border-color:#CFE3DA}.pend.ok b{color:var(--paddy)}
+.news li{list-style:none;padding:8px 0;border-bottom:1px solid var(--line-2);font-size:13.5px}
+.news li:last-child{border-bottom:none}
+.news li span{display:inline-block;min-width:44px;font-size:12px;color:var(--paddy);font-weight:600}
+
+/* eKisti কার্ড গ্রিড — শান্ত রূপে */
+.db-card{border:1px solid var(--line-2);box-shadow:none;border-radius:12px}
+.db-ic{border-radius:10px}
+.db-v{font-weight:600;font-size:19px}
+.db-target{background:var(--rust);border-radius:14px}
+
+/* ── মোবাইল ── */
+@media(max-width:900px){
+  .today-band{grid-template-columns:1fr;gap:16px;padding:18px}
+  .tb-sun{justify-self:start}
+  .db-feed{grid-template-columns:1fr}
+}
+@media(max-width:767px){
+  :root{--header-h:56px}
+  body{font-size:15px}
+  .main{padding:12px 12px 78px}
+  .card,.report-filter{padding:14px;border-radius:12px}
+  .page-title{font-size:19px}
+  .header .logo-area .org-name{font-size:15px}
+  .fgrid.c2,.fgrid.c3,.fgrid.c4,.report-filter .filter-grid{grid-template-columns:1fr 1fr}
+  .form-group input,.form-group select,.form-group textarea{font-size:16px;padding:10px 11px}   /* iPhone জুম এড়াতে ১৬px */
+  .actions .btn,.filter-actions .btn{flex:1 1 auto;justify-content:center}
+  table{font-size:13px}
+  .home-grid{grid-template-columns:repeat(3,1fr)!important}
+  .tb-hello{font-size:19px}
+}
+@media(max-width:480px){
+  .fgrid.c2,.fgrid.c3,.fgrid.c4,.report-filter .filter-grid{grid-template-columns:1fr}
+  .tb-stats{grid-template-columns:1fr 1fr}
+  .tb-sun,.tb-sun svg{width:200px}
+  .header .date-badge,.lang-toggle{display:none}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media print{body{background:#fff}.card{border:1px solid #ddd}}
