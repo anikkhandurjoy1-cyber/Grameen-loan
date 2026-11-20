@@ -139,7 +139,6 @@ table tfoot td{background:#E7F0EC;color:var(--pine)}
 .tb-stats b{font-size:17px;font-weight:600}
 .tb-stats .warn b{color:#FFD56A}
 .db-filter{padding:12px 16px}
-.db-filter .db-welcome{display:none}
 .db-filter .fgrid{margin-bottom:6px}
 
 /* আজকের কার্যক্রম + অনুমোদন + নতুন যা এসেছে */
