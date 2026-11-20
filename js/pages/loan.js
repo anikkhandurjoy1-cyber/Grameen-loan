@@ -309,7 +309,7 @@ const Waive = {
         branch: f.branch, date: f.date, type: 'LOAN_WAIVER', narration: 'ঋণ মওকুফ ' + l.accNo + ' — ' + f.comments, ref: { accNo: l.accNo },
         lines: (p + pr) ? [{ gl: REF.GL.waiver, dr: p }, { gl: prod.recGl, dr: pr, memo: 'Profit Waiver' }, { gl: prod.gl, cr: r2(p + pr), accNo: l.accNo }] : [],
         txns: [{ accNo: l.accNo, kind: 'loan', type: l.type, memberId: l.memberId, samity: l.samity, tt: 'EMI_WAIVE', amount: r2(p + pr), dc: 'C', principal: p, profit: pr, penalty: c, waiver: true, narration: f.comments }],
-        accOps: [{ accNo: l.accNo, samity: l.samity, inc: { balance: -(p + pr), paidP: p, paidPr: pr, paidTotal: p + pr, penDue: -c, wvP: p, wvPr: pr, wvC: c }, snapInc: { b: -(p + pr), pp: p, ppr: pr, pt: p + pr }, set: closing ? { status: 'closed', closeDate: f.date } : null, snapSet: closing ? { st: 'closed', cd: f.date } : null, undoSet: closing ? { status: 'active' } : null }],
+        accOps: [{ accNo: l.accNo, samity: l.samity, meta: closing ? [l.memberId || '', 'loan', l.type || '', 'closed', l.samity || '', l.title || ''] : null, inc: { balance: -(p + pr), paidP: p, paidPr: pr, paidTotal: p + pr, penDue: -c, wvP: p, wvPr: pr, wvC: c }, snapInc: { b: -(p + pr), pp: p, ppr: pr, pt: p + pr }, set: closing ? { status: 'closed', closeDate: f.date } : null, snapSet: closing ? { st: 'closed', cd: f.date } : null, undoSet: closing ? { status: 'active' } : null }],
       });
       toast('✅ মওকুফ সম্পন্ন'); UI.el(el, 'account').dispatchEvent(new Event('change'));
     });

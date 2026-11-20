@@ -308,7 +308,7 @@ const MemberCard = {
     card.innerHTML = `<div class="mc-top">${m.photoUrl ? `<img src="${esc(m.photoUrl)}">` : '<span class="mc-ph">👤</span>'}<div><div class="mc-name">${esc(m.name)} <small>(${esc(mid)})</small></div>
       <div>📞 ${esc(m.mobile || '-')}</div><div>📍 ${esc(m.presentAddr || '-')}</div><div class="mini">পিতা/স্বামী: ${esc(m.father || m.spouse || '-')} • সমিতি: ${esc(sam ? sam.code + ' - ' + sam.name : m.samity || '')}</div></div>${m.signatureUrl ? `<img class="mc-sig" src="${esc(m.signatureUrl)}">` : ''}</div>
       <div class="mc-badges"><span>Savings AC <i class="on">Active ${on(dep)}</i><i class="off">Close ${off(dep)}</i></span><span>Loan AC <i class="on">Active ${on(ln)}</i><i class="off">Close ${off(ln)}</i></span></div>
-      <div class="mc-sec">🐷 সঞ্চয় হিসাব</div>${dep.map(accRow).join('') || '<div class="mini">নেই</div>'}<div class="mc-sec">💳 ঋণ হিসাব</div>${ln.map(accRow).join('') || '<div class="mini">নেই</div>'}`;
+      <div class="mc-sec">🐷 সঞ্চয় হিসাব</div>${dep.filter(x => x.st !== 'closed').map(accRow).join('') || '<div class="mini">নেই</div>'}<div class="mc-sec">💳 ঋণ হিসাব</div>${ln.filter(x => x.st !== 'closed').map(accRow).join('') || '<div class="mini">নেই</div>'}`;   // ক্লোজড হিসাব শুধু গণনায় (Close n), তালিকায় নয়
   },
 };
 const Pick = {

@@ -38,7 +38,7 @@ const Eng = {
       vno, branch: v.branch, date: v.date, bd: v.branch + '_' + v.date, type: v.type || 'JV', narration: v.narration || '', docNo: v.docNo || '', payer: v.payer || '',
       lines: v.lines, total: v.total, status: pending ? 'pending' : 'posted', authType: v.authType || '', payload: pending ? payload : null, ref: v.ref || null,
       accs: [...new Set([...(v.txns || []).map(t => t.accNo), ...(v.accOps || []).map(a => a.accNo)].filter(Boolean))],
-      accOps: pending ? [] : (v.accOps || []).map(a => ({ accNo: a.accNo, samity: a.samity || '', inc: a.inc || {}, snapInc: a.snapInc || {}, undoSet: a.undoSet || null })),
+      accOps: pending ? [] : (v.accOps || []).map(a => ({ accNo: a.accNo, samity: a.samity || '', inc: a.inc || {}, snapInc: a.snapInc || {}, undoSet: a.undoSet || null, meta: a.meta || null })),
       by: App.user.uid, byName: App.user.userId || App.user.name || '', on: FV.serverTimestamp(),
       businessDate: await businessDate(v.branch),
     });
@@ -61,7 +61,7 @@ const Eng = {
       batch.set(db.collection('vouchers').doc(vno), {
         vno, branch: v.branch, date: v.date, bd: v.branch + '_' + v.date, type: v.type || 'JV', narration: v.narration || '', docNo: v.docNo || '', payer: '', lines: v.lines, total: v.total, status: 'posted', authType: '', payload: null, ref: v.ref || null,
         accs: [...new Set([...payload.txns.map(t => t.accNo), ...payload.accOps.map(a => a.accNo)].filter(Boolean))],
-        accOps: payload.accOps.map(a => ({ accNo: a.accNo, samity: a.samity || '', inc: a.inc || {}, snapInc: a.snapInc || {}, undoSet: a.undoSet || null })),
+        accOps: payload.accOps.map(a => ({ accNo: a.accNo, samity: a.samity || '', inc: a.inc || {}, snapInc: a.snapInc || {}, undoSet: a.undoSet || null, meta: a.meta || null })),
         by: App.user.uid, byName: App.user.userId || '', on: FV.serverTimestamp(), businessDate: await businessDate(v.branch),
       });
       Eng._apply(batch, vno, v.branch, v.date, payload, 1);
@@ -92,6 +92,9 @@ const Eng = {
       if (sign === -1 && a.undoSet) Object.assign(upd, a.undoSet);
       upd.lastTxnDate = date;
       if (Object.keys(upd).length) batch.update(db.collection('accounts').doc(a.accNo), upd);
+      // স্ট্যাটাস বদলালে (ক্লোজ / বাতিলে আবার চালু) একাউন্ট ইনডেক্সও আপডেট — নইলে ড্রপডাউনে পুরনো ক্লোজড ঋণ দেখায়
+      const newSt = sign === 1 ? ((a.set && a.set.status) || (a.snapSet && a.snapSet.st)) : (a.undoSet && a.undoSet.status);
+      if (newSt && a.meta && branch) { const row = [...a.meta]; row[3] = newSt; batch.set(db.collection('idx').doc('acc_' + branch), { rows: { [a.accNo]: Idx.enc(row) } }, { merge: true }); Cache.drop('aidx_' + branch); }
       if (a.samity) {
         const s = {};
         Object.entries(a.snapInc || {}).forEach(([k, n]) => { s[k] = inc(n); });
@@ -140,7 +143,7 @@ const Eng = {
     if (v.status !== 'pending') fail('অনুমোদনের অপেক্ষায় নেই');
     const batch = db.batch();
     Eng._apply(batch, vno, v.branch, v.date, v.payload, 1);
-    batch.update(vd.ref, { status: 'posted', payload: null, accOps: (v.payload.accOps || []).map(a => ({ accNo: a.accNo, samity: a.samity || '', inc: a.inc || {}, snapInc: a.snapInc || {}, undoSet: a.undoSet || null })), authBy: App.user.userId || App.user.uid, authOn: FV.serverTimestamp() });
+    batch.update(vd.ref, { status: 'posted', payload: null, accOps: (v.payload.accOps || []).map(a => ({ accNo: a.accNo, samity: a.samity || '', inc: a.inc || {}, snapInc: a.snapInc || {}, undoSet: a.undoSet || null, meta: a.meta || null })), authBy: App.user.userId || App.user.uid, authOn: FV.serverTimestamp() });
     await batch.commit();
   },
   // সাধারণ নগদ/অন্য লেজার লাইন

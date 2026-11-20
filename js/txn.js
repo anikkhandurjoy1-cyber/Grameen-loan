@@ -75,7 +75,7 @@ const Tx = {
       // eKisti: ঋণ হিসাবে (আসল+মুনাফা) ক্রেডিট; Profit Receivable ডেবিট → সার্ভিস চার্জ আয় ক্রেডিট
       lines: [opts.contraGl === null ? null : { gl: opts.contraGl || REF.GL.cash, dr: total }, { gl: prod.gl, cr: r2(principal + profit), accNo: l.accNo }, { gl: prod.recGl, dr: profit, memo: 'Installment Profit Adjustment' }, { gl: prod.incGl, cr: profit, accNo: l.accNo }, { gl: REF.GL.penalty, cr: penalty, accNo: l.accNo }].filter(Boolean),
       txns: [Tx.base(l, opts.tt || 'EMI_RCV', amount, 'C', { principal, profit, penalty, docNo: opts.docNo || '', narration: opts.narration || '', outAfter: newOut })],
-      accOps: [{ accNo: l.accNo, samity: l.samity, inc: { balance: -amount, paidP: principal, paidPr: profit, paidPen: penalty, paidTotal: amount, penDue: -Math.min(penalty, num(l.penDue)) }, snapInc: { b: -amount, pp: principal, ppr: profit, pt: amount }, set: set ? { ...set, lastPayDate: opts.date } : { lastPayDate: opts.date }, snapSet: closing ? { st: 'closed', cd: opts.date } : null, undoSet: closing ? { status: 'active' } : null }],
+      accOps: [{ accNo: l.accNo, samity: l.samity, meta: closing ? [l.memberId || '', 'loan', l.type || '', 'closed', l.samity || '', l.title || ''] : null, inc: { balance: -amount, paidP: principal, paidPr: profit, paidPen: penalty, paidTotal: amount, penDue: -Math.min(penalty, num(l.penDue)) }, snapInc: { b: -amount, pp: principal, ppr: profit, pt: amount }, set: set ? { ...set, lastPayDate: opts.date } : { lastPayDate: opts.date }, snapSet: closing ? { st: 'closed', cd: opts.date } : null, undoSet: closing ? { status: 'active' } : null }],
     };
   },
   merge(parts) { return { lines: parts.flatMap(p => p.lines), txns: parts.flatMap(p => p.txns), accOps: parts.flatMap(p => p.accOps) }; },
