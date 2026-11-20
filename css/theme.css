@@ -182,7 +182,10 @@ table tfoot td{background:#E7F0EC;color:var(--pine)}
   .form-group input,.form-group select,.form-group textarea{font-size:16px;padding:10px 11px}   /* iPhone জুম এড়াতে ১৬px */
   .actions .btn,.filter-actions .btn{flex:1 1 auto;justify-content:center}
   table{font-size:13px}
-  .home-grid{grid-template-columns:repeat(3,1fr)!important}
+  .home-grid{grid-template-columns:repeat(4,1fr)!important;gap:8px!important}
+  .home-tile{padding:8px 4px!important}
+  .ht-ic{width:38px!important;height:38px!important;font-size:19px!important}
+  .ht-l{font-size:11.5px!important}
   .tb-hello{font-size:19px}
 }
 @media(max-width:480px){

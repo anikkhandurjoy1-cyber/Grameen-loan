@@ -84,7 +84,7 @@ const Dash = {
     const n0 = x => Math.round(x).toLocaleString('en-IN');
     const b = await Data.branch(f.branch); const pct = d.receivable ? d.rcv / d.receivable * 100 : 0;
     el.querySelector('.tb-meta').innerHTML = `<b>${esc(b ? b.code + ' - ' + b.name : f.branch)}</b><br>বিজনেস ডেট <b>${fmtD(f.date)}</b>${isFriday(f.date) ? ' (শুক্রবার — বন্ধ)' : ''}`;
-    el.querySelector('.tb-sun').innerHTML = Dash.sun(pct) + `<div class="tb-fig"><b>${n0(d.rcv)}</b><span>${n0(d.receivable)} টাকার মধ্যে আদায় (${Math.round(pct)}%)</span></div>`;
+    el.querySelector('.tb-sun').innerHTML = Dash.sun(pct) + `<div class="tb-fig"><b>${n0(d.rcv)}</b><span>আজকের আদায় • আদায়যোগ্য ${n0(d.receivable)}</span></div>`;
     el.querySelector('.tb-stats').innerHTML = [['হাতে নগদ', d.cash], ['আজ নগদ গ্রহণ', d.cashRcv], ['আজ নগদ প্রদান', d.cashPay], ['আজকের বকেয়া', Math.max(0, d.receivable - d.rcv), 'warn']].map(([l, v, c]) => `<div class="${c || ''}"><small>${l}</small><b>${n0(v)}</b></div>`).join('');
   },
   // আজকের ভাউচার তালিকা + অনুমোদনের অপেক্ষা
