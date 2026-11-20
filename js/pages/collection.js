@@ -8,7 +8,7 @@ async function collectRows(samity, date, memberId) {
   const rows = [];
   Object.entries(snap.a || {}).forEach(([accNo, s]) => {
     if (s.st === 'closed' || s.st === 'cancelled' || (memberId && s.m !== memberId)) return;
-    if (s.k === 'loan') { const l = Loan.fromSnap({ ...s, accNo }); const st = Loan.status(l, date); if (!(st.outstanding > 0)) return; rows.push({ accNo, memberId: s.m, kind: 'loan', type: s.t, bal: num(s.b), exp: st.asonDue, inst: num(s.ia), instAmt: r2(Math.min(num(s.ia) || st.outstanding, st.outstanding)), overdue: st.overdue, advance: st.advance, instNo: st.dueCnt, nInst: num(s.an) + (num(s.li) ? 1 : 0), freq: s.fq }); }
+    if (s.k === 'loan') { const l = Loan.fromSnap({ ...s, accNo }); const st = Loan.status(l, date); if (!(st.outstanding > 0)) return; rows.push({ accNo, memberId: s.m, kind: 'loan', type: s.t, bal: num(s.b), exp: st.asonDue, inst: num(s.ia), instAmt: r2(Math.min(num(s.ia) || st.outstanding, st.outstanding)), overdue: st.overdue, advance: st.advance, instNo: st.dueCnt, nInst: num(s.an) + (num(s.li) ? 1 : 0), freq: s.fq, today: r2(Math.min(st.todayInst, st.outstanding)), total: num(l.totalRepay), out: st.outstanding, expDate: l.expDate || '', pen: num(s.pd) }); }
     else if (s.k === 'dep') { const d = REF.DEP[s.t] || {}; if (d.dtype === 'FD') return; rows.push({ accNo, memberId: s.m, kind: 'dep', type: s.t, bal: num(s.b), exp: num(s.ia), inst: num(s.ia), instAmt: num(s.ia) }); }
     else if (s.k === 'share' && num(s.b) > 0) rows.push({ accNo, memberId: s.m, kind: 'share', type: 'share', bal: num(s.b), exp: 0, inst: 0 });
   });
@@ -131,29 +131,80 @@ const Sheet = {
   },
 };
 
-// ── সদস্য ভিত্তিক কালেকশন ──
+// ── সদস্য ভিত্তিক কালেকশন — eKisti "micfin-installmentcollection-client-form" এর হুবহু লেআউট ──
 App.page('memberColl', {
   title: 'সদস্য ভিত্তিক কালেকশন', icon: '👤',
-  render: () => `<div class="report-filter">${UI.grid([F.branch, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }], 4)}<div class="filter-actions">${UI.btn('Search Details', 'MemColl.load(this)')}${UI.btn('Submit', 'MemColl.submit(this)', 'btn-success')}</div></div><div class="card mc"></div>`,
+  render: () => `<div class="mc-ek">
+    <div class="card mc-ek-f"><div class="mc-ek-h">🧾 INSTALLMENT COLLECTION</div>${UI.grid([{ ...F.branch, l: 'Branch Name' }, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }], 1)}<div class="actions">${UI.btn('🔍 Search Details', 'MemColl.load(this)', 'btn-success')}</div></div>
+    <div class="card mc-ek-m"><div class="mc-ek-ph"><span class="mc-ph">👤</span><div>Profile image</div></div><table class="mc-ek-it"><tbody>${['Member Name', 'Somity Name', 'Phone', 'Address', 'Saving Account', 'Loan Account'].map(x => `<tr><th>${x}</th><td data-i="${x}"></td></tr>`).join('')}</tbody></table></div>
+    <div class="card mc-ek-s"><div class="mc-ek-st">SUMMARY</div><div class="mc-ek-c1"><small>TOTAL RECEIVABLE</small><b data-s="due">0 Tk</b></div>
+      <div class="mc-ek-c2"><div><small>LOAN RECEIVE</small><b data-s="L">0 Tk</b></div><div><small>DEPOSIT RECEIVE</small><b data-s="S">0 Tk</b></div></div>
+      <div class="mc-ek-c3"><div><small>TOTAL RECEIVE</small><b class="g" data-s="rcv">0 TK</b></div><div><small>TOTAL DUES</small><b class="r" data-s="dues">0 TK</b></div></div>
+      <button class="btn mc-ek-sub" onclick="MemColl.submit(this)">Submit</button></div>
+  </div><div class="card mc-ek-t"></div>`,
   init: async el => { await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch'); UI.el(el, 'date').value = await businessDate(); UI.el(el, 'date').readOnly = !canBackDate(); UI.el(el, 'member').addEventListener('picked', () => MemColl.load()); },
 });
 const MemColl = {
+  f: v => { v = r2(num(v)); return Number.isInteger(v) ? String(v) : v.toFixed(2); },
   load(btn) {
     const el = $('#page-memberColl');
     return guard(btn, async () => {
-      const f = UI.get(el); if (!f.member) fail('সদস্য বাছাই করুন');
-      const m = (await Data.members(f.branch)).find(x => x.id === f.member); if (!m) fail('সদস্য পাওয়া যায়নি');
-      const rows = await collectRows(m.samity, f.date, f.member); const mem = await Data.memberIdx(f.branch);
+      const f = UI.get(el); if (!f.member) fail('Please Select Member');
+      const m = await Data.member(f.member); if (!m) fail('সদস্য পাওয়া যায়নি');
+      const sam = m.samity ? await Data.samity(m.samity) : null;
+      const snaps = (await Data.snaps(f.branch, m.samity)).filter(x => x.m === f.member);
+      const rows = (await collectRows(m.samity, f.date, f.member)).sort((a, b) => (a.kind === 'loan') - (b.kind === 'loan') || a.accNo.localeCompare(b.accNo));
+      // আজ কয়টি কিস্তি জমা হয়েছে (This Inst.)
+      const tday = (await db.collection('txns').where('memberId', '==', f.member).get()).docs.map(d => d.data()).filter(t => t.date === f.date && !t.cancelled && t.dc === 'C');
+      rows.forEach(r => { const amtToday = sum(tday.filter(t => t.accNo === r.accNo), t => t.amount); r.thisInst = r.kind === 'loan' && r.inst ? Math.floor((amtToday + 0.001) / r.inst) : 0; });
       el._rows = rows;
-      $('.mc', el).innerHTML = MemberCard.html() + CollGrid.html(rows, mem) + `<div class="actions">${UI.btn('Submit', 'MemColl.submit(this)', 'btn-success')}</div>`;
-      MemberCard.show($('.mc .mcard', el), f.member, f.branch); CollGrid.bind($('.mc', el));
+      const ph = $('.mc-ek-ph', el); ph.innerHTML = (m.photoUrl ? `<img src="${esc(m.photoUrl)}">` : '<span class="mc-ph">👤</span>') + '<div>Profile image</div>';
+      const info = { 'Member Name': m.name, 'Somity Name': sam ? `${sam.code.slice(-4)}----${sam.name}` : m.samity, 'Phone': m.mobile || '', 'Address': m.presentAddr || '', 'Saving Account': snaps.filter(x => x.k === 'dep').length, 'Loan Account': snaps.filter(x => x.k === 'loan').length };
+      Object.entries(info).forEach(([k, v]) => { const td = $(`[data-i="${k}"]`, el); if (td) td.textContent = v; });
+      const tn = r => r.kind === 'share' ? 'Share Accounts' : ((r.kind === 'loan' ? REF.LOAN : REF.DEP)[r.type] || {}).name || typeName(r.kind, r.type);
+      const due = r => r.kind === 'loan' ? r.today : num(r.exp);
+      const body = rows.map(r => `<tr><td>${esc(r.accNo)}</td><td>${esc(tn(r))}</td><td>${r.kind === 'loan' ? r.nInst || '' : ''}</td><td>${r.kind === 'loan' ? r.thisInst : ''}</td><td>${num(r.inst).toFixed(2)}</td><td>${num(r.pen).toFixed(2)}</td><td>${due(r).toFixed(2)}</td>
+        <td class="c"><input type="radio" name="fz_${esc(r.accNo)}" class="mc-f" data-acc="${esc(r.accNo)}"></td><td class="c"><input type="radio" name="fz_${esc(r.accNo)}" class="mc-z" data-acc="${esc(r.accNo)}"></td>
+        <td><input type="number" class="ci mc-in" data-acc="${esc(r.accNo)}" data-g="${r.kind === 'loan' ? 'L' : 'S'}" data-due="${due(r)}" value="0.00" min="0"></td>
+        <td>${r.kind === 'loan' ? num(r.total).toFixed(2) : ''}</td><td>${(r.kind === 'loan' ? num(r.out) : num(r.bal)).toFixed(2)}</td><td>${r.kind === 'loan' ? num(r.overdue).toFixed(2) : ''}</td><td>${r.kind === 'loan' ? esc(r.expDate) : ''}</td>
+        <td class="c"><button class="btn btn-warning btn-sm" title="PassBook" onclick="MemColl.pass('${esc(r.accNo)}')">👁</button></td></tr>`).join('');
+      $('.mc-ek-t', el).innerHTML = `<table class="mc-ek-tbl"><thead><tr><th colspan="10" class="c">Account Details</th><th colspan="4" class="c">Total Balance</th><th>PassBook</th></tr>
+        <tr><th>Account NO</th><th>Type</th><th>Total Inst</th><th>This Inst.</th><th>Inst Amount</th><th>Penalty</th><th>Todays Due</th><th>F</th><th>Z</th><th>Receive</th><th>Total Amount</th><th>Balance</th><th>Total Overdue</th><th>Exp Date</th><th>PassBook</th></tr>
+        <tr><th colspan="7"></th><th class="c"><input type="checkbox" class="mc-allf"></th><th class="c"><input type="checkbox" class="mc-allz"></th><th colspan="5"></th><th>click</th></tr></thead>
+        <tbody>${body || '<tr><td colspan="15" class="c">কোনো একাউন্ট নেই</td></tr>'}</tbody></table>`;
+      MemColl.bind(el);
     });
+  },
+  bind(el) {
+    const ins = $$('.mc-in', el);
+    const upd = () => {
+      const t = { L: 0, S: 0, due: 0 }; ins.forEach(i => { t[i.dataset.g] += num(i.value); t.due += num(i.dataset.due); });
+      const set = (k, v, u) => { const e = $(`[data-s="${k}"]`, el); if (e) e.textContent = MemColl.f(v) + u; };
+      set('due', t.due, ' Tk'); set('L', t.L, ' Tk'); set('S', t.S, ' Tk'); set('rcv', t.L + t.S, ' TK'); set('dues', Math.max(0, t.due - t.L - t.S), ' TK');
+    };
+    const inp = acc => $(`.mc-in[data-acc="${CSS.escape(acc)}"]`, el);
+    const setF = acc => { const i = inp(acc); i.value = num(i.dataset.due).toFixed(2); };
+    const setZ = acc => { inp(acc).value = '0.00'; };
+    $$('.mc-f', el).forEach(r => r.addEventListener('change', () => { if (r.checked) setF(r.dataset.acc); upd(); }));
+    $$('.mc-z', el).forEach(r => r.addEventListener('change', () => { if (r.checked) setZ(r.dataset.acc); upd(); }));
+    ins.forEach(i => { i.addEventListener('click', () => i.select()); i.addEventListener('focus', () => i.select()); i.addEventListener('input', () => { $$(`input[name="fz_${CSS.escape(i.dataset.acc)}"]`, el).forEach(x => x.checked = false); upd(); }); });
+    const aF = $('.mc-allf', el), aZ = $('.mc-allz', el);
+    aF.addEventListener('change', () => { if (aF.checked) { aZ.checked = false; $$('.mc-f', el).forEach(r => { r.checked = true; setF(r.dataset.acc); }); } else { $$('.mc-f', el).forEach(r => { r.checked = false; setZ(r.dataset.acc); }); } upd(); });
+    aZ.addEventListener('change', () => { if (aZ.checked) { aF.checked = false; $$('.mc-z', el).forEach(r => { r.checked = true; setZ(r.dataset.acc); }); } else $$('.mc-z', el).forEach(r => r.checked = false); upd(); });
+    upd();
+  },
+  async pass(accNo) {
+    const el = $('#page-memberColl'); const d = UI.el(el, 'date').value;
+    UI.modal('PassBook — ' + accNo, '<div class="mini">লোড হচ্ছে...</div>');
+    const html = await accStatementHTML(accNo, '2000-01-01', d, 1);
+    const b = $('.modal .modal-body') || $('.modal'); if (b) b.innerHTML = `<div class="table-wrap">${html}</div>`;
   },
   submit(btn) {
     const el = $('#page-memberColl');
     return guard(btn, async () => {
-      const f = UI.get(el); const items = CollGrid.picked(el).map(i => ({ accNo: i.dataset.acc, amount: num(i.value) }));
-      if (!items.length) fail('যে একাউন্টে আদায় হয়েছে তার F এ টিক দিন');
+      const f = UI.get(el); if (!el._rows) fail('আগে Search Details চাপুন');
+      const items = $$('.mc-in', el).filter(i => num(i.value) > 0).map(i => ({ accNo: i.dataset.acc, amount: num(i.value) }));
+      if (!items.length) fail('Receive এ টাকা দিন (F চাপলে আজকের বকেয়া বসবে)');
       const p = await buildMemberCollection(f.branch, f.date, f.member, items, 'member');
       const vno = await Eng.post(p);
       toast('✅ কালেকশন সম্পন্ন — ' + vno); Receipt.print(vno); MemColl.load();
