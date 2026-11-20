@@ -21,7 +21,8 @@ const Mig = {
     const head = (X.utils.sheet_to_json(ws, { header: 1, blankrows: false })[0] || []).map(h => String(h).trim()).filter(Boolean);
     return { cols: head, rows };
   },
-  date(v) {
+  date(v) { const r = Mig._date(v); return r && r < '1990' ? '' : r; },   // eKisti খালি তারিখ "0001-01-01" দেয় — বাদ
+  _date(v) {
     if (v == null || v === '') return '';
     if (v instanceof Date) { const d = new Date(v.getTime() - v.getTimezoneOffset() * 60000); return d.toISOString().slice(0, 10); }
     if (typeof v === 'number' && v > 20000 && v < 80000) { const d = new Date(Math.round((v - 25569) * 86400000)); return d.toISOString().slice(0, 10); }
@@ -216,7 +217,7 @@ const BalMig = {
       if (!n && inst) n = Math.ceil(total / inst); if (!n) fail('No Of Inst / Inst Amount দিন');
       const c = Loan.calc(P, rate, n, inst || undefined);
       if (num(r.recv) > c.total) fail('Total Receive মোট ঋণের চেয়ে বেশি');
-      const first = r.fromDate || Loan.nextDate(r.openDate, r.freq, 1);
+      const first = r.fromDate && r.fromDate >= '1990' ? r.fromDate : Loan.nextDate(r.openDate, r.freq, 1);
       await LoanForm.disburse({
         branch: b, member: r.memberId, type: r.type, openDate: r.openDate, postDate: txDate, purpose: '', purposeName: 'Balance Migration', principal: P, rate, profit: c.profit, totalRepay: c.total,
         n, actualN: c.actualN, totalN: c.totalN, instAmount: c.actualInst, calcInst: c.inst, lastInst: c.lastInst, freq: r.freq, firstDate: first, expDate: Loan.expiry(first, r.freq, c.totalN), settingId: '',
