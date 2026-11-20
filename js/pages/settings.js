@@ -48,7 +48,7 @@ const SystemSetup = {
 
 // ── শাখা পরিচালনা ──
 CrudPage({
-  id: 'branchManage', title: 'শাখা পরিচালনা করুন', icon: '🏢', coll: 'branches', key: 'code', cacheKey: 'branches', cols: 3,
+  id: 'branchManage', submitLabel: 'Create New Branch', searchLabel: 'Search Branch', title: 'শাখা পরিচালনা করুন', icon: '🏢', coll: 'branches', key: 'code', cacheKey: 'branches', cols: 3,
   fields: [
     { k: 'code', l: 'Branch Code', t: 'number', req: 1, hint: 'যেমন 101' }, { k: 'name', l: 'Branch Name', req: 1 },
     { k: 'type', l: 'Branch Type', t: 'select', req: 1, opts: ['Branch Office', 'Regional Office', 'Zonal Office', 'Head Office'] },
@@ -85,7 +85,7 @@ const EmpAccounts = {
 
 // ── কর্মচারী নিবন্ধন ──
 CrudPage({
-  id: 'employeeReg', title: 'কর্মচারী নিবন্ধন রেজিঃ', icon: '🧑‍💼', coll: 'employees', key: 'empId', cacheKey: 'emp_', cols: 3,
+  id: 'employeeReg', submitLabel: 'Create New Employee', searchLabel: 'Search Employee', title: 'কর্মচারী নিবন্ধন রেজিঃ', icon: '🧑‍💼', coll: 'employees', key: 'empId', cacheKey: 'emp_', cols: 3,
   fields: [
     { k: 'empId', l: 'Employee ID', ro: 1, ph: 'অটো' }, { k: 'branch', l: 'Branch Name', t: 'select', req: 1 }, { k: 'name', l: 'Employee Name', req: 1 },
     { k: 'father', l: 'Father Name' }, { k: 'mother', l: 'Mother Name' }, { k: 'gender', l: 'Gender', t: 'select', opts: GENDER },
@@ -125,7 +125,7 @@ App.pages.employeeReg.init = async el => { await App.pages.employeeReg._init(el)
 
 // ── পরিচালক রেজিস্টার ──
 CrudPage({
-  id: 'directorReg', title: 'পরিচালক রেজিস্টার', icon: '🎖️', coll: 'directors', key: 'dirId', cols: 3,
+  id: 'directorReg', submitLabel: 'Create New Director', searchLabel: 'Search Director', title: 'পরিচালক রেজিস্টার', icon: '🎖️', coll: 'directors', key: 'dirId', cols: 3,
   fields: [
     { k: 'dirId', l: 'Director ID', ro: 1, ph: 'অটো' }, { k: 'branch', l: 'Branch Name', t: 'select' }, { k: 'name', l: 'Director Name', req: 1 },
     { k: 'father', l: 'Father Name' }, { k: 'mother', l: 'Mother Name' }, { k: 'gender', l: 'Gender', t: 'select', opts: GENDER }, { k: 'joinDate', l: 'Joining Date', t: 'date' },
@@ -142,7 +142,7 @@ CrudPage({
 
 // ── সমিতি / কেন্দ্র সেটআপ ──
 CrudPage({
-  id: 'samitySetup', title: 'সমিতি / কেন্দ্র সেটআপ', icon: '🏛️', coll: 'samities', key: 'code', cols: 3,
+  id: 'samitySetup', submitLabel: 'Create Samity', searchLabel: 'Search Samity', title: 'সমিতি / কেন্দ্র সেটআপ', icon: '🏛️', coll: 'samities', key: 'code', cols: 3,
   fields: [
     { k: 'code', l: 'Samity Code', ro: 1, ph: 'অটো' }, { k: 'branch', l: 'Branch Name', t: 'select', req: 1 }, { k: 'name', l: 'Samity Name', req: 1 },
     { k: 'referredBy', l: 'Referred By' }, { k: 'address', l: 'Address', t: 'textarea', req: 1 }, { k: 'openDate', l: 'Open Date', t: 'date', req: 1 },
@@ -170,7 +170,7 @@ function SamityChangePage(id, title, field, label, optsFn) {
     render: () => UI.card('', UI.grid([
       { k: 'branch', l: 'Branch Name', t: 'select', req: 1 }, { k: 'samity', l: 'Samity Name', t: 'select', req: 1 }, { k: 'date', l: 'Effective From Date', t: 'date', req: 1 },
       { k: 'current', l: 'Current ' + label, ro: 1 }, { k: 'newVal', l: 'New ' + label, t: 'select', req: 1 }, { k: 'comments', l: 'Comments', req: 1 },
-    ], 3) + `<div class="actions">${UI.btn('Submit', `SamityChange.save('${id}','${field}',this)`, 'btn-success')}</div>`) + UI.card('পরিবর্তনের ইতিহাস', '<div class="hist"></div>'),
+    ], 3) + `<div class="actions">${UI.btn(field === 'day' ? 'Submit Samity Day Change' : 'Submit', `SamityChange.save('${id}','${field}',this)`, 'btn-success')} ${UI.btn(field === 'day' ? 'Search Samity Day Change' : 'Search', 'EK.show(this)', 'btn-info')}</div>`) + '<div class="ek-rl" style="display:none">' + UI.card('', '<div class="hist"></div>') + '</div>',
     init: async el => {
       await Pick.branch(el, 'branch'); await Pick.samity(el, 'samity', 'branch', { all: false });
       await optsFn(el);
@@ -282,10 +282,10 @@ const Holiday = {
 
 // ── নোটিশ সেটআপ ──
 CrudPage({
-  id: 'noticeSetup', title: 'নোটিশ সেটআপ', icon: '📢', coll: 'notices', cols: 3, canDelete: true,
+  id: 'noticeSetup', submitLabel: 'Save Notice', searchLabel: 'Search Notice', title: 'নোটিশ সেটআপ', icon: '📢', coll: 'notices', cols: 3, canDelete: true,
   fields: [{ k: 'branch', l: 'Branch Name (খালি = সব শাখা)', t: 'select' }, { k: 'text', l: 'Notice', t: 'textarea', req: 1 }, { k: 'color', l: 'Text Color', t: 'select', req: 1, opts: ['Red', 'Green', 'Yellow', 'Black'] }],
   init: async el => { const bs = await Data.branches(); UI.fill(UI.el(el, 'branch'), bs, b => b.code, b => b.code + ' - ' + b.name, '— সব শাখা —'); },
-  submitLabel: '💾 Save Notice', after: () => loadNotice(),
+  after: () => loadNotice(),
   list: { query: async () => db.collection('notices').orderBy('createdAt', 'desc').limit(50).get(), cols: [{ h: 'Notice', f: r => esc(r.text) }, { h: 'Branch', f: r => r.branch || 'সব' }, { h: 'Create By', f: r => r.createdBy || '' }, { h: 'Date Time', f: r => tsStr(r.createdAt) }] },
 });
 

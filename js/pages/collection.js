@@ -231,7 +231,7 @@ const MemColl = {
 
 // ── সদস্য কালেকশন তালিকা ──
 ReportPage({
-  id: 'memberCollList', title: 'সদস্য কালেকশন তালিকা (Member Installment Collection)', icon: '📋', fromDefault: 'month',
+  id: 'memberCollList', ek: 'Search Details', title: 'সদস্য কালেকশন তালিকা (Member Installment Collection)', icon: '📋', fromDefault: 'month',
   filters: [F.branch, { k: 'member', l: 'Member Name', t: 'member', req: 1 }, { ...F.from, req: 1 }, { ...F.upto, req: 1 }],
   run: async f => {
     const ts = (await db.collection('txns').where('memberId', '==', f.member).get()).docs.map(d => d.data()).filter(t => t.date >= f.from && t.date <= f.upto && t.dc === 'C' && ['dep', 'loan', 'share'].includes(t.kind));

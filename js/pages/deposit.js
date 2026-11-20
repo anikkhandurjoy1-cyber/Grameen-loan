@@ -249,7 +249,7 @@ const Lien = {
 
 // ── লাভের বিবরণ (Deposit Profit Details) ──
 ReportPage({
-  id: 'depProfit', title: 'লাভের বিবরণ (Deposit Profit Details)', icon: '💹',
+  id: 'depProfit', ek: 'Search Details', title: 'লাভের বিবরণ (Deposit Profit Details)', icon: '💹',
   filters: [F.branch, { k: 'member', l: 'সদস্য', t: 'member' }, { k: 'account', l: 'Select Account', t: 'select', req: 1 }, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, { k: 'rate', l: 'Profit Rate (খালি = একাউন্টের হার)', t: 'number' }],
   init: async (el, f) => { await Pick.account(f, 'account', 'member', 'branch', { kind: 'dep', closed: true }); UI.el(f, 'account').addEventListener('change', async () => { const a = await Data.account(UI.el(f, 'account').value); if (a) UI.el(f, 'from').value = a.lastProfitDate ? addDays(a.lastProfitDate, 1) : a.openDate; }); },
   run: async f => {
@@ -410,7 +410,7 @@ const ProfitDist = {
   },
 };
 ReportPage({
-  id: 'profitPostList', title: 'মুনাফা বন্টন তালিকা', icon: '📋',
+  id: 'profitPostList', ek: 'Search Details', title: 'মুনাফা বন্টন তালিকা', icon: '📋',
   filters: [F.branch, F.samity, { k: 'type', l: 'Account Type', t: 'select', opts: [['', '— সব —'], ...DEP_TYPES] }, { ...F.from, req: 1 }, { ...F.upto, req: 1 }],
   init: async (el, f) => { UI.el(f, 'from').value = (await businessDate()).slice(0, 4) + '-01-01'; },
   run: async f => {

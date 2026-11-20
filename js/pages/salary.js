@@ -85,10 +85,10 @@ const SalProc = {
     });
   },
 };
-const SalFilter = [F.branch, { k: 'month', l: 'Month Name', t: 'select', opts: [['', '-----------------'], ...MONTHS.map((m, i) => [String(i + 1).padStart(2, '0'), m])] }, F.from, F.upto];
+const SalFilter = [F.branch, { k: 'month', l: 'Month Name', t: 'select', opts: [['', '-----------------'], ...MONTHS.map((m, i) => [String(i + 1).padStart(2, '0'), m])] }, { ...F.from, req: 1 }, { ...F.upto, req: 1 }];
 async function salPosts(f) { return (await db.collection('salaryPosts').where('branch', '==', f.branch).get()).docs.map(d => ({ id: d.id, ...d.data() })).filter(p => (!f.month || p.ym.slice(5) === f.month) && (!f.from || p.date >= f.from) && (!f.upto || p.date <= f.upto)).sort((a, b) => a.date.localeCompare(b.date)); }
 ReportPage({
-  id: 'salList', title: 'বেতন বিতরণ তালিকা', icon: '📋', filters: SalFilter, init: async (el, f) => { UI.el(f, 'from').value = (await businessDate()).slice(0, 4) + '-01-01'; },
+  id: 'salList', title: 'বেতন বিতরণ তালিকা', icon: '📋', ek: 'Search Details', filters: SalFilter,
   run: async f => ({ html: UI.table([{ h: 'Branch Code', f: p => p.branch }, { h: 'Salary Month', f: p => p.month + ' ' + p.year }, { h: 'Posting Date', f: p => fmtD(p.date) }, { h: 'Total Earning', f: p => amt(p.earn), r: 1, sum: 1, v: p => p.status === 'cancelled' ? 0 : p.earn }, { h: 'Total Deduction', f: p => amt(p.ded), r: 1, sum: 1, v: p => p.status === 'cancelled' ? 0 : p.ded }, { h: 'Total Payment', f: p => amt(p.pay), r: 1, sum: 1, v: p => p.status === 'cancelled' ? 0 : p.pay }, { h: 'Cancel By', f: p => p.cancelBy || '' }, { h: 'Cancel On', f: p => tsStr(p.cancelOn) }, { h: 'Posting By', f: p => p.by }, { h: 'Posting On', f: p => tsStr(p.on) }, { h: 'Action', f: p => p.status === 'cancelled' ? 'বাতিল' : `<span class="no-print">${UI.btn('Cancel', `SalCancel('${p.id}',this)`, 'btn-danger btn-sm')}</span>` }], await salPosts(f)) }),
 });
 async function SalCancel(id, btn) {
@@ -97,10 +97,10 @@ async function SalCancel(id, btn) {
 }
 const salEmpRows = async (f, empId) => (await salPosts(f)).filter(p => p.status !== 'cancelled').flatMap(p => p.rows.filter(r => !empId || r.empId === empId).map(r => ({ ...r, month: p.month + ' ' + p.year, date: p.date, by: p.by, branch: p.branch })));
 const salEmpCols = [{ h: 'Branch Code', f: r => r.branch }, { h: 'Employee ID', f: r => r.empId }, { h: 'Employee Name', f: r => esc(r.name) }, { h: 'Salary Month', f: r => r.month }, { h: 'Posting Date', f: r => fmtD(r.date) }, { h: 'Total Earning', f: r => amt(r.earn), r: 1, sum: 1, v: r => r.earn }, { h: 'Total Deduction', f: r => amt(r.ded), r: 1, sum: 1, v: r => r.ded }, { h: 'Total Payment', f: r => amt(r.pay), r: 1, sum: 1, v: r => r.pay }, { h: 'Posting By', f: r => r.by }, { h: 'Action', f: r => `<span class="no-print">${UI.btn('Print', `SalSlip(${esc(JSON.stringify(JSON.stringify(r)))})`, 'btn-info btn-sm')}</span>` }];
-ReportPage({ id: 'salEmpList', title: 'বিতরণ কর্মচারী তালিকা', icon: '👥', filters: [F.branch, { k: 'employee', l: 'Employee Name', t: 'select' }, ...SalFilter.slice(1)], init: async (el, f) => { UI.el(f, 'from').value = (await businessDate()).slice(0, 4) + '-01-01'; }, run: async f => ({ landscape: true, html: UI.table(salEmpCols, await salEmpRows(f, f.employee)) }) });
+ReportPage({ id: 'salEmpList', title: 'বিতরণ কর্মচারী তালিকা', icon: '👥', ek: 'Search Disbursment', filters: [F.branch, { k: 'employee', l: 'Employee Name', t: 'select' }, ...SalFilter.slice(1)], run: async f => ({ landscape: true, html: UI.table(salEmpCols, await salEmpRows(f, f.employee)) }) });
 ReportPage({
-  id: 'myPayslip', title: 'আমার পেস্লিপ', icon: '🧾', filters: SalFilter,
-  init: async (el, f) => { UI.el(f, 'from').value = (await businessDate()).slice(0, 4) + '-01-01'; if (App.user.branch) UI.el(f, 'branch').value = App.user.branch; },
+  id: 'myPayslip', title: 'আমার পেস্লিপ', icon: '🧾', ek: 'Search Disbursment', filters: SalFilter,
+  init: async (el, f) => { if (App.user.branch) UI.el(f, 'branch').value = App.user.branch; },
   run: async f => {
     if (!App.user.empId) return { html: '<div class="alert alert-warning">আপনার ইউজারের সাথে কোনো কর্মচারী আইডি যুক্ত নেই।</div>' };
     const rows = await salEmpRows(f, App.user.empId);

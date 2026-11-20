@@ -261,7 +261,7 @@ const MemberClose = {
 // ── সদস্য সমিতি স্থানান্তর ──
 App.page('memberTransfer', {
   title: 'সদস্য সমিতি স্থানান্তর', icon: '🔀',
-  render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Member Name', t: 'member', req: 1 }, { k: 'cur', l: 'বর্তমান সমিতি', ro: 1 }, { k: 'samity', l: 'Transfer Samity', t: 'select', req: 1 }], 4) + `<div class="actions">${UI.btn('Submit Transfer', 'MemberTransfer.run(this)', 'btn-success')}</div>`),
+  render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Member Name', t: 'member', req: 1 }, { k: 'cur', l: 'বর্তমান সমিতি', ro: 1, hide: 1 }, { k: 'samity', l: 'Transfer Samity', t: 'select', req: 1 }], 4) + `<div class="actions">${UI.btn('Submit', 'MemberTransfer.run(this)', 'btn-success')}</div>`),
   init: async el => {
     await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch'); await Pick.samity(el, 'samity', 'branch', { all: false });
     UI.el(el, 'member').addEventListener('picked', e => { UI.el(el, 'cur').value = e.detail ? e.detail.samity : ''; });

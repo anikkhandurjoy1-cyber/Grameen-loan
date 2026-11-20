@@ -80,9 +80,9 @@ const AccTxn = {
 // ── লেজার লেনদেন ──
 App.page('ledgerTxn', {
   title: 'লেজার লেনদেন (Ledger Transaction)', icon: '📗',
-  render: () => UI.card('', UI.grid([F.branch, { k: 'tt', l: 'Transaction Type', t: 'select', req: 1, opts: [['', '----------'], ...REF.LEDGER_TT.map(x => [x[0], x[1]])] }, { k: 'ledger', l: 'Transaction Ledger', t: 'select', req: 1 }, { k: 'balance', l: 'Current Balance', ro: 1 },
+  render: () => UI.card('', UI.grid([F.branch, { k: 'tt', l: 'Transaction Type', t: 'select', req: 1, opts: [['', '----------'], ...REF.LEDGER_TT.map(x => [x[0], x[1]])] }, { k: 'ledger', l: 'Transaction Ledger', t: 'select', req: 1 },
     { k: 'amount', l: 'Transaction Amount', t: 'number', req: 1 }, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }, { k: 'docNo', l: 'Document Number (Bank Cheque)' }, { k: 'comments', l: 'Comments', t: 'textarea' },
-    { k: 'payerPhone', l: 'Receiver/Payer Phone' }, { k: 'payerName', l: 'Receiver/Payer Name' }, { k: 'file', l: 'Upload Documents', t: 'file' }], 4)
+    { k: 'payerPhone', l: 'Receiver/Payer Phone' }, { k: 'payerName', l: 'Receiver/Payer Name' }, { k: 'balance', l: 'Current Balance', ro: 1 }, { k: 'file', l: 'Upload Documents', t: 'file' }], 4)
     + `<div class="actions">${UI.btn('Post Transaction', 'LedgerTxn.save(this)', 'btn-success')}</div>`) + UI.card('আজকের লেজার লেনদেন', '<div class="vl"></div>'),
   init: async el => {
     await Pick.branch(el, 'branch'); UI.el(el, 'date').value = await businessDate();
@@ -250,7 +250,7 @@ const VList = {
   cancel(vno, btn) { const reason = prompt('বাতিলের কারণ:'); if (reason === null) return; return guard(btn, async () => { if (!isBM()) fail('অনুমতি নেই'); await Eng.cancel(vno, reason); toast('✅ ভাউচার বাতিল হয়েছে'); btn.closest('tr').querySelector('td:nth-child(10)').innerHTML = '<span class="tag red">Cancelled</span>'; }); },
 };
 ReportPage({
-  id: 'voucherList', title: 'ভাউচার তালিকা', icon: '🧾',
+  id: 'voucherList', ek: 'Search Transaction', title: 'ভাউচার তালিকা', icon: '🧾',
   filters: [F.branch, F.samity, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, { k: 'fromB', l: 'From Batch' }, { k: 'toB', l: 'To Number' }, { k: 'bdate', l: 'Business Date', t: 'date' }, { k: 'user', l: 'User ID', t: 'select', opts: [['', '— সব —']] }, { k: 'q', l: 'Comments / Type' }],
   init: async (el, f) => { UI.el(f, 'bdate').value = ''; const us = (await db.collection('users').get()).docs.map(d => ({ id: d.id, ...d.data() })); UI.fill(UI.el(f, 'user'), us, u => u.id, u => u.userId || u.email, '— সব —'); },
   run: async f => {
@@ -264,7 +264,7 @@ ReportPage({
 
 // ── লেনদেন সংশোধন (Transaction Query) ──
 ReportPage({
-  id: 'tranQuery', title: 'লেনদেন সংশোধন (Transaction Query)', icon: '🛠️',
+  id: 'tranQuery', ek: 'Search Transaction', title: 'লেনদেন সংশোধন (Transaction Query)', icon: '🛠️',
   filters: [F.branch, { k: 'kind', l: 'Account Type', t: 'select', opts: [['', '— সব —'], ['dep', 'Deposit'], ['loan', 'Loan'], ['share', 'Share'], ['other', 'Others']] }, { k: 'member', l: 'সদস্য', t: 'member' }, { k: 'account', l: 'Select Account', t: 'select' }, { k: 'ledger', l: 'Select Ledger', t: 'select' }, { ...F.from, req: 1 }, { ...F.upto, req: 1 }],
   init: async (el, f) => {
     await Pick.ledger(UI.el(f, 'ledger'), l => l.leaf, '— সব —');

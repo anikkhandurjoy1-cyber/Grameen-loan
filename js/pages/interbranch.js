@@ -50,7 +50,7 @@ const IB = {
   },
 };
 ReportPage({
-  id: 'ibList', title: 'স্থানান্তর অনুরোধের তালিকা', icon: '📋', fromDefault: 'month',
+  id: 'ibList', ek: 'Search', title: 'স্থানান্তর অনুরোধের তালিকা', icon: '📋', fromDefault: 'month',
   filters: [{ k: 'receiver', l: 'Receiver Branch', t: 'select' }, { k: 'sender', l: 'Sender Branch', t: 'select' }, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, { k: 'status', l: 'Transaction Status', t: 'select', opts: [['', '-------------'], ...['Approve Pending', 'Approve Completed', 'Rejected', 'Authorization Cancel'].map(s => [s, s])] }],
   init: async (el, f) => { const bs = await Data.branches(); ['receiver', 'sender'].forEach(k => UI.fill(UI.el(f, k), bs, b => b.code, b => b.code + ' - ' + b.name, '— সব —')); setTimeout(() => ReportPage.run('ibList'), 0); },
   run: async f => ({ landscape: true, noSig: true, html: UI.table([{ h: 'Receiver Branch', f: r => r.receiver }, { h: 'Sender Branch', f: r => r.sender }, { h: 'Transaction ID', f: r => r.id }, { h: 'Date', f: r => fmtD(r.date) }, { h: 'Amount', f: r => amt(r.amount), r: 1, sum: 1, v: r => r.amount }, { h: 'Status', f: r => `<span class="tag">${r.status}</span>` }, { h: 'Request By', f: r => r.by }, { h: 'Authorized By', f: r => r.authBy || '' }, { h: 'Cancel By', f: r => r.cancelBy || '' }, { h: 'Cancel Reason', f: r => esc(r.cancelReason || '') },

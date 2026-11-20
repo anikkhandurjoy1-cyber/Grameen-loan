@@ -200,7 +200,7 @@ const EmiCancel = {
 
 // ── কিস্তির বিবরণ (Installment Receive History) ──
 ReportPage({
-  id: 'emiHist', title: 'কিস্তির বিবরণ (Installment Receive History)', icon: '📜', fromDefault: 'month',
+  id: 'emiHist', ek: 'Search Receive Details', title: 'কিস্তির বিবরণ (Installment Receive History)', icon: '📜', fromDefault: 'month',
   filters: [F.branch, { k: 'member', l: 'Select Member', t: 'member', req: 1 }, { k: 'account', l: 'Select Account', t: 'select', req: 1 }, F.from, F.upto],
   init: async (el, f) => { await Pick.account(f, 'account', 'member', 'branch', { kind: 'loan', closed: true }); const fe = UI.el(f, 'from'); fe.value = '2000-01-01'; },
   run: async f => {
@@ -324,7 +324,7 @@ const Waive = {
 App.page('emiPenalty', {
   title: 'অতিরিক্ত ঋণের জরিমানা', icon: '⚡',
   render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'account', l: 'Loan Account', t: 'select', req: 1 }, { k: 'date', l: 'Entry Date', t: 'date', req: 1 },
-    { k: 'addProfit', l: 'Additional Profit', t: 'number' }, { k: 'penaltyAmt', l: 'Penalty Amount', t: 'number' }, { k: 'instAmount', l: 'Installment Amount', ro: 1 }, { k: 'totalLoan', l: 'Total EMI Amount', ro: 1 }, { k: 'totalPaid', l: 'Total EMI Paid', ro: 1 }, { k: 'totalDue', l: 'Total EMI Due', ro: 1 }, { k: 'penalty', l: 'বর্তমান জরিমানা বকেয়া', ro: 1 }, { k: 'comments', l: 'Comments', req: 1 }], 4)
+    { k: 'addProfit', l: 'Additional Profit', t: 'number' }, { k: 'penaltyAmt', l: 'Penalty Amount', t: 'number' }, { k: 'instAmount', l: 'Installment Amount', ro: 1 }, { k: 'totalLoan', l: 'Total EMI Amount', ro: 1 }, { k: 'totalPaid', l: 'Total EMI Paid', ro: 1 }, { k: 'totalDue', l: 'Total EMI Due', ro: 1 }, { k: 'penalty', l: 'বর্তমান জরিমানা বকেয়া', ro: 1, hide: 1 }, { k: 'comments', l: 'Comments', req: 1 }], 4)
     + `<div class="actions">${UI.btn('Submit Penalty', 'Penalty.save(this)', 'btn-danger')} ${UI.btn('Search Penalty', 'EK.show(this)', 'btn-info')}</div>`) + '<div class="ek-rl" style="display:none">' + UI.card('', '<div class="pl"></div>') + '</div>',
   init: async el => {
     await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch'); await Pick.account(el, 'account', 'member', 'branch', { kind: 'loan' });
@@ -356,24 +356,24 @@ const Penalty = {
 
 // ── ঋণ উদ্দেশ্য সেটআপ ──
 CrudPage({
-  id: 'loanPurpose', title: 'ঋণ উদ্দেশ্য সেটআপ (Loan Purpose Setup)', icon: '🎯', coll: 'loanPurposes', key: 'code', cacheKey: 'purposes', cols: 3,
+  id: 'loanPurpose', submitLabel: 'Create Loan Purpose', searchLabel: 'Search Loan Purpose', title: 'ঋণ উদ্দেশ্য সেটআপ (Loan Purpose Setup)', icon: '🎯', coll: 'loanPurposes', key: 'code', cacheKey: 'purposes', cols: 3,
   fields: [{ k: 'code', l: 'Purpose Code', ro: 1, ph: 'অটো' }, { k: 'cat', l: 'Category Name', t: 'select', opts: ['Business', 'Agriculture', 'Livestock', 'Fisheries', 'Housing', 'Education', 'Health', 'Transport', 'Consumption', 'Others'] }, { k: 'name', l: 'Purpose Name', req: 1 }, { k: 'active', l: 'IS Active', t: 'checkbox', v: true }],
-  autoId: async () => pad(await nextSeq('purpose', 2), 6), submitLabel: '✅ Create Loan Purpose', searchLabel: 'Search Loan Purpose',
+  autoId: async () => pad(await nextSeq('purpose', 2), 6), 
   list: { cols: [{ h: 'Category Name', f: r => esc(r.cat || '') }, { h: 'Purpose Code', f: r => r.code }, { h: 'Purpose Name', f: r => esc(r.name) }, { h: 'IS Active', f: r => r.active === false ? 'No' : 'Yes' }] },
 });
 
 // ── ঋণের কিস্তি সেটিংস ──
 CrudPage({
-  id: 'emiInstSet', title: 'ঋণের কিস্তি সেটিংস (Manage Installment Settings)', icon: '⚙️', coll: 'emiInstSettings', cacheKey: 'instset', cols: 4,
+  id: 'emiInstSet', submitLabel: 'Add Installment', searchLabel: 'Search Installment', title: 'ঋণের কিস্তি সেটিংস (Manage Installment Settings)', icon: '⚙️', coll: 'emiInstSettings', cacheKey: 'instset', cols: 4,
   fields: [{ k: 'type', l: 'Account Type', t: 'select', req: 1, opts: Object.entries(REF.LOAN).map(([c, d]) => [c, c + '-' + d.name]) }, { k: 'freq', l: 'Installment Frequency', t: 'select', req: 1, opts: [['', 'Select'], ...['D', 'W', 'M', 'Q', 'H', 'Y', 'C', 'F', 'S'].map(x => [x, REF.FREQ[x]])] }, { k: 'n', l: 'No of Installment', t: 'number', req: 1 }, { k: 'rate', l: 'Profit Rate', t: 'number', req: 1 }, { k: 'active', l: 'Active', t: 'checkbox', v: true }],
-  autoId: async () => 'E' + pad(await nextSeq('instset', 9), 8), submitLabel: '➕ Add Installment', searchLabel: 'Search Installment',
+  autoId: async () => 'E' + pad(await nextSeq('instset', 9), 8), 
   before: d => { d.n = num(d.n); d.rate = num(d.rate); return d; },
   list: { post: rows => rows.sort((a, b) => a.id.localeCompare(b.id)), cols: [{ h: 'Installment ID', f: r => r.id }, { h: 'Account Type', f: r => r.type }, { h: 'Installment Frequency', f: r => REF.FREQ[r.freq] || r.freq }, { h: 'No Of Installment', f: r => r.n }, { h: 'Profit Rate', f: r => amt(r.rate) }, { h: 'Status', f: r => r.active === false ? 'Inactive' : 'Active' }] },
 });
 
 // ── ঋণ লাভের বিবরণ (Investment Profit Details) ──
 ReportPage({
-  id: 'invProfit', title: 'ঋণ লাভের বিবরণ (Investment Profit Details)', icon: '💹', fromDefault: 'month',
+  id: 'invProfit', ek: 'Search Details', title: 'ঋণ লাভের বিবরণ (Investment Profit Details)', icon: '💹', fromDefault: 'month',
   filters: [F.branch, { k: 'member', l: 'সদস্য', t: 'member' }, { k: 'account', l: 'Select Account', t: 'select', req: 1 }, F.from, F.upto],
   init: async (el, f) => Pick.account(f, 'account', 'member', 'branch', { kind: 'loan', closed: true }),
   run: async f => {

@@ -358,7 +358,7 @@ const Proposal = {
   },
 };
 ReportPage({
-  id: 'loanProposalList', title: 'ঋন আবেদন তালিকা', icon: '📋', fromDefault: 'month',
+  id: 'loanProposalList', ek: 'Search Proposal', title: 'ঋন আবেদন তালিকা', icon: '📋', fromDefault: 'month',
   filters: [F.branch, F.samity, F.employee, F.member, { k: 'status', l: 'Status', t: 'select', opts: [['', '--------'], ...PROPOSAL_ST.map(s => [s, s])] }, { ...F.from, req: 1 }, { ...F.upto, req: 1 }],
   run: async f => {
     let rows = (await db.collection('loanProposals').where('branch', '==', f.branch).get()).docs.map(d => ({ id: d.id, ...d.data() }));
@@ -409,7 +409,7 @@ const OtherOpen = {
 // ── সঞ্চয়ের পরিমান নির্ধারন ──
 App.page('depInstUpdate', {
   title: 'সঞ্চয়ের পরিমান নির্ধারন (Update Deposit Installment)', icon: '✏️',
-  render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'account', l: 'Member Account', t: 'select', req: 1 }, { k: 'cur', l: 'বর্তমান কিস্তি', ro: 1 }, { k: 'instAmount', l: 'Installment Amount', t: 'number', req: 1 }], 3) + `<div class="actions">${UI.btn('Update Installment', 'DepInst.save(this)', 'btn-success')}</div>`),
+  render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'account', l: 'Member Account', t: 'select', req: 1 }, { k: 'cur', l: 'বর্তমান কিস্তি', ro: 1, hide: 1 }, { k: 'instAmount', l: 'Installment Amount', t: 'number', req: 1 }], 3) + `<div class="actions">${UI.btn('Update Installment', 'DepInst.save(this)', 'btn-success')}</div>`),
   init: async el => { await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch'); await Pick.account(el, 'account', 'member', 'branch', { kind: 'dep' }); UI.el(el, 'account').addEventListener('change', async () => { const a = await Data.account(UI.el(el, 'account').value); UI.el(el, 'cur').value = a ? a.instAmount || 0 : ''; }); },
 });
 const DepInst = {
@@ -427,7 +427,7 @@ const DepInst = {
 
 // ── ঋণ বিতরণ তালিকা ──
 ReportPage({
-  id: 'loanDisbList', title: 'ঋণ বিতরণ তালিকা', icon: '📃', fromDefault: 'month',
+  id: 'loanDisbList', ek: 'Search Disbursement List', title: 'ঋণ বিতরণ তালিকা', icon: '📃', fromDefault: 'month',
   filters: [F.branch, F.samity, F.member, F.from, F.upto],
   run: async f => {
     const snaps = (await Data.snaps(f.branch, f.samity)).filter(s => s.k === 'loan' && s.st !== 'cancelled' && (!f.member || s.m === f.member) && s.od >= f.from && s.od <= f.upto).map(Loan.fromSnap);
@@ -439,7 +439,7 @@ ReportPage({
 
 // ── এ্যাকাউন্ট তালিকা ──
 ReportPage({
-  id: 'accList', title: 'এ্যাকাউন্ট তালিকা', icon: '📒',
+  id: 'accList', ek: 'Search Account Details', title: 'এ্যাকাউন্ট তালিকা', icon: '📒',
   filters: [F.branch, F.samity, { k: 'kind', l: 'Account Type', t: 'select', opts: [['', '— সব —'], ['dep', 'Deposit'], ['loan', 'Loan'], ['share', 'Share'], ['other', 'Others'], ...DEP_TYPES.map(([c, t]) => ['dep:' + c, t]), ...LOAN_TYPES.map(([c, t]) => ['loan:' + c, t])] }, F.member, { k: 'ofrom', l: 'From Date', t: 'date' }, { k: 'oupto', l: 'Upto Date', t: 'date' }, { k: 'phone', l: 'Phone Number' }, { k: 'accNo', l: 'Select Account' }, { k: 'status', l: 'অবস্থা', t: 'select', opts: [['', 'All'], ['active', 'Active'], ['closed', 'Closed']] }],
   run: async f => {
     const [kind, type] = (f.kind || '').split(':');
@@ -545,7 +545,7 @@ CrudPage({
 // ── এ্যাকাউন্ট লাভ সেটআপ ──
 App.page('accProfitRate', {
   title: 'এ্যাকাউন্ট লাভ সেটআপ (Deposit Account Profit)', icon: '📈',
-  render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'account', l: 'Accont Number', t: 'select', req: 1 }, { k: 'cur', l: 'বর্তমান হার', ro: 1 }, { k: 'date', l: 'Effective Date', t: 'date', req: 1 }, { k: 'rate', l: 'Profit Rate', t: 'number', req: 1 }], 3) + `<div class="actions">${UI.btn('Set Profit Rate', 'AccRate.save(this)', 'btn-success')} ${UI.btn('Search Profit Rate', 'EK.show(this)', 'btn-info')}</div>`) + '<div class="ek-rl" style="display:none">' + UI.card('', '<div class="rl"></div>') + '</div>',
+  render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'account', l: 'Accont Number', t: 'select', req: 1 }, { k: 'cur', l: 'বর্তমান হার', ro: 1, hide: 1 }, { k: 'date', l: 'Effective Date', t: 'date', req: 1 }, { k: 'rate', l: 'Profit Rate', t: 'number', req: 1 }], 3) + `<div class="actions">${UI.btn('Set Profit Rate', 'AccRate.save(this)', 'btn-success')} ${UI.btn('Search Profit Rate', 'EK.show(this)', 'btn-info')}</div>`) + '<div class="ek-rl" style="display:none">' + UI.card('', '<div class="rl"></div>') + '</div>',
   init: async el => {
     await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch'); await Pick.account(el, 'account', 'member', 'branch', { kind: 'dep' });
     UI.el(el, 'date').value = await businessDate();

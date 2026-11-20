@@ -196,7 +196,7 @@ const UI = {
       case 'member': inp = `<div class="mpick"><input type="search" ${common} placeholder="${esc(f.ph || 'আইডি / নাম / মোবাইল লিখুন')}" autocomplete="off"><div class="mpick-list" hidden></div></div>`; break;
       default: inp = `<input type="${f.t || 'text'}" ${common} value="${esc(f.v == null ? '' : f.v)}" placeholder="${esc(f.ph || '')}" ${f.t === 'number' ? 'step="any"' : ''}>`;
     }
-    return `<div class="form-group" style="${f.span ? 'grid-column:span ' + f.span : ''}"><label for="${id}">${esc(f.l)}${req}</label>${inp}${f.hint ? `<div class="hint">${esc(f.hint)}</div>` : ''}</div>`;
+    return `<div class="form-group" style="${f.span ? 'grid-column:span ' + f.span : ''}${f.hide ? ';display:none' : ''}"><label for="${id}">${esc(f.l)}${req}</label>${inp}${f.hint ? `<div class="hint">${esc(f.hint)}</div>` : ''}</div>`;
   },
   grid(fields, cols = 3) { return `<div class="fgrid c${cols}">${fields.filter(Boolean).map(UI.field).join('')}</div>`; },
   el(root, k) { return root.querySelector(`[data-k="${k}"]`); },
@@ -665,8 +665,8 @@ function CrudPage(o) {
       <div class="card">${o.top || ''}${UI.grid(o.fields, o.cols || 3)}
         <div class="actions">${UI.btn(o.submitLabel || '💾 সংরক্ষণ', `CrudPage.save('${o.id}',this)`, 'btn-success')}
         ${UI.btn('↺ নতুন', `CrudPage.reset('${o.id}')`, 'btn-secondary')}${o.extraButtons || ''}</div></div>
-      ${o.list ? `<div class="card"><div class="card-title">🔍 ${o.searchLabel || 'অনুসন্ধান'}</div>${o.list.filter ? UI.grid(o.list.filter, 4) : ''}
-        <div class="actions">${UI.btn('🔍 ' + (o.searchLabel || 'অনুসন্ধান'), `CrudPage.search('${o.id}',this)`)}${UI.btn('🖨️ প্রিন্ট', `CrudPage.print('${o.id}')`, 'btn-outline')}</div>
+      ${o.list ? `<div class="card"><div class="card-title">${o.searchLabel || 'অনুসন্ধান'}</div>${o.list.filter ? UI.grid(o.list.filter, 4) : ''}
+        <div class="actions">${UI.btn(o.searchLabel || 'অনুসন্ধান', `CrudPage.search('${o.id}',this)`, 'btn-info')} ${UI.btn('Print', `CrudPage.print('${o.id}')`, 'btn-outline')}</div>
         <div class="crud-list" style="margin-top:10px"></div></div>` : ''}`,
     init: async (el) => {
       el._edit = null;
@@ -747,8 +747,8 @@ function ReportPage(o) {
   App.page(o.id, {
     title: o.title, icon: o.icon || '📄',
     render: () => `<div class="report-filter">${UI.grid(o.filters, o.cols || 4)}
-      <div class="filter-actions">${UI.btn('🔍 দেখুন', `ReportPage.run('${o.id}',this)`)}${UI.btn('🖨️ Print Report', `ReportPage.run('${o.id}',this,true)`, 'btn-print')}${UI.btn('📥 Excel', `ReportPage.excel('${o.id}')`, 'btn-outline')}${(o.buttons || []).map(([l, m]) => UI.btn(l, `ReportPage.run('${o.id}',this,true,'${m}')`, 'btn-outline')).join('')}</div></div>
-      <div class="card rpt-out"><div class="mini">ফিল্টার দিয়ে "দেখুন" চাপুন</div></div>`,
+      <div class="filter-actions">${o.ek ? UI.btn(o.ek, `ReportPage.run('${o.id}',this)`, 'btn-success') : UI.btn('🔍 দেখুন', `ReportPage.run('${o.id}',this)`) + UI.btn('🖨️ Print Report', `ReportPage.run('${o.id}',this,true)`, 'btn-print') + UI.btn('📥 Excel', `ReportPage.excel('${o.id}')`, 'btn-outline')}${(o.buttons || []).map(([l, m]) => UI.btn(l, `ReportPage.run('${o.id}',this,true,'${m}')`, 'btn-outline')).join('')}</div></div>
+      <div class="card rpt-out"><div class="mini">${o.ek ? '"' + o.ek + '" চাপুন' : 'ফিল্টার দিয়ে "দেখুন" চাপুন'}</div></div>`,
     init: async (el) => {
       const f = $('.report-filter', el);
       const keys = o.filters.map(x => x.k);
