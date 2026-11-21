@@ -19,6 +19,8 @@ const R = {
   name: (mem, id) => esc((mem[id] || [])[0] || ''),
   father: (mem, id) => esc((mem[id] || [])[4] || ''),
   mobile: (mem, id) => esc((mem[id] || [])[2] || ''),
+  // Balance Migration / পুরোনো আদায় (ওপেনিং) — কালেকশন নয় (eKisti এর মতো বাদ)
+  isMig: t => t.tt === 'OPEN_PAID' || t.tt === 'OPEN_BAL' || /^Balance Migration/.test(t.narration || ''),
   isTrf: t => ['EMI_TRF', 'DEP_TRF_IN', 'DEP_TRF_OUT', 'PROFIT_POST', 'LOAN_DISB_TRF', 'JV'].includes(t.tt),
   // লেনদেনের শ্রেণি
   cls(t) {
@@ -332,7 +334,7 @@ ReportPage({
   id: 'rptCollDetails', title: 'কালেকশন বিস্তারিত রিপোর্ট', landscape: true, filters: collFilters([TRF_F]), init: R.userOpts,
   run: async f => {
     const mem = await Data.memberIdx(f.branch); const sm = await R.sams(f.branch); const en = await R.empName();
-    const ts = (await R.txns(f, f.from, f.upto)).filter(t => ['depRcv', 'depPay', 'loanRcv'].includes(R.cls(t)) && (f.trf !== 'no' || !R.isTrf(t)));
+    const ts = (await R.txns(f, f.from, f.upto)).filter(t => !R.isMig(t) && ['depRcv', 'depPay', 'loanRcv'].includes(R.cls(t)) && (f.trf !== 'no' || !R.isTrf(t)));
     const fees = await R.fees(f, f.from, f.upto);
     const g = groupBy(ts, t => t.samity || '—'); const fg = groupBy(fees, x => x.samity || '—');
     const keys = [...new Set([...Object.keys(g), ...Object.keys(fg)])].sort();
@@ -352,7 +354,7 @@ ReportPage({
   id: 'rptCollSummary', title: 'কালেকশন সামারী রিপোর্ট', landscape: true, filters: collFilters(), init: R.userOpts,
   run: async f => {
     const c = await R.snaps(f, f.upto); const en = await R.empName();
-    const ts = (await R.txns(f, f.from, f.upto)).filter(t => !R.isTrf(t) && ['depRcv', 'depPay', 'loanRcv'].includes(R.cls(t)));
+    const ts = (await R.txns(f, f.from, f.upto)).filter(t => !R.isMig(t) && !R.isTrf(t) && ['depRcv', 'depPay', 'loanRcv'].includes(R.cls(t)));
     const fees = await R.fees(f, f.from, f.upto);
     const by = {}; const row = m => by[m] = by[m] || { m, dr: 0, dp: 0, inst: 0, pen: 0, fee: {} };
     ts.forEach(t => { const r = row(t.memberId); const cl = R.cls(t); if (cl === 'depRcv') r.dr += num(t.amount); if (cl === 'depPay') r.dp += num(t.amount); if (cl === 'loanRcv') { r.inst += num(t.amount); r.pen += num(t.penalty); } });
@@ -370,7 +372,7 @@ ReportPage({
 // ─── সঞ্চয় ও ঋণ আদায় সামারি (Deposit & Investment Collection Summary) ───
 async function depInvRows(f, grpDefault) {
   const grp = f.grp || grpDefault; const bs = await R.branchesFor(f);
-  const ts = (await R.txns({ ...f, branch: bs[0] }, f.from, f.upto, bs)).filter(t => !R.isTrf(t) && ['depRcv', 'depPay', 'loanRcv', 'disb'].includes(R.cls(t)));
+  const ts = (await R.txns({ ...f, branch: bs[0] }, f.from, f.upto, bs)).filter(t => !R.isMig(t) && !R.isTrf(t) && ['depRcv', 'depPay', 'loanRcv', 'disb'].includes(R.cls(t)));
   const sm = {}; for (const b of bs) Object.assign(sm, await R.sams(b));
   const by = {};
   ts.forEach(t => {
