@@ -425,7 +425,15 @@ ReportPage({
         const k = v.date + '|' + gl; const x = agg[k] = agg[k] || { date: v.date, gl, rcC: 0, rcB: 0, pyC: 0, pyB: 0 };
         const rc = n > 0 ? n : 0, py = n < 0 ? -n : 0;
         if (bankSide) { x.rcB += rc; x.pyB += py; } else { x.rcC += rc; x.pyC += py; }
-        (CashSub.det[k] = CashSub.det[k] || []).push({ n: v.narration || '', rc, py });
+        // eKisti এর মতো বিবরণ: Loan Inst Receive <সদস্য> <হিসাব> ইত্যাদি
+        const ln = v.lines.find(l => l.gl === gl && l.accNo) || {}; const acc = ln.accNo || ''; const mem = acc ? acc.slice(0, -2) : '';
+        let nt = v.narration || '';
+        if (acc) {
+          if (gl.startsWith('112')) nt = (rc ? 'Loan Inst Receive ' : 'Loan Disbursement ') + mem + ' ' + acc;
+          else if (gl.startsWith('31')) nt = 'Loan Inst Profit Receive ' + mem + ' ' + acc;
+          else if (gl.startsWith('21')) nt = rc ? 'Deposit Inst Receive ' + mem : 'Deposit Payment ' + mem + ' ' + acc;
+        }
+        (CashSub.det[k] = CashSub.det[k] || []).push({ n: nt, rc, py });
       });
     });
     const eRows = Object.values(agg).sort((a, b) => (a.date + a.gl).localeCompare(b.date + b.gl));
