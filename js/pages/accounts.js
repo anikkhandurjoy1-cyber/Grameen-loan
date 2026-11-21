@@ -206,7 +206,8 @@ const LoanForm = {
     const od = UI.el(el, 'openDate').value, fq = UI.el(el, 'freq').value; if (!od || !fq) return;
     let fd = Loan.nextDate(od, fq, 1);
     const s = el._samity;
-    if (fq === 'W' && s && s.day) { fd = addDays(od, 7); const want = WEEKDAYS.indexOf(s.day); while (parseD(fd).getDay() !== want) fd = addDays(fd, 1); }
+    // eKisti: সাপ্তাহিক — খোলার পরের প্রথম সমিতি বার (১-৭ দিনের মধ্যে); সমিতির বার না থাকলে +১০ দিন
+    if (fq === 'W') { if (s && s.day) { fd = addDays(od, 1); const want = WEEKDAYS.indexOf(s.day); while (parseD(fd).getDay() !== want) fd = addDays(fd, 1); } else fd = addDays(od, 10); if (isFriday(fd)) fd = addDays(fd, 1); }
     if (fq === 'M' && s && s.dateOfMonth) { const d = parseD(addMonths(od, 1)); d.setDate(Math.min(num(s.dateOfMonth), 28)); fd = ymd(d); }
     UI.el(el, 'firstDate').value = fd; LoanForm.calc(el);
   },
