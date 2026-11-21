@@ -325,7 +325,7 @@ function collDetailsBlock(ts, fees, mem, sm, en, samCode) {
   const info = `<div class="ig"><p><b>Somity Name : </b>${esc((samCode || '').slice(-4) + '-' + (sam.name || ''))}</p><p><b>Field Officer Name : </b>${esc((en(sam.foId) || '').replace(/^\d+ - /, ''))}</p><p></p>`
     + [['Total Receive', rc], ['Total Payment', py], ['Loan Receive', sum(ts, t => t.kind === 'loan' && t.dc === 'C' ? num(t.amount) : 0)], ['Deposit Receive', sum(ts, t => t.kind !== 'loan' && t.dc === 'C' ? num(t.amount) : 0)], ['Deposit Payment', sum(ts, t => t.kind !== 'loan' && t.dc === 'D' ? num(t.amount) : 0)], ...FEE_SUM_LABELS.map(([k, l]) => [l, fk(k)])].map(([l, v]) => `<p><b>${l} : </b>${amt(v)}</p>`).join('') + '</div>';
   const rows = ts.slice().sort((a, b) => (a.date + a.memberId).localeCompare(b.date + b.memberId));
-  return info + UI.table([SL, { h: 'Customer Name', f: t => (t.memberId || '') + ' - ' + R.name(mem, t.memberId) }, { h: 'Transaction Type', f: t => ttEn(t) }, { h: 'Date', f: t => fmtD(t.date) }, { h: 'Transaction Details', f: t => esc((TT_NAME[t.tt] || t.tt) + ' ' + (t.memberId || '') + ' ' + (t.accNo || '')) }, { h: 'Posting Time', f: t => tsStr(t.on) }, { h: 'Receive', f: t => t.dc === 'C' ? amt(num(t.amount) + num(t.penalty)) : '0', r: 1, sum: 1, v: t => t.dc === 'C' ? num(t.amount) + num(t.penalty) : 0 }, { h: 'Payment', f: t => t.dc === 'D' ? amt(t.amount) : '0', r: 1, sum: 1, v: t => t.dc === 'D' ? t.amount : 0 }, { h: 'User ID', f: t => esc(t.byName || '') }], rows);
+  return info + UI.table([SL, { h: 'Customer Name', f: t => (t.memberId || '') + ' - ' + R.name(mem, t.memberId) }, { h: 'Transaction Type', f: t => ttEn(t) }, { h: 'Date', f: t => fmtD(t.date) }, { h: 'Transaction Details', f: t => esc(t.kind === 'loan' ? (t.dc === 'C' ? 'Loan Installment Receive ' : 'Loan Disbursement ') + (t.memberId || '') + ' ' + (t.accNo || '') : t.dc === 'C' ? 'Deposit Inst Receive ' + (t.memberId || '') : 'Deposit Payment ' + (t.memberId || '') + ' ' + (t.accNo || '')) }, { h: 'Posting Time', f: t => tsStr(t.on) }, { h: 'Receive', f: t => t.dc === 'C' ? amt(num(t.amount) + num(t.penalty)) : '0', r: 1 }, { h: 'Payment', f: t => t.dc === 'D' ? amt(t.amount) : '0', r: 1 }, { h: 'User ID', f: t => esc(t.byName || '') }], rows);
 }
 const collFilters = (extra = []) => [F.branch, F.samity, F.employee, F.member, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, ...extra, USER_F];
 ReportPage({
@@ -340,9 +340,10 @@ ReportPage({
     // সব সমিতির সর্বমোট হিসাব (শেষে)
     const rc = sum(ts, t => t.dc === 'C' ? num(t.amount) + num(t.penalty) : 0) + sum(fees, x => x.amount), py = sum(ts, t => t.dc === 'D' ? num(t.amount) : 0);
     const fk = k => sum(fees.filter(x => x.k === k), x => x.amount) + (k === 'penalty' ? sum(ts, t => num(t.penalty)) : 0);
-    const gt = [['Total Receive', rc], ['Total Payment', py], ['Net Collection', rc - py], ['Loan Receive', sum(ts, t => t.kind === 'loan' && t.dc === 'C' ? num(t.amount) : 0)], ['Deposit Receive', sum(ts, t => t.kind !== 'loan' && t.dc === 'C' ? num(t.amount) : 0)], ['Deposit Payment', sum(ts, t => t.kind !== 'loan' && t.dc === 'D' ? num(t.amount) : 0)], ...FEE_SUM_LABELS.map(([k, l]) => [l, fk(k)])];
-    const grand = `<h4 style="margin:14px 0 4px;text-align:center">Grand Total (সর্বমোট হিসাব)</h4>` + UI.table([{ h: 'Particular', f: r => r[0] }, { h: 'Amount', f: r => amt(r[1]), r: 1 }], gt);
-    return { title: 'Collection Details Report', info: [['Total Receive', amt(rc)], ['Total Payment', amt(py)]], html: keys.map(k => collDetailsBlock(g[k] || [], fg[k] || [], mem, sm, en, k)).join('<br>') + grand };
+    const gt = [['Total Receive', rc], ['Total Payment', py], ['Loan Receive', sum(ts, t => t.kind === 'loan' && t.dc === 'C' ? num(t.amount) : 0)], ['Deposit Receive', sum(ts, t => t.kind !== 'loan' && t.dc === 'C' ? num(t.amount) : 0)], ['Deposit Payment', sum(ts, t => t.kind !== 'loan' && t.dc === 'D' ? num(t.amount) : 0)], ...FEE_SUM_LABELS.map(([k, l]) => [l, fk(k)])];
+    // eKisti: শেষে সব সমিতির মোট হিসাব
+    const grand = `<div class="ig" style="margin-top:12px;border-top:2px solid #333;padding-top:6px">${gt.map(([l, v]) => `<p><b>${l} : </b>${amt(v)}</p>`).join('')}</div>`;
+    return { title: 'Collection Details Report', html: keys.map(k => collDetailsBlock(g[k] || [], fg[k] || [], mem, sm, en, k)).join('<br>') + grand };
   },
 });
 

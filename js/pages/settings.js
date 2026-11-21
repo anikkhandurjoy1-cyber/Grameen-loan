@@ -55,12 +55,15 @@ CrudPage({
     { k: 'parent', l: 'Parent Branch', t: 'select', opts: [['', '- Select an option -']] }, { k: 'manager', l: 'Branch Manager' },
     { k: 'openDate', l: 'Opening Date', t: 'date' }, { k: 'division', l: 'Division' }, { k: 'district', l: 'District' }, { k: 'upazila', l: 'Upozila' },
     { k: 'union', l: 'Union/City Corp' }, { k: 'phone', l: 'Manager Phone' }, { k: 'address', l: 'Address', req: 1 },
-    { k: 'status', l: 'Status', t: 'select', req: 1, opts: ['Active', 'Inactive'] }, { k: 'businessDate', l: 'Business Date', t: 'date', hint: 'Edit করে আগের তারিখ (Back Date) দেওয়া যাবে' },
+    { k: 'status', l: 'Status', t: 'select', req: 1, opts: ['Active', 'Inactive'] }, { k: 'businessDate', l: 'Business Day', t: 'date', hide: 1 },
   ],
-  init: async el => { const bs = await Data.branches(); UI.fill(UI.el(el, 'parent'), bs, b => b.code, b => b.code + '-' + b.name, '- Select an option -'); UI.el(el, 'businessDate').value = today(); },
+  init: async el => { const bs = await Data.branches(); UI.fill(UI.el(el, 'parent'), bs, b => b.code, b => b.code + '-' + b.name, '- Select an option -'); UI.el(el, 'businessDate').closest('.form-group').style.display = 'none'; },
+  // eKisti: Edit এ "Business Day" দেখায় — আগের তারিখ (Back Date) দেওয়া যায়
+  onEdit: el => { UI.el(el, 'businessDate').closest('.form-group').style.display = ''; $('.actions .btn-success', el).textContent = 'Submit'; },
+  onReset: el => { UI.el(el, 'businessDate').closest('.form-group').style.display = 'none'; $('.actions .btn-success', el).textContent = 'Create New Branch'; },
   before: (d, isEdit) => { d.code = String(d.code); if (!isEdit && !d.businessDate) d.businessDate = today(); if (isEdit && !d.businessDate) delete d.businessDate; return d; },
   after: () => { Cache.drop('branches'); refreshBranchBadge(); },
-  list: { cols: [{ h: 'Branch Code', f: r => r.code }, { h: 'Branch Name', f: r => esc(r.name) }, { h: 'Type', f: r => r.type }, { h: 'Manager Phone', f: r => esc(r.phone || '') }, { h: 'Address', f: r => esc(r.address || '') }, { h: 'Business Date', f: r => fmtD(r.businessDate) }, { h: 'Status', f: r => r.status }] },
+  list: { cols: [{ h: 'Branch Code', f: r => r.code }, { h: 'Branch Name', f: r => esc(r.name) }, { h: 'Manager Phone', f: r => esc(r.phone || '') }, { h: 'Address', f: r => esc(r.address || '') }, { h: 'Business Day', f: r => fmtD(r.businessDate) }, { h: 'Status', f: r => r.status }] },
 });
 
 // ── নতুন কর্মচারীর ৪টি একাউন্ট (eKisti এর মতো স্বয়ংক্রিয়): বেতন, প্রভিডেন্ট ফান্ড, গ্র্যাচুইটি, স্টাফ সিকিউরিটি ──

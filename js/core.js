@@ -699,6 +699,7 @@ CrudPage.reset = function (id) {
   UI.reset($('.card', el), o.keepOnReset || ['branch']);
   $$('[data-k]', $('.card', el)).forEach(e => { if (e.dataset.lockEdit) e.readOnly = false; });
   if (o.onReset) o.onReset(el);
+  if (o.onReset) o.onReset(el);
 };
 CrudPage.save = function (id, btn) {
   return guard(btn, async () => {
