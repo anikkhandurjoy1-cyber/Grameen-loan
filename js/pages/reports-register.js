@@ -217,7 +217,7 @@ async function memberDocs(f) {
 const ageOf = (dob, d) => dob ? Math.floor(daysBetween(dob, d) / 365.25) : '';
 ReportPage({
   id: 'rptAdmission', title: 'ভর্তি রেজিস্টার', landscape: true, fromDefault: 'month',
-  filters: [F.branch, F.samity, F.employee, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, { k: 'ms', l: 'Member Status', t: 'select', opts: [['', 'Choose'], ['active', 'Active'], ['inactive', 'Inactive'], ['closed', 'Closed']] }, ...LOC_F],
+  filters: [F.branch, F.samity, F.employee, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, { k: 'ms', l: 'Member Status', t: 'select', opts: [['', 'Choose'], ['active', 'Active'], ['inactive', 'Inactive'], ['closed', 'Closed']] }, ...LOC_F.map(x => ({ ...x, l: ({ 'Police Station': 'Upozila', 'Word/Union': 'Union' })[x.l] || x.l }))],
   run: async f => {
     const rows = (await memberDocs(f)).filter(m => m.joinDate >= f.from && m.joinDate <= f.upto && (!f.ms || (m.status || 'active') === f.ms) && locMatch(f, m)).sort((a, b) => (a.joinDate + a.memberId).localeCompare(b.joinDate + b.memberId));
     const G = 'Member Information';

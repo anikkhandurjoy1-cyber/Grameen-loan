@@ -8,8 +8,9 @@ async function accTxnList(el, accNo, tts, cancel = true) {
   if (!accNo) { box.innerHTML = ''; return; }
   const rows = (await db.collection('txns').where('accNo', '==', accNo).get()).docs.map(d => d.data()).filter(t => !tts || tts.includes(t.tt)).sort((a, b) => (b.date + b.vno).localeCompare(a.date + a.vno)).slice(0, 100);
   const pid = (el.id || '').replace('page-', ''); const pay = /Pay$|Closing$/.test(pid), shr = /^share/.test(pid);
-  const dH = shr ? (pay ? 'Payment Date' : 'Receive Date') : pay ? 'Payment Date' : 'Deposit Date', aH = shr ? (pay ? 'Payment Amount' : 'Receive Amount') : pay ? 'Payment Amount' : 'Deposit Amount';
-  box.innerHTML = UI.table([{ h: 'Branch Code', f: r => r.branch }, { h: 'Member ID', f: r => r.memberId }, { h: dH, f: r => fmtD(r.date) }, { h: aH, f: r => amt(r.amount), r: 1 }, { h: 'Memo Number', f: r => esc(r.docNo || r.vno) }, { h: 'Cancel By', f: r => r.cancelBy || '' }, { h: 'Cancel On', f: r => tsStr(r.cancelOn) }, { h: 'Narration', f: r => esc(r.narration || '') },
+  const cls = /Closing$/.test(pid);
+  const dH = cls ? 'Closing Date' : shr ? (pay ? 'Payment Date' : 'Receive Date') : pay ? 'Payment Date' : 'Deposit Date', aH = shr ? (pay ? 'Payment Amount' : 'Receive Amount') : pay ? 'Payment Amount' : 'Deposit Amount';
+  box.innerHTML = UI.table([{ h: 'Branch Code', f: r => r.branch }, { h: cls ? 'Customer ID' : 'Member ID', f: r => r.memberId }, { h: dH, f: r => fmtD(r.date) }, { h: cls ? 'Closing Balance' : aH, f: r => amt(r.amount), r: 1 }, { h: cls ? 'Document Number' : 'Memo Number', f: r => esc(r.docNo || r.vno) }, { h: 'Cancel By', f: r => r.cancelBy || '' }, { h: 'Cancel On', f: r => tsStr(r.cancelOn) }, { h: 'Narration', f: r => esc(r.narration || '') },
     { h: 'Action', f: r => r.cancelled ? '<span class="tag red">বাতিল</span>' : `${UI.btn('Print', `Receipt.print('${r.vno}')`, 'btn-info btn-sm')} ${cancel ? UI.btn('Cancel', `DepTx.cancel('${r.vno}',this)`, 'btn-danger btn-sm') : ''}` }], rows, { rowCls: r => r.cancelled ? 'row-cancel' : '' });
 }
 // একাউন্ট বাছাই হলে ব্যালেন্স দেখানো
@@ -165,7 +166,7 @@ const DepTransfer = {
 App.page('depClosing', {
   title: 'ডিপোজিট হিসাব ক্লোজিং', icon: '🔒',
   render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Member Name', t: 'member', req: 1 }, { k: 'account', l: 'Deposit Account', t: 'select', req: 1 }, { k: 'payable', l: 'Payable Amount', ro: 1 }, { k: 'date', l: 'Closing Date', t: 'date', req: 1 }, { k: 'balance', l: 'Account Balance', ro: 1 }, { k: 'blocked', l: 'ব্লক পরিমাণ', ro: 1 },
-    { k: 'calcProfit', l: 'Closing Profit (হিসাবকৃত)', ro: 1 }, { k: 'profit', l: 'Profit Payment', t: 'number' }, { k: 'charge', l: 'Closing Charge', t: 'number' }, { k: 'mode', l: 'Payment', t: 'select', opts: [['cash', 'নগদ'], ['trf', 'অন্য একাউন্টে স্থানান্তর']] }, { k: 'trfAcc', l: 'স্থানান্তর একাউন্ট', t: 'select' }, { k: 'docNo', l: 'Payment Document Number' }, { k: 'narration', l: 'Comments', t: 'textarea', req: 1 }], 4)
+    { k: 'calcProfit', l: 'Closing Profit', ro: 1 }, { k: 'profit', l: 'Profit Payment', t: 'number' }, { k: 'charge', l: 'Closing Charge', t: 'number' }, { k: 'mode', l: 'Payment', t: 'select', opts: [['cash', 'নগদ'], ['trf', 'অন্য একাউন্টে স্থানান্তর']] }, { k: 'trfAcc', l: 'স্থানান্তর একাউন্ট', t: 'select' }, { k: 'docNo', l: 'Payment Document Number' }, { k: 'narration', l: 'Comments', t: 'textarea', req: 1 }], 4)
     + `<div class="actions">${UI.btn('Submit Closing', 'DepClose.save(this)', 'btn-danger')} ${UI.btn('Search Closing', 'EK.show(this)', 'btn-info')}</div>`) + '<div class="ek-rl" style="display:none">' + UI.card('', '<div class="tl"></div>') + '</div>',
   init: async el => {
     await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch'); await Pick.account(el, 'account', 'member', 'branch', { kind: 'dep' });
@@ -216,7 +217,7 @@ function LienPage(id, title, add) {
     render: () => UI.card('', UI.grid([F.branch, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'account', l: 'Select Account', t: 'select', req: 1 }, { k: 'balance', l: 'Account Balance', ro: 1 }, { k: 'blocked', l: 'Current Block Amount', ro: 1 },
       { k: 'date', l: add ? 'Block Effective Date' : 'Remove Date', t: 'date', req: 1 }, { k: 'amount', l: add ? 'Block Amount' : 'Remove Amount', t: 'number' }, { k: 'reason', l: add ? 'Blocking Reason' : 'Clear Reason', req: 1 },
       { k: 'dep', l: add ? 'Deposit Block' : 'Deposit Block Clear', t: 'checkbox' }, { k: 'wd', l: add ? 'Withdrawal Block' : 'Withdrawal Block Clear', t: 'checkbox' }], 4)
-      + `<div class="actions">${UI.btn(add ? '⛔ Add Block' : '🔓 Clear Block', `Lien.save('${id}',${add},this)`, add ? 'btn-danger' : 'btn-success')} ${UI.btn(add ? 'Search Block' : 'Search Block Clear', 'EK.show(this)', 'btn-info')}</div>`) + '<div class="ek-rl" style="display:none">' + UI.card('', '<div class="ll"></div>') + '</div>',
+      + `<div class="actions">${UI.btn(add ? 'Add Block' : 'Clear Block', `Lien.save('${id}',${add},this)`, add ? 'btn-danger' : 'btn-success')} ${UI.btn(add ? 'Search Block' : 'Search Block Clear', 'EK.show(this)', 'btn-info')}</div>`) + '<div class="ek-rl" style="display:none">' + UI.card('', '<div class="ll"></div>') + '</div>',
     init: async el => {
       await Pick.branch(el, 'branch'); await Pick.member(el, 'member', 'branch'); await Pick.account(el, 'account', 'member', 'branch', { kind: 'dep' });
       UI.el(el, 'date').value = await businessDate();
@@ -243,7 +244,7 @@ const Lien = {
   },
   async list(el) {
     const rows = (await db.collection('liens').where('accNo', '==', UI.el(el, 'account').value).get()).docs.map(d => d.data()).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    $('.ll', el).innerHTML = UI.table([{ h: 'Branch Code', f: r => r.branch }, { h: 'Member ID', f: r => r.memberId || '' }, { h: 'Reference Account', f: r => r.accNo }, { h: 'ধরন', f: r => r.kind === 'add' ? 'Block' : 'Clear' }, { h: 'Date', f: r => fmtD(r.date) }, { h: 'Amount', f: r => amt(r.amount), r: 1 }, { h: 'Deposit', f: r => r.dep ? '✔' : '' }, { h: 'Withdrawal', f: r => r.wd ? '✔' : '' }, { h: 'Reason', f: r => esc(r.reason || '') }, { h: 'By', f: r => r.by }, { h: 'On', f: r => tsStr(r.on) }], rows);
+    $('.ll', el).innerHTML = UI.table([{ h: 'Branch Code', f: r => r.branch }, { h: 'Member ID', f: r => r.memberId || '' }, { h: 'Reference Account', f: r => r.accNo }, { h: 'Block Date', f: r => fmtD(r.date) + (r.kind === 'add' ? '' : ' (Clear)') }, { h: 'Block Amount', f: r => amt(r.amount), r: 1 }, { h: 'Deposit Block', f: r => r.dep ? 'Yes' : 'No' }, { h: 'Withdrawal Block', f: r => r.wd ? 'Yes' : 'No' }, { h: 'Block Reason', f: r => esc(r.reason || '') }, { h: 'Block By', f: r => r.by }, { h: 'Block On', f: r => tsStr(r.on) }], rows);
   },
 };
 

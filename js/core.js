@@ -764,7 +764,7 @@ function ReportPage(o) {
   App.page(o.id, {
     title: o.title, icon: o.icon || '📄',
     render: () => `<div class="report-filter">${UI.grid(o.filters, o.cols || 4)}
-      <div class="filter-actions">${o.ek ? UI.btn(o.ek, `ReportPage.run('${o.id}',this)`, 'btn-success') : UI.btn('Print Report', `ReportPage.run('${o.id}',this,true)`, 'btn-print') + UI.btn('Excel', `ReportPage.excel('${o.id}')`, 'btn-outline')}${(o.buttons || []).map(([l, m]) => UI.btn(l, `ReportPage.run('${o.id}',this,true,'${m}')`, 'btn-outline')).join('')}</div></div>
+      <div class="filter-actions">${o.ek ? UI.btn(o.ek, `ReportPage.run('${o.id}',this)`, 'btn-success') : UI.btn(o.printLabel || 'Print Report', `ReportPage.run('${o.id}',this,true)`, 'btn-print') + UI.btn('Excel', `ReportPage.excel('${o.id}')`, 'btn-outline')}${(o.buttons || []).map(([l, m]) => UI.btn(l, `ReportPage.run('${o.id}',this,true,'${m}')`, 'btn-outline')).join('')}</div></div>
       <div class="card rpt-out"${o.ek ? '' : ' hidden'}><div class="mini">${o.ek ? '"' + o.ek + '" চাপুন' : ''}</div></div>`,
     init: async (el) => {
       const f = $('.report-filter', el);

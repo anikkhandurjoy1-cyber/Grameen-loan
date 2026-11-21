@@ -72,7 +72,7 @@ ReportPage({
 ReportPage({
   id: 'rptIbStatement', title: 'শাখা অনুযায়ী লেনদেন ডিটেলস', icon: '📄', fromDefault: 'month',
   filters: [F.branch, { k: 'other', l: 'Other Branch Name', t: 'select' }, F.from, F.upto],
-  buttons: [['🖨️ Print Details Report', 'details']],
+  buttons: [['Print Details Report', 'details']],
   init: async (el, f) => { const bs = await Data.branches(); UI.fill(UI.el(f, 'other'), bs, b => b.code, b => b.code + ' - ' + b.name, '— সব —'); },
   run: async (f, mode) => {
     const rows = (await IB.rows({ from: f.from, upto: f.upto })).filter(r => (r.sender === f.branch || r.receiver === f.branch) && (!f.other || r.sender === f.other || r.receiver === f.other));

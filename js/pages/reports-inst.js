@@ -429,7 +429,7 @@ ReportPage({
   run: async f => { const { rows, rec } = await dcrRows(f, 'center'); const lab = await R.glabel('center', [f.branch]); const en = await R.empName(); return { title: 'Samity Wise Collection Summary', html: UI.table(dcrCols(k => lab(k).replace(/^\d{3}(\d{4}) - /, '$1-'), 'সমিতির নাম', { h: 'ফিল্ড অফিসার', f: r => esc((en(rec.fo(r.k)) || '').replace(/^\d+ - /, '')) }), rows) }; },
 });
 ReportPage({
-  id: 'rptFieldOfficer', title: 'ফিল্ড অফিসার রিপোর্ট', landscape: true, filters: [F.branch, F.btype, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, F.samity, F.employee, { ...R.GROUP, opts: [['employee', 'Employee'], ['center', 'Center'], ['member', 'Member'], ['branch', 'Branch']] }],
+  id: 'rptFieldOfficer', title: 'ফিল্ড অফিসার রিপোর্ট', printLabel: 'প্রিন্ট রিপোর্ট', landscape: true, filters: [F.branch, F.btype, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, F.samity, F.employee, { ...R.GROUP, opts: [['employee', 'Employee'], ['center', 'Center'], ['member', 'Member'], ['branch', 'Branch']] }],
   run: async f => { const grp = f.grp || 'employee'; const { rows } = await dcrRows(f, grp); const lab = await R.glabel(grp, [f.branch]); return { title: 'Field Officer Collection Summary', html: UI.table(dcrCols(lab, { employee: 'ফিল্ড অফিসার', center: 'সমিতির নাম', member: 'সদস্য', branch: 'শাখা' }[grp]), rows) }; },
 });
 

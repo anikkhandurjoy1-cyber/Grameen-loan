@@ -7,7 +7,7 @@ const OTHER_TYPES = Object.entries(REF.OTHER).map(([c, d]) => [c, `${c} - ${d.na
 
 // ── সাব-লিস্ট এডিটর (নমিনি / জামিনদার) ──
 const SubList = {
-  render(key, title) { return `<div class="card-title" style="margin-top:8px">${title} ${UI.btn(key === 'nominee' ? '➕ Add Nominee' : key === 'guarantor' ? '➕ Add Guarantor' : '➕ Add', `SubList.add(this,'${key}')`, 'btn-outline btn-sm')}</div><div class="sublist" data-sub="${key}"></div>`; },
+  render(key, title) { return `<div class="card-title" style="margin-top:8px">${title} ${UI.btn(key === 'nominee' ? 'Add Nominee' : key === 'guarantor' ? 'Add Guarantor' : '➕ Add', `SubList.add(this,'${key}')`, 'btn-outline btn-sm')}</div><div class="sublist" data-sub="${key}"></div>`; },
   defs: {
     nominee: [{ k: 'serial', l: 'Nominee Serial' }, { k: 'name', l: 'Nominee Name', req: 1 }, { k: 'relation', l: 'Relation With Member' }, { k: 'mobile', l: 'Mobile No', req: 1 }, { k: 'sex', l: 'Gender', t: 'select', opts: GENDER }, { k: 'father', l: 'Father Name' }, { k: 'mother', l: 'Mother Name' }, { k: 'pct', l: 'Share Percentage', t: 'number', req: 1 }, { k: 'presentAddr', l: 'Present Address' }, { k: 'permAddr', l: 'Permanent Address' }, { k: 'dob', l: 'Birth Date', t: 'date' }, { k: 'nid', l: 'NID NO', req: 1 }],
     guarantor: [{ k: 'memberId', l: 'Member ID (সদস্য হলে)' }, { k: 'blockAcc', l: 'সঞ্চয় অ্যাকাউন্ট ব্লক', t: 'select', opts: [['', '------------']] }, { k: 'accBal', l: 'অ্যাকাউন্ট ব্যালেন্স', ro: 1 }, { k: 'blockAmt', l: 'ব্লক পরিমাণ', t: 'number' }, { k: 'serial', l: 'জামিনদার সিরিয়াল' }, { k: 'name', l: 'জামিনদার নাম', req: 1 }, { k: 'relation', l: 'সদস্যের সাথে সম্পর্ক' }, { k: 'mobile', l: 'ফোন নাম্বার', req: 1 }, { k: 'sex', l: 'লিঙ্গ', t: 'select', opts: GENDER }, { k: 'father', l: 'পিতার নাম' }, { k: 'mother', l: 'মাতার নাম' }, { k: 'nid', l: 'এন আই ডি নাম্বার' }, { k: 'presentAddr', l: 'বর্তমান ঠিকানা' }, { k: 'permAddr', l: 'স্থায়ী ঠিকানা' }, { k: 'income', l: 'মাসিক আয়', t: 'number' }, { k: 'incomeSrc', l: 'আয়ের উৎস' }, { k: 'dob', l: 'জন্ম তারিখ', t: 'date' }, { k: 'religion', l: 'ধর্ম', t: 'select', opts: RELIGION }, { k: 'blood', l: 'রক্তের গ্রুপ', t: 'select', opts: BLOOD }, { k: 'education', l: 'শিক্ষা', t: 'select', opts: EDU }, { k: 'marital', l: 'বৈবাহিক অবস্থা', t: 'select', opts: MARITAL }, { k: 'photo', l: 'ছবি', t: 'file' }],
@@ -428,12 +428,12 @@ const DepInst = {
 // ── ঋণ বিতরণ তালিকা ──
 ReportPage({
   id: 'loanDisbList', ek: 'Search Disbursement List', title: 'ঋণ বিতরণ তালিকা', icon: '📃', fromDefault: 'month',
-  filters: [F.branch, F.samity, F.member, F.from, F.upto],
+  filters: [F.branch, F.samity, { ...F.member, l: 'Member Name' }, F.from, F.upto],
   run: async f => {
     const snaps = (await Data.snaps(f.branch, f.samity)).filter(s => s.k === 'loan' && s.st !== 'cancelled' && (!f.member || s.m === f.member) && s.od >= f.from && s.od <= f.upto).map(Loan.fromSnap);
     const mem = await Data.memberIdx(f.branch);
     snaps.sort((a, b) => a.openDate.localeCompare(b.openDate));
-    return { landscape: true, html: UI.table([{ h: 'Samity Name', f: r => r.samity }, { h: 'Member ID', f: r => r.memberId }, { h: 'Member Name', f: r => esc((mem[r.memberId] || [])[0] || '') }, { h: 'Account', f: r => r.accNo }, { h: 'Disburse Date', f: r => fmtD(r.openDate) }, { h: 'Loan Amount', f: r => amt(r.principal), r: 1, sum: 1, v: r => r.principal }, { h: 'Repay Amount', f: r => amt(r.totalRepay), r: 1, sum: 1, v: r => r.totalRepay }, { h: 'Profit Rate', f: r => r.rate }, { h: 'Repayment Start', f: r => fmtD(r.firstDate) }, { h: 'Inst NO', f: r => r.actualN + (r.lastInst ? 1 : 0) }, { h: 'Actions', f: r => `<span class="no-print">${UI.btn('📅', `Data.account('${r.accNo}').then(loanSchedulePrint)`, 'btn-outline btn-sm')}</span>` }], snaps) };
+    return { landscape: true, html: UI.table([{ h: 'Samity Name', f: r => r.samity }, { h: 'Member ID', f: r => r.memberId }, { h: 'Member Name', f: r => esc((mem[r.memberId] || [])[0] || '') }, { h: 'Loan Amount', f: r => amt(r.principal), r: 1, sum: 1, v: r => r.principal }, { h: 'Repay Amount', f: r => amt(r.totalRepay), r: 1, sum: 1, v: r => r.totalRepay }, { h: 'Profit Rate', f: r => r.rate }, { h: 'Repayment Start', f: r => fmtD(r.firstDate) }, { h: 'Inst NO', f: r => r.actualN + (r.lastInst ? 1 : 0) }, { h: 'Actions', f: r => `<span class="no-print">${UI.btn('📅', `Data.account('${r.accNo}').then(loanSchedulePrint)`, 'btn-outline btn-sm')}</span>` }], snaps) };
   },
 });
 

@@ -106,7 +106,7 @@ const SUMMARY_CARD = `<div class="card mc-ek-s"><div class="mc-ek-c1"><small>TOT
 // ── শীট পোস্টিং ──
 App.page('sheetPosting', {
   title: 'শীট পোস্টিং (সমিতি কালেকশন)', icon: '🧾',
-  render: () => `<div class="mc-ek sp-ek"><div class="card mc-ek-f"><div class="mc-ek-h">🧾 Installment Collection</div>${UI.grid([{ ...F.branch, l: 'Branch Name' }, { ...F.samity, l: 'Samity Name', req: 1 }, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }], 1)}<div class="actions">${UI.btn('🔍 Search Details', 'Sheet.load(this)', 'btn-success')} ${UI.btn('Submit', 'Sheet.submit(this)', 'btn-info')}</div></div><div></div>${SUMMARY_CARD}</div><div class="card mc-ek-t sheet"></div>`,
+  render: () => `<div class="mc-ek sp-ek"><div class="card mc-ek-f"><div class="mc-ek-h">🧾 Installment Collection</div>${UI.grid([{ ...F.branch, l: 'Branch Name' }, { ...F.samity, l: 'Samity Name', req: 1 }, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }], 1)}<div class="actions">${UI.btn('Search Details', 'Sheet.load(this)', 'btn-success')} ${UI.btn('Submit', 'Sheet.submit(this)', 'btn-info')}</div></div><div></div>${SUMMARY_CARD}</div><div class="card mc-ek-t sheet"></div>`,
   init: async el => {
     await Pick.branch(el, 'branch'); await Pick.samity(el, 'samity', 'branch', { all: false }); UI.el(el, 'date').value = await businessDate();
     if (!canBackDate()) { UI.el(el, 'date').readOnly = true; UI.el(el, 'date').closest('.form-group').style.display = 'none'; }   // eKisti: তারিখ = বিজনেস ডেট
@@ -152,7 +152,7 @@ const Sheet = {
 App.page('memberColl', {
   title: 'সদস্য ভিত্তিক কালেকশন', icon: '👤',
   render: () => `<div class="mc-ek">
-    <div class="card mc-ek-f"><div class="mc-ek-h">🧾 INSTALLMENT COLLECTION</div>${UI.grid([{ ...F.branch, l: 'Branch Name' }, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }], 1)}<div class="actions">${UI.btn('🔍 Search Details', 'MemColl.load(this)', 'btn-success')}</div></div>
+    <div class="card mc-ek-f"><div class="mc-ek-h">🧾 INSTALLMENT COLLECTION</div>${UI.grid([{ ...F.branch, l: 'Branch Name' }, { k: 'member', l: 'Member ID', t: 'member', req: 1 }, { k: 'date', l: 'Transaction Date', t: 'date', req: 1 }], 1)}<div class="actions">${UI.btn('Search Details', 'MemColl.load(this)', 'btn-success')}</div></div>
     <div class="card mc-ek-m"><div class="mc-ek-ph"><span class="mc-ph">👤</span><div>Profile image</div></div><table class="mc-ek-it"><tbody>${['Member Name', 'Somity Name', 'Phone', 'Address', 'Saving Account', 'Loan Account'].map(x => `<tr><th>${x}</th><td data-i="${x}"></td></tr>`).join('')}</tbody></table></div>
     <div class="card mc-ek-s"><div class="mc-ek-st">SUMMARY</div><div class="mc-ek-c1"><small>TOTAL RECEIVABLE</small><b data-s="due">0 Tk</b></div>
       <div class="mc-ek-c2"><div><small>LOAN RECEIVE</small><b data-s="L">0 Tk</b></div><div><small>DEPOSIT RECEIVE</small><b data-s="S">0 Tk</b></div></div>

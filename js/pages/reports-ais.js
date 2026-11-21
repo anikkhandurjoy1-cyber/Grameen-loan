@@ -25,7 +25,7 @@ ReportPage({
 ReportPage({
   id: 'rptAccRecPay', infoMap: { 'Reporting Date': 'রিপোর্টিং তারিখ', 'Branch Name': 'শাখার নাম', 'Branch Address': 'শাখা ঠিকানা', 'Account Type': 'একাউন্টের ধরন' }, title: 'এ্যাকাউন্ট রিসিভ পেমেন্ট', landscape: true, fromDefault: 'month',
   filters: [F.branch, { k: 'kind', l: 'Account Type', t: 'select', opts: KIND_OPTS }, F.samity, F.employee, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, { k: 'cash', l: 'Cash & Bank', t: 'select', opts: [['cb', 'Cash & Bank'], ['co', 'Cash Only'], ['bo', 'Bank Only'], ['nc', 'Non Cash'], ['all', 'Cash, Bank & Non-Cash All']] }, { k: 'bal', l: 'Balance Type', t: 'select', opts: [['nz', 'All Without Zero Balance'], ['due', 'Due Only'], ['adv', 'Advance Only'], ['all', 'All With Zero Balance']] }, ...LOC_F],
-  buttons: [['🖨️ Print Details Report', 'details'], ['🖨️ Print Type Wise', 'type']],
+  buttons: [['Print Details Report', 'details'], ['Print Type Wise', 'type']],
   run: async (f, mode) => {
     const fo = await foMap(f.branch); const mem = await Data.memberIdx(f.branch);
     const opening = await Hist.snapsAt(f.branch, addDays(f.from, -1), f.samity);
@@ -233,7 +233,7 @@ ReportPage({
 });
 ReportPage({
   id: 'rptRecPay2', title: 'প্রাপ্তি- প্রদান II', fromDefault: 'month', landscape: true, filters: [F.branch, F.btype, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, RTYPE, GRP],
-  buttons: [['🖨️ Receive & Payment (Simple)', 'simple']],
+  printLabel: 'Receive & Payment', buttons: [['Receive & Payment (Simple)', 'simple']],
   run: async (f, mode) => {
     const bs = await GLX.branchesFor(f); const rt = f.rtype || 'cash';
     if (f.grp === 'date') {
