@@ -8,7 +8,7 @@
 App.page('dashboard', {
   title: 'ড্যাশবোর্ড', icon: '🏠', always: true,
   render: () => ''
-    + Home.html() + `<div class="card db-filter"><div class="db-welcome"><h3>Welcome back, ${esc((App.user && (App.user.name || App.user.userId)) || '')} !</h3><div class="mini">Track your somity activity, leads and deals here.</div></div>
+    + `<div class="card db-filter"><div class="db-welcome"><h3>Welcome back, ${esc((App.user && (App.user.name || App.user.userId)) || '')} !</h3><div class="mini">Track your somity activity, leads and deals here.</div></div>
     ${UI.grid([{ ...F.branch, l: 'Branch Name' }, { k: 'btype', l: 'Branch Type', t: 'select', opts: [['me', 'Only Me'], ['all', 'All Branch'], ['others', 'All Others Branch']] }, { k: 'employee', l: 'Employee Name', t: 'select' }, { k: 'date', l: 'Business Date', t: 'date', req: 1 }], 4)}
     <div class="actions">${UI.btn('Refresh Dashboard', 'Dash.load(this,true)', 'btn-info')}</div></div><div class="dash-out"><div class="mini">লোড হচ্ছে...</div></div>`,
   init: async el => {
@@ -17,7 +17,6 @@ App.page('dashboard', {
     UI.el(f, 'date').value = await businessDate();
     // eKisti: শাখা বদলালে শুধু কর্মচারীর তালিকা আর বিজনেস ডেট বদলায় — ডেটা আসে "Refresh Dashboard" এ
     UI.el(f, 'branch').addEventListener('change', async () => { const b = UI.el(f, 'branch').value; UI.fill(UI.el(f, 'employee'), b ? await Data.employees(b) : [], e => e.empId, e => e.empId + ' - ' + e.name, '----------'); UI.el(f, 'date').value = await businessDate(b); });
-    Home.bind(el);
     await Dash.load();
   },
 });
