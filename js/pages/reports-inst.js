@@ -336,7 +336,13 @@ ReportPage({
     const fees = await R.fees(f, f.from, f.upto);
     const g = groupBy(ts, t => t.samity || '—'); const fg = groupBy(fees, x => x.samity || '—');
     const keys = [...new Set([...Object.keys(g), ...Object.keys(fg)])].sort();
-    return { title: 'Collection Details Report', html: keys.map(k => collDetailsBlock(g[k] || [], fg[k] || [], mem, sm, en, k)).join('<br>') || '<div class="mini">কোনো লেনদেন নেই</div>' };
+    if (!keys.length) return { title: 'Collection Details Report', html: '<div class="mini">কোনো লেনদেন নেই</div>' };
+    // সব সমিতির সর্বমোট হিসাব (শেষে)
+    const rc = sum(ts, t => t.dc === 'C' ? num(t.amount) + num(t.penalty) : 0) + sum(fees, x => x.amount), py = sum(ts, t => t.dc === 'D' ? num(t.amount) : 0);
+    const fk = k => sum(fees.filter(x => x.k === k), x => x.amount) + (k === 'penalty' ? sum(ts, t => num(t.penalty)) : 0);
+    const gt = [['Total Receive', rc], ['Total Payment', py], ['Net Collection', rc - py], ['Loan Receive', sum(ts, t => t.kind === 'loan' && t.dc === 'C' ? num(t.amount) : 0)], ['Deposit Receive', sum(ts, t => t.kind !== 'loan' && t.dc === 'C' ? num(t.amount) : 0)], ['Deposit Payment', sum(ts, t => t.kind !== 'loan' && t.dc === 'D' ? num(t.amount) : 0)], ...FEE_SUM_LABELS.map(([k, l]) => [l, fk(k)])];
+    const grand = `<h4 style="margin:14px 0 4px;text-align:center">Grand Total (সর্বমোট হিসাব)</h4>` + UI.table([{ h: 'Particular', f: r => r[0] }, { h: 'Amount', f: r => amt(r[1]), r: 1 }], gt);
+    return { title: 'Collection Details Report', info: [['Total Receive', amt(rc)], ['Total Payment', amt(py)]], html: keys.map(k => collDetailsBlock(g[k] || [], fg[k] || [], mem, sm, en, k)).join('<br>') + grand };
   },
 });
 

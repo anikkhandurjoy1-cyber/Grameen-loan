@@ -55,10 +55,10 @@ CrudPage({
     { k: 'parent', l: 'Parent Branch', t: 'select', opts: [['', '- Select an option -']] }, { k: 'manager', l: 'Branch Manager' },
     { k: 'openDate', l: 'Opening Date', t: 'date' }, { k: 'division', l: 'Division' }, { k: 'district', l: 'District' }, { k: 'upazila', l: 'Upozila' },
     { k: 'union', l: 'Union/City Corp' }, { k: 'phone', l: 'Manager Phone' }, { k: 'address', l: 'Address', req: 1 },
-    { k: 'status', l: 'Status', t: 'select', req: 1, opts: ['Active', 'Inactive'] }, { k: 'businessDate', l: 'Business Date (শুরু)', t: 'date', hint: 'নতুন শাখার প্রথম বিজনেস ডেট' },
+    { k: 'status', l: 'Status', t: 'select', req: 1, opts: ['Active', 'Inactive'] }, { k: 'businessDate', l: 'Business Date', t: 'date', hint: 'Edit করে আগের তারিখ (Back Date) দেওয়া যাবে' },
   ],
   init: async el => { const bs = await Data.branches(); UI.fill(UI.el(el, 'parent'), bs, b => b.code, b => b.code + '-' + b.name, '- Select an option -'); UI.el(el, 'businessDate').value = today(); },
-  before: (d, isEdit) => { d.code = String(d.code); if (!isEdit && !d.businessDate) d.businessDate = today(); if (isEdit) delete d.businessDate; return d; },
+  before: (d, isEdit) => { d.code = String(d.code); if (!isEdit && !d.businessDate) d.businessDate = today(); if (isEdit && !d.businessDate) delete d.businessDate; return d; },
   after: () => { Cache.drop('branches'); refreshBranchBadge(); },
   list: { cols: [{ h: 'Branch Code', f: r => r.code }, { h: 'Branch Name', f: r => esc(r.name) }, { h: 'Type', f: r => r.type }, { h: 'Manager Phone', f: r => esc(r.phone || '') }, { h: 'Address', f: r => esc(r.address || '') }, { h: 'Business Date', f: r => fmtD(r.businessDate) }, { h: 'Status', f: r => r.status }] },
 });

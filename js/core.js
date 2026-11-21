@@ -459,7 +459,7 @@ async function locMembers(f) {
   const ms = (await db.collection('members').where('branch', '==', f.branch).get()).docs.map(d => ({ id: d.id, ...d.data() }));
   return new Set(ms.filter(m => locMatch(f, m)).map(m => m.memberId || m.id));
 }
-const PRINT_CSS = `td .btn,td button{display:none!important}
+const PRINT_CSS = `td .btn,td button{display:none!important}a.cb-l{color:#3f2929;font-weight:500;text-decoration:none}a.cb-l:hover{text-decoration:underline}
 body{font-family:'Hind Siliguri',Arial,sans-serif;color:#000;margin:0;background:#fff}
   #wrap{max-width:96%;margin:0 auto;padding-top:10px}
   .tb{text-align:right;padding:8px}.tb button{background:#333;color:#fff;border:0;padding:6px 12px;font-size:14px;cursor:pointer;margin-left:2px}
@@ -479,7 +479,7 @@ body{font-family:'Hind Siliguri',Arial,sans-serif;color:#000;margin:0;background
   @media print{table.sheet th{font-size:8px!important}table.sheet td{font-size:10px!important;height:34px}}
   @media print{.no-print{display:none!important}#wrap{max-width:100%}th{background:transparent!important;font-size:10px}td{font-size:10px}}`;
 function printHTML(title, body, opts = {}) {
-  const w = window.open('', '_blank');
+  const w = opts.win || window.open('', '_blank');
   if (!w) { toast('পপ-আপ ব্লক করা আছে — অনুমতি দিন', 'error'); return; }
   const info = opts.info || [];
   if (!opts.info && opts.sub) info.push(['', opts.sub]);

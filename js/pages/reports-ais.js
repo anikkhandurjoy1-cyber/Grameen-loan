@@ -355,6 +355,16 @@ ReportPage({
 });
 
 // ── ক্যাশবুক (Cash & Bank Book Report) ──
+// ক্যাশবুকের লেজার লিংক → Cash & Bank Details (eKisti finance-report-cashbanksub)
+const CashSub = {
+  det: {}, meta: {},
+  show(w, key) {
+    const [date, gl] = key.split('|'); const rows = CashSub.det[key] || [];
+    Data.ledgerMap().then(lm => printHTML('Cash & Bank Details', UI.table([SL, { h: 'Transaction Details', f: r => esc(r.n) }, { h: 'Credit(Payment)', f: r => amt(r.py), r: 1, sum: 1, v: r => r.py }, { h: 'Debit(Receive)', f: r => amt(r.rc), r: 1, sum: 1, v: r => r.rc }], rows, { totalLabel: 'Total :' }),
+      { win: w, info: [['Reporting Date', date], ['Branch Name', esc(CashSub.meta.branch || '')], ['Branch Address', esc(CashSub.meta.addr || '')], ['Ledger Name', esc(gl + ' ' + ((lm[gl] || {}).name || ''))]] }));
+  },
+};
+window.CashSub = CashSub;
 ReportPage({
   id: 'rptCashBook', title: 'ক্যাশবুক (Cash & Bank)', landscape: true, filters: [F.branch, F.btype, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, GRP],
   buttons: [['🖨️ Cash & Bank Statement', 'stmt'], ['🖨️ Debit Voucher', 'dv'], ['🖨️ Credit Voucher', 'cv']],
@@ -397,10 +407,36 @@ ReportPage({
       return { title: 'Cash & Bank Book Report (' + (f.grp === 'date' ? 'Date' : 'Ledger') + ' Wise)', info: [['রিপোর্ট তারিখ', `${fmtD(f.from)} - ${fmtD(f.upto)}`], ['ওপেনিং হাতে নগদ', amt(oCash)], ['ব্যাংক ওপেনিং', amt(oBank)]],
         html: UI.table([SL, { h: f.grp === 'date' ? 'Date' : 'Ledger', f: lab }, { g: 'Receipt (Debit)', h: 'Cash', f: r => amt(r.rcC), r: 1, sum: 1, v: r => r.rcC }, { g: 'Receipt (Debit)', h: 'Bank', f: r => amt(r.rcB), r: 1, sum: 1, v: r => r.rcB }, { g: 'Payment (Credit)', h: 'Cash', f: r => amt(r.pyC), r: 1, sum: 1, v: r => r.pyC }, { g: 'Payment (Credit)', h: 'Bank', f: r => amt(r.pyB), r: 1, sum: 1, v: r => r.pyB }].concat(f.grp === 'date' ? [{ g: 'Balance', h: 'Cash', f: r => amt(r.bC), r: 1 }, { g: 'Balance', h: 'Bank', f: r => amt(r.bB), r: 1 }] : []), gr) };
     }
-    const tR = sum(rows, r => r.rcC + r.rcB), tP = sum(rows, r => r.pyC + r.pyB);
-    const info = [['রিপোর্ট তারিখ', `${fmtD(f.from)} - ${fmtD(f.upto)}`], ['ওপেনিং হাতে নগদ', amt(oCash)], ['মোট ওপেনিং টাকা', amt(oCash + oBank)], ['ব্যাংক ওপেনিং', amt(oBank)], ['শাখা', esc((await Data.branch(f.branch) || {}).name || '')], ['আজকের মোট গ্রহন', amt(tR)], ['আজকের উদৃত্ত হিসাব', amt(oCash + oBank + tR - tP)], ['আজকের মোট প্রদান', amt(tP)], ['Branch Address', esc((await Data.branch(f.branch) || {}).address || '')], ['Closing Cash', amt(cash)], ['Closing Balance', amt(cash + bank)], ['Closing Bank', amt(bank)]];
-    const foot = `<tfoot><tr><td colspan="3" class="r"><b>Total During This Period :</b></td>${[sum(rows, r => r.rcC), sum(rows, r => r.rcB), sum(rows, r => r.pyC), sum(rows, r => r.pyB), cash, bank].map(v => `<td class="r"><b>${amt(v)}</b></td>`).join('')}</tr><tr><td colspan="3" class="r"><b>Closing Total :</b></td>${[oCash + sum(rows, r => r.rcC), oBank + sum(rows, r => r.rcB), sum(rows, r => r.pyC), sum(rows, r => r.pyB), cash, bank].map(v => `<td class="r"><b>${amt(v)}</b></td>`).join('')}</tr></tfoot>`;
-    const tbl = UI.table([SL, { h: 'Date', f: r => fmtD(r.date) }, { h: 'Particular', f: r => r.part }, { g: 'Receipt (Debit)', h: 'Cash', f: r => amt(r.rcC), r: 1 }, { g: 'Receipt (Debit)', h: 'Bank', f: r => amt(r.rcB), r: 1 }, { g: 'Payment (Credit)', h: 'Cash', f: r => amt(r.pyC), r: 1 }, { g: 'Payment (Credit)', h: 'Bank', f: r => amt(r.pyB), r: 1 }, { g: 'Balance', h: 'Cash', f: r => amt(r.bC), r: 1 }, { g: 'Balance', h: 'Bank', f: r => amt(r.bB), r: 1 }], rows).replace('</table></div>', foot + '</table></div>');
+    // eKisti হুবহু: তারিখ + বিপরীত লেজার অনুযায়ী সারি; লেজারের নামে ট্যাপ করলে সেই দিনের বিস্তারিত (Cash & Bank Details)
+    const br = await Data.branch(f.branch) || {};
+    const agg = {}; CashSub.det = {};
+    vs.forEach(v => {
+      const cl = v.lines.filter(l => cashCodes.includes(l.gl)); const other = v.lines.filter(l => !cashCodes.includes(l.gl));
+      const bankSide = cl.length && cl.every(l => isBankGl(l.gl));
+      const net = {}; let last = null;
+      if (!other.length) cl.forEach(l => { net[l.gl] = (net[l.gl] || 0) + num(l.dr) - num(l.cr); });
+      other.forEach(l => {
+        const amtN = num(l.cr) - num(l.dr);
+        if (/Adjustment/i.test(l.memo || '') && last) net[last] = (net[last] || 0) + amtN; // মুনাফা সমন্বয় ঋণ লেজার থেকে বাদ (eKisti)
+        else { net[l.gl] = (net[l.gl] || 0) + amtN; if (num(l.cr)) last = l.gl; }
+      });
+      Object.entries(net).forEach(([gl, n]) => {
+        n = r2(n); if (!n) return;
+        const k = v.date + '|' + gl; const x = agg[k] = agg[k] || { date: v.date, gl, rcC: 0, rcB: 0, pyC: 0, pyB: 0 };
+        const rc = n > 0 ? n : 0, py = n < 0 ? -n : 0;
+        if (bankSide) { x.rcB += rc; x.pyB += py; } else { x.rcC += rc; x.pyC += py; }
+        (CashSub.det[k] = CashSub.det[k] || []).push({ n: v.narration || '', rc, py });
+      });
+    });
+    const eRows = Object.values(agg).sort((a, b) => (a.date + a.gl).localeCompare(b.date + b.gl));
+    let c1 = oCash, b1 = oBank;
+    eRows.forEach(x => { ['rcC', 'rcB', 'pyC', 'pyB'].forEach(k => x[k] = r2(x[k])); c1 = r2(c1 + x.rcC - x.pyC); b1 = r2(b1 + x.rcB - x.pyB); x.bC = c1; x.bB = b1; });
+    CashSub.meta = { branch: br.name || '', addr: br.address || '' };
+    const tR = sum(eRows, r => r.rcC + r.rcB), tP = sum(eRows, r => r.pyC + r.pyB);
+    const info = [['রিপোর্ট তারিখ', `${fmtD(f.from)} - ${fmtD(f.upto)}`], ['ওপেনিং হাতে নগদ', amt(oCash)], ['মোট ওপেনিং টাকা', amt(oCash + oBank)], ['ব্যাংক ওপেনিং', amt(oBank)], ['শাখা', esc(br.name || '')], ['আজকের মোট গ্রহন', amt(tR)], ['আজকের উদৃত্ত হিসাব', amt(tR - tP)], ['আজকের মোট প্রদান', amt(tP)], ['Branch Address', esc(br.address || '')], ['Closing Cash', amt(c1)], ['Closing Balance', amt(c1 + b1)], ['Closing Bank', amt(b1)]];
+    const foot = `<tfoot><tr><td colspan="3" class="r"><b>Total During This Period :</b></td>${[sum(eRows, r => r.rcC), sum(eRows, r => r.rcB), sum(eRows, r => r.pyC), sum(eRows, r => r.pyB), c1, b1].map(v => `<td class="r"><b>${amt(v)}</b></td>`).join('')}</tr><tr><td colspan="3" class="r"><b>Closing Total :</b></td>${[oCash + sum(eRows, r => r.rcC), oBank + sum(eRows, r => r.rcB), sum(eRows, r => r.pyC), sum(eRows, r => r.pyB), c1, b1].map(v => `<td class="r"><b>${amt(v)}</b></td>`).join('')}</tr></tfoot>`;
+    const link = r => { const k = esc(r.date + '|' + r.gl); const nm = esc((lm[r.gl] || {}).name || r.gl) + ' [' + r.gl + ']'; return `<a class="cb-l" href="javascript:void(0)" onclick="var w=window.open('','_blank');(window.opener||window).CashSub.show(w,'${k}')">${nm}</a>`; };
+    const tbl = UI.table([SL, { h: 'Date', f: r => fmtD(r.date) }, { h: 'Particular', f: link }, { g: 'Receipt (Debit)', h: 'Cash', f: r => amt(r.rcC), r: 1 }, { g: 'Receipt (Debit)', h: 'Bank', f: r => amt(r.rcB), r: 1 }, { g: 'Payment (Credit)', h: 'Cash', f: r => amt(r.pyC), r: 1 }, { g: 'Payment (Credit)', h: 'Bank', f: r => amt(r.pyB), r: 1 }, { g: 'Balance', h: 'Cash', f: r => amt(r.bC), r: 1 }, { g: 'Balance', h: 'Bank', f: r => amt(r.bB), r: 1 }], eRows).replace('</table></div>', foot + '</table></div>');
     return { title: 'Cash & Bank Book Report', info, html: tbl };
   },
 });
