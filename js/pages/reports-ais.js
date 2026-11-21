@@ -105,7 +105,33 @@ ReportPage({
     const m = await Data.member(f.member); if (!m) fail('সদস্য পাওয়া যায়নি');
     const accs = (await Data.accountsOf(f.branch, f.member)).filter(a => a.status !== 'cancelled');
     let html = UI.info([['Member', esc(m.memberId + ' - ' + m.name)], ['Father Name', esc(m.father || m.spouse || '')], ['Samity', esc(m.samity)], ['Phone', esc(m.mobile)]]);
-    for (const a of accs) html += `<h4 style="margin:12px 0 4px">${a.accNo} — ${typeFull(a.kind, a.type)}</h4>` + await accStatementHTML(a.accNo, f.from, f.upto, 1);
+    // eKisti হুবহু: সব একাউন্ট এক টেবিলে, চলমান ব্যালেন্স (সঞ্চয় +, ঋণ −), DR/CR
+    const isMig = t => t.tt === 'OPEN_PAID' || t.tt === 'OPEN_BAL' || /Balance Migration|Opening Paid/i.test(t.narration || '');
+    let all = [];
+    for (const a of accs) {
+      const ts = (await db.collection('txns').where('accNo', '==', a.accNo).get()).docs.map(d => d.data()).filter(t => !t.cancelled && t.date <= f.upto);
+      ts.forEach(t => {
+        const mem = t.memberId || f.member, acc = a.accNo, L = [];
+        if (a.kind === 'loan') {
+          if (t.dc === 'D') L.push({ n: 'Loan Disbursement ' + mem + ' ' + acc, w: num(t.principal) + num(t.profit) || num(t.delta) || num(t.amount) });
+          else {
+            const pr = num(t.principal), pf = num(t.profit), pn = num(t.penalty);
+            if (pr || pf) { if (pr) L.push({ n: 'Loan Inst Receive ' + mem + ' ' + acc, d: pr }); if (pf) L.push({ n: 'Loan Inst Profit Receive ' + mem + ' ' + acc, d: pf }); } else L.push({ n: 'Loan Inst Receive ' + mem + ' ' + acc, d: num(t.amount) });
+            if (pn) L.push({ n: 'Loan Penalty Receive ' + mem + ' ' + acc, d: pn, pen: 1 });
+          }
+        } else if (t.dc === 'C') L.push({ n: (a.kind === 'share' ? 'Share Receive ' : 'Deposit Inst Receive ') + mem, d: num(t.amount) });
+        else L.push({ n: 'Payment Deposit ID ' + acc + (t.narration && !/^(member|sheet)$/.test(t.narration) ? ' ' + t.narration : ''), w: num(t.amount), vno: acc });
+        L.forEach((x, i) => all.push({ date: t.date, k: (t.date || '') + (t.vno || '') + i, open: t.date < f.from || isMig(t), pen: x.pen, n: x.n, d: x.d || 0, w: x.w || 0, vno: x.vno || '' }));
+      });
+    }
+    all.sort((x, y) => x.k.localeCompare(y.k));
+    const op = all.filter(x => x.open && !x.pen), cur = all.filter(x => !x.open);
+    const oD = r2(sum(op, x => x.d)), oW = r2(sum(op, x => x.w)); let bal = r2(oD - oW);
+    const dc = v => (v < 0 ? amt(v) + ' DR' : amt(v) + ' CR');
+    const rows = [{ date: addDays(f.from, -1), n: 'Opening Balance', d: oD, w: oW, b: bal, vno: '' }];
+    cur.forEach(x => { if (!x.pen) bal = r2(bal + x.d - x.w); rows.push({ ...x, b: bal }); });
+    html += UI.table([SL, { h: 'Date', f: r => fmtD(r.date) }, { h: 'Voucher Type', f: () => '' }, { h: 'Voucher No', f: r => esc(r.vno) }, { h: 'Particulars', f: r => esc(r.n) }, { h: 'Deposit', f: r => amt(r.d), r: 1 }, { h: 'Withdraw', f: r => amt(r.w), r: 1 }, { h: 'Balance', f: r => dc(r.b), r: 1 }], rows)
+      .replace('</table></div>', `<tfoot><tr><td colspan="5"><b>Total</b></td><td class="r"><b>${amt(sum(rows, r => r.d))}</b></td><td class="r"><b>${amt(sum(rows, r => r.w))}</b></td><td class="r"><b>${dc(bal)}</b></td></tr></tfoot></table></div>`);
     return { title: 'Member All Account Statement', sub: `${fmtD(f.from)} হতে ${fmtD(f.upto)}`, html: html + `<div style="text-align:right;margin-top:30px">Authorized Signature: ${esc(App.user.userId || '')}</div>`, noSig: true };
   },
 });
