@@ -410,6 +410,7 @@ ReportPage({
     // eKisti হুবহু: তারিখ + বিপরীত লেজার অনুযায়ী সারি; লেজারের নামে ট্যাপ করলে সেই দিনের বিস্তারিত (Cash & Bank Details)
     const br = await Data.branch(f.branch) || {};
     const agg = {}; CashSub.det = {};
+    const aix = {}; for (const b of bs) { try { Object.assign(aix, await Data.accIdx(b)); } catch (e) {} }
     vs.forEach(v => {
       const cl = v.lines.filter(l => cashCodes.includes(l.gl)); const other = v.lines.filter(l => !cashCodes.includes(l.gl));
       const bankSide = cl.length && cl.every(l => isBankGl(l.gl));
@@ -426,7 +427,7 @@ ReportPage({
         const rc = n > 0 ? n : 0, py = n < 0 ? -n : 0;
         if (bankSide) { x.rcB += rc; x.pyB += py; } else { x.rcC += rc; x.pyC += py; }
         // eKisti এর মতো বিবরণ: Loan Inst Receive <সদস্য> <হিসাব> ইত্যাদি
-        const ln = v.lines.find(l => l.gl === gl && l.accNo) || {}; const acc = ln.accNo || ''; const mem = acc ? acc.slice(0, -2) : '';
+        const ln = v.lines.find(l => l.gl === gl && l.accNo) || {}; const acc = ln.accNo || ''; const mem = acc ? ((aix[acc] || [])[0] || acc.slice(0, -2)) : '';
         let nt = v.narration || '';
         if (acc) {
           if (gl.startsWith('112')) nt = (rc ? 'Loan Inst Receive ' : 'Loan Disbursement ') + mem + ' ' + acc;
