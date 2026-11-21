@@ -416,9 +416,11 @@ ReportPage({
       const bankSide = cl.length && cl.every(l => isBankGl(l.gl));
       const net = {}; let last = null;
       if (!other.length) cl.forEach(l => { net[l.gl] = (net[l.gl] || 0) + num(l.dr) - num(l.cr); });
+      const loanGl = (other.find(l => String(l.gl).startsWith('112')) || {}).gl;
       other.forEach(l => {
         const amtN = num(l.cr) - num(l.dr);
-        if (/Adjustment/i.test(l.memo || '') && last) net[last] = (net[last] || 0) + amtN; // মুনাফা সমন্বয় ঋণ লেজার থেকে বাদ (eKisti)
+        if (loanGl && String(l.gl).startsWith('113')) net[loanGl] = (net[loanGl] || 0) + amtN; // মুনাফা প্রাপ্য (Profit Receivable) ঋণ লেজারের সাথে সমন্বয় (eKisti)
+        else if (/Adjustment/i.test(l.memo || '') && last) net[last] = (net[last] || 0) + amtN; // মুনাফা সমন্বয় ঋণ লেজার থেকে বাদ (eKisti)
         else { net[l.gl] = (net[l.gl] || 0) + amtN; if (num(l.cr)) last = l.gl; }
       });
       Object.entries(net).forEach(([gl, n]) => {

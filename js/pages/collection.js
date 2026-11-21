@@ -58,7 +58,7 @@ const CollGrid = {
     let body = '';
     Object.entries(by).sort((a, b) => a[0].localeCompare(b[0])).forEach(([m, g]) => {
       const n = Math.max(g.L.length, g.S.length, 1);
-      const cell = (r, grp) => r ? `<td>${esc(r.accNo)}</td>${grp === 'L' ? `<td>${thisInst[r.accNo] || 0}</td>` : ''}<td>${CollGrid.f(due(r))}</td><td class="c"><input type="radio" name="cz_${esc(r.accNo)}" class="cg-f" data-acc="${esc(r.accNo)}"></td><td class="c"><input type="radio" name="cz_${esc(r.accNo)}" class="cg-z" data-acc="${esc(r.accNo)}"></td><td><input type="number" class="ci" data-acc="${esc(r.accNo)}" data-m="${m}" data-g="${grp}" data-due="${due(r)}" value="0.00" min="0"></td>`
+      const cell = (r, grp) => r ? `<td>${esc(r.accNo)}</td>${grp === 'L' ? `<td>${thisInst[r.accNo] || 0}</td>` : ''}<td>${CollGrid.f(due(r))}</td><td class="c"><input type="radio" name="cz_${esc(r.accNo)}" class="cg-f" data-acc="${esc(r.accNo)}"></td><td class="c"><input type="radio" name="cz_${esc(r.accNo)}" class="cg-z" data-acc="${esc(r.accNo)}"></td><td><input type="number" class="ci" data-acc="${esc(r.accNo)}" data-m="${m}" data-g="${grp}" data-due="${due(r)}" data-inst="${num(r.inst)}" value="0.00" min="0"></td>`
         : `<td></td>${grp === 'L' ? '<td>0</td>' : ''}<td></td><td></td><td></td><td></td>`;
       for (let i = 0; i < n; i++) {
         body += '<tr class="cg-row">';
@@ -82,7 +82,7 @@ const CollGrid = {
       const sr = sumRoot || root; const set = (k, v, u) => { const e = $(`[data-s="${k}"]`, sr); if (e) e.textContent = MemColl.f(v) + u; };
       set('due', tot.due, ' Tk'); set('L', tot.L, ' Tk'); set('S', tot.S, ' Tk'); set('rcv', tot.L + tot.S, ' TK'); set('dues', Math.max(0, tot.due - tot.L - tot.S), ' TK');
     };
-    const setV = (acc, full) => { const i = inp(acc); i.value = full ? CollGrid.f(i.dataset.due) : '0.00'; touched.add(i.dataset.m); };
+    const setV = (acc, full) => { const i = inp(acc); i.value = full ? CollGrid.f(num(i.dataset.due) > 0 ? i.dataset.due : (i.dataset.inst || 0)) : '0.00'; touched.add(i.dataset.m); };
     $$('.cg-f', root).forEach(r => r.addEventListener('change', () => { if (r.checked) setV(r.dataset.acc, true); upd(); }));
     $$('.cg-z', root).forEach(r => r.addEventListener('change', () => { if (r.checked) setV(r.dataset.acc, false); upd(); }));
     $$('.ci', root).forEach(i => { i.addEventListener('click', () => i.select()); i.addEventListener('focus', () => i.select()); i.addEventListener('input', () => { touched.add(i.dataset.m); $$(`input[name="cz_${CSS.escape(i.dataset.acc)}"]`, root).forEach(x => x.checked = false); upd(); }); });
@@ -182,7 +182,7 @@ const MemColl = {
       const due = r => r.kind === 'loan' ? r.today : num(r.exp);
       const body = rows.map(r => `<tr><td>${esc(r.accNo)}</td><td>${esc(tn(r))}</td><td>${r.kind === 'loan' ? r.nInst || '' : ''}</td><td>${r.kind === 'loan' ? r.thisInst : ''}</td><td>${num(r.inst).toFixed(2)}</td><td>${num(r.pen).toFixed(2)}</td><td>${due(r).toFixed(2)}</td>
         <td class="c"><input type="radio" name="fz_${esc(r.accNo)}" class="mc-f" data-acc="${esc(r.accNo)}"></td><td class="c"><input type="radio" name="fz_${esc(r.accNo)}" class="mc-z" data-acc="${esc(r.accNo)}"></td>
-        <td><input type="number" class="ci mc-in" data-acc="${esc(r.accNo)}" data-g="${r.kind === 'loan' ? 'L' : 'S'}" data-due="${due(r)}" value="0.00" min="0"></td>
+        <td><input type="number" class="ci mc-in" data-acc="${esc(r.accNo)}" data-g="${r.kind === 'loan' ? 'L' : 'S'}" data-due="${due(r)}" data-inst="${num(r.inst)}" value="0.00" min="0"></td>
         <td>${r.kind === 'loan' ? num(r.total).toFixed(2) : ''}</td><td>${(r.kind === 'loan' ? num(r.out) : num(r.bal)).toFixed(2)}</td><td>${r.kind === 'loan' ? num(r.overdue).toFixed(2) : ''}</td><td>${r.kind === 'loan' ? esc(r.expDate) : ''}</td>
         <td class="c"><button class="btn btn-warning btn-sm" title="PassBook" onclick="MemColl.pass('${esc(r.accNo)}')">👁</button></td></tr>`).join('');
       $('.mc-ek-t', el).innerHTML = `<table class="mc-ek-tbl"><thead><tr><th colspan="10" class="c">Account Details</th><th colspan="4" class="c">Total Balance</th><th>PassBook</th></tr>
@@ -200,7 +200,8 @@ const MemColl = {
       set('due', t.due, ' Tk'); set('L', t.L, ' Tk'); set('S', t.S, ' Tk'); set('rcv', t.L + t.S, ' TK'); set('dues', Math.max(0, t.due - t.L - t.S), ' TK');
     };
     const inp = acc => $(`.mc-in[data-acc="${CSS.escape(acc)}"]`, el);
-    const setF = acc => { const i = inp(acc); i.value = num(i.dataset.due).toFixed(2); };
+    // eKisti: F চাপলে কিস্তি অটো বসে — আজকের বকেয়া থাকলে সেটা, না থাকলে কিস্তির পরিমাণ
+    const setF = acc => { const i = inp(acc); const v = num(i.dataset.due) > 0 ? num(i.dataset.due) : num(i.dataset.inst); i.value = v.toFixed(2); };
     const setZ = acc => { inp(acc).value = '0.00'; };
     $$('.mc-f', el).forEach(r => r.addEventListener('change', () => { if (r.checked) setF(r.dataset.acc); upd(); }));
     $$('.mc-z', el).forEach(r => r.addEventListener('change', () => { if (r.checked) setZ(r.dataset.acc); upd(); }));
