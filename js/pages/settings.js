@@ -317,7 +317,9 @@ const DayClose = {
       const cash = g.exists && g.data().gl && g.data().gl[REF.GL.cash] ? num(g.data().gl[REF.GL.cash].dr) - num(g.data().gl[REF.GL.cash].cr) : 0;
       if (!confirm(`${fmtD(f.cur)} তারিখ বন্ধ করে ${fmtD(f.next)} খুলবেন?\nআজকের নগদ নিট পরিবর্তন: ${tk(cash)}`)) return;
       const b = db.batch();
-      b.update(db.collection('branches').doc(f.branch), { businessDate: f.next });
+      // শাখার ডকুমেন্ট আইডি কোড থেকে আলাদা হতে পারে (যেমন বাউসাম শাখা) — আসল ডক খুঁজে আপডেট
+      Cache.drop('branches'); const bd = await Data.branch(f.branch); if (!bd) fail('শাখা পাওয়া যায়নি');
+      b.set(db.collection('branches').doc(bd.id || f.branch), { businessDate: f.next }, { merge: true });
       b.set(db.collection('dayCloseLogs').doc(f.branch + '_' + f.cur), { branch: f.branch, closed: f.cur, opened: f.next, cashNet: cash, by: App.user.userId, on: FV.serverTimestamp() });
       await b.commit(); Cache.drop('branches'); await refreshBranchBadge(); toast('✅ বিজনেস ডেট এখন ' + fmtD(f.next));
       UI.el(el, 'cur').value = f.next; UI.el(el, 'next').value = await DayClose.next(f.next, f.branch); DayClose.logs();
