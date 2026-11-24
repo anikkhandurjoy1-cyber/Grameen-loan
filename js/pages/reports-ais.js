@@ -167,8 +167,8 @@ function sideBySide(lh, rh, cols, L, Rr, footL, footR, lk) {
   const cell = (r, lm) => r ? `<td style="padding-left:${4 + r.depth * 10}px">${r.leaf ? '' : '<b>'}${nm(r)}${r.leaf ? '' : '</b>'}</td>${r.vals.map(v => `<td class="r">${r.leaf ? '' : '<b>'}${GLFMT(v)}${r.leaf ? '' : '</b>'}</td>`).join('')}` : `<td></td>${cols.map(() => '<td></td>').join('')}`;
   const n = Math.max(L.length, Rr.length); let h = `<table><thead><tr><th>${lh}</th>${cols.map(c => `<th class="r">${c}</th>`).join('')}<th>${rh}</th>${cols.map(c => `<th class="r">${c}</th>`).join('')}</tr></thead><tbody>`;
   for (let i = 0; i < n; i++) h += `<tr>${cell(L[i])}${cell(Rr[i])}</tr>`;
-  // eKisti: লাভ নীল, লোকসান লাল
-  const fr = (lab, vals) => { const c = /Profit/i.test(lab) ? 'color:#1d4ed8' : /Loss/i.test(lab) ? 'color:#dc2626' : ''; return `<td style="${c}"><b>${lab}</b></td>${vals.map(v => `<td class="r" style="${c}"><b>${GLFMT(v)}</b></td>`).join('')}`; };
+  // eKisti: Net Profit সবুজ, Net Loss লাল
+  const fr = (lab, vals) => { const c = /Profit/i.test(lab) ? 'color:green' : /Loss/i.test(lab) ? 'color:red' : ''; return `<td style="${c}"><b>${lab}</b></td>${vals.map(v => `<td class="r" style="${c}"><b>${GLFMT(v)}</b></td>`).join('')}`; };
   h += `</tbody><tfoot>${(footL || []).map((f, i) => `<tr>${fr(f[0], f[1])}${(footR || [])[i] ? fr(footR[i][0], footR[i][1]) : fr('', cols.map(() => 0))}</tr>`).join('')}</tfoot></table>`;
   return h;
 }
