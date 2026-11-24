@@ -23,7 +23,7 @@ ReportPage({
     const from = f.alld === 'no' ? f.from : '2000-01-01', upto = f.alld === 'no' ? f.upto : '2999-12-31';
     const sam = await Data.samity(m.samity);
     let html = `<h4 style="margin:4px 0">Member Details</h4>` + UI.info([['Member ID', esc(m.memberId)], ['Member Name', esc(m.name)], ['Father Name', esc(m.father || m.spouse || '')], ['Phone Number', esc(m.mobile || '')], ['Samity Name', esc((m.samity || '').slice(-4) + ' - ' + ((sam || {}).name || ''))], ['Present Address', esc(m.presentAddr || '')], ['Permanent Address', esc(m.permAddr || '')], ['Admission Date', fmtD(m.joinDate)]]);
-    for (const a of accs) html += await passbookAccHTML(a.accNo, from, upto);
+    html += (await Promise.all(accs.map(a => passbookAccHTML(a.accNo, from, upto)))).join(''); // সমান্তরালে
     return { title: 'Member Passbook', info: [], noSig: true, html };
   },
 });

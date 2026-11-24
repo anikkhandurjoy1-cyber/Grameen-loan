@@ -257,7 +257,7 @@ ReportPage({
   filters: [F.branch, F.samity, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, { k: 'fromB', l: 'From Batch' }, { k: 'toB', l: 'To Number' }, { k: 'bdate', l: 'Business Date', t: 'date' }, { k: 'user', l: 'User ID', t: 'select', opts: [['', '— সব —']] }, { k: 'q', l: 'Comments / Type' }],
   init: async (el, f) => { UI.el(f, 'bdate').value = ''; const us = (await db.collection('users').get()).docs.map(d => ({ id: d.id, ...d.data() })); UI.fill(UI.el(f, 'user'), us, u => u.id, u => u.userId || u.email, '— সব —'); },
   run: async f => {
-    const rows = (await db.collection('vouchers').where('bd', '>=', f.branch + '_' + f.from).where('bd', '<=', f.branch + '_' + f.upto).get()).docs.map(d => d.data())
+    const rows = (await Data.vouchers(f.branch, f.from, f.upto))
       .filter(v => (!f.fromB || v.vno >= f.fromB) && (!f.toB || v.vno <= f.toB) && (!f.bdate || v.businessDate === f.bdate) && (!f.user || sameUser(v.by, f.user)) && (!f.q || (v.narration + ' ' + v.type).toLowerCase().includes(f.q.toLowerCase())));
     let list = rows;
     if (f.samity) { const aidx = await Data.accIdx(f.branch), mem = await Data.memberIdx(f.branch); list = rows.filter(v => (v.accs || []).some(a => (aidx[a] || [])[4] === f.samity) || (v.ref && v.ref.memberId && (mem[v.ref.memberId] || [])[1] === f.samity) || v.samity === f.samity); }
@@ -279,7 +279,7 @@ ReportPage({
     let rows;
     if (f.account) rows = (await db.collection('txns').where('accNo', '==', f.account).get()).docs.map(d => d.data()).filter(t => t.date >= f.from && t.date <= f.upto).map(t => ({ ...t, gl: Eng.productGl(t.kind, t.type) }));
     else {
-      const vs = (await db.collection('vouchers').where('bd', '>=', f.branch + '_' + f.from).where('bd', '<=', f.branch + '_' + f.upto).get()).docs.map(d => d.data());
+      const vs = (await Data.vouchers(f.branch, f.from, f.upto));
       rows = []; vs.forEach(v => v.lines.forEach(l => { if ((!f.ledger || l.gl === f.ledger) && (!f.member || (v.ref && v.ref.memberId === f.member) || (l.accNo || '').startsWith(f.member))) rows.push({ date: v.date, gl: l.gl, accNo: l.accNo, dc: l.dr ? 'D' : 'C', amount: l.dr || l.cr, vno: v.vno, docNo: v.docNo, narration: v.narration, cancelled: v.status === 'cancelled', cancelBy: v.cancelBy, cancelOn: v.cancelOn, byName: v.byName, on: v.on, status: v.status }); }));
     }
     rows.sort((a, b) => (a.date + a.vno).localeCompare(b.date + b.vno));

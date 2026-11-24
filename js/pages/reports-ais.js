@@ -73,9 +73,9 @@ const EkHist = {
 };
 // একাউন্টের লেনদেন সারি (eKisti পুরোনো + অ্যাপ) — স্টেটমেন্ট ও পাসবুক দুটোতেই
 async function accRows(accNo, from, upto) {
-  const a = await Tx.acc(accNo);
+  const [a, tq] = await Promise.all([Tx.acc(accNo), db.collection('txns').where('accNo', '==', accNo).get()]);
   const isLoan = a.kind === 'loan';
-  let ts = (await db.collection('txns').where('accNo', '==', accNo).get()).docs.map(d => d.data()).filter(t => !t.cancelled);
+  let ts = tq.docs.map(d => d.data()).filter(t => !t.cancelled);
   // eKisti এর পুরোনো লেনদেন (ইমপোর্টের আগের) — একই কলামে
   const hist = (await EkHist.rows(a.memberId, accNo)).filter(h => !/^Opening Balance/i.test(h.narr) || h.dep || h.wd).map((h, i) => {
     const amtv = r2(h.dep || h.wd); const delta = isLoan ? r2(h.wd - h.dep) : r2(h.dep - h.wd);
@@ -118,8 +118,9 @@ ReportPage({
     // eKisti হুবহু: সব একাউন্ট এক টেবিলে, চলমান ব্যালেন্স (সঞ্চয় +, ঋণ −), DR/CR
     const isMig = t => t.tt === 'OPEN_PAID' || t.tt === 'OPEN_BAL' || /Balance Migration|Opening Paid/i.test(t.narration || '');
     let all = [];
-    for (const a of accs) {
-      const ts = (await db.collection('txns').where('accNo', '==', a.accNo).get()).docs.map(d => d.data()).filter(t => !t.cancelled && t.date <= f.upto);
+    const tsBy = await Promise.all(accs.map(a => db.collection('txns').where('accNo', '==', a.accNo).get()));
+    for (const [ai, a] of accs.entries()) {
+      const ts = tsBy[ai].docs.map(d => d.data()).filter(t => !t.cancelled && t.date <= f.upto);
       ts.forEach(t => {
         const mem = t.memberId || f.member, acc = a.accNo, L = [];
         if (a.kind === 'loan') {
@@ -197,7 +198,7 @@ ReportPage({
     const ob = await GLX.before(bs, f.from); let bal = GLX.nat(cash, ob[cash]);
     const rows = [{ date: addDays(f.from, -1), det: 'Opening Balance', cr: 0, dr: 0, bal }];
     for (const b of bs) {
-      const vs = (await db.collection('vouchers').where('bd', '>=', b + '_' + f.from).where('bd', '<=', b + '_' + f.upto).get()).docs.map(d => d.data()).filter(v => v.status === 'posted').sort((a, c) => (a.date + a.vno).localeCompare(c.date + c.vno));
+      const vs = (await Data.vouchers(b, f.from, f.upto)).filter(v => v.status === 'posted').sort((a, c) => (a.date + a.vno).localeCompare(c.date + c.vno));
       vs.forEach(v => v.lines.filter(l => l.gl === cash).forEach(l => rows.push({ date: v.date, det: v.narration, dr: num(l.dr), cr: num(l.cr) })));
     }
     rows.slice(1).sort((a, c) => a.date.localeCompare(c.date)).forEach(r => { bal = r2(bal + r.dr - r.cr); r.bal = bal; });
@@ -217,7 +218,7 @@ ReportPage({
     const sign = (f.ledger[0] === '1' || f.ledger[0] === '4') ? 1 : -1;
     let rows = [];
     if (f.rtype !== 'S') {
-      for (const b of bs) { const vs = (await db.collection('vouchers').where('bd', '>=', b + '_' + f.from).where('bd', '<=', b + '_' + f.upto).get()).docs.map(d => d.data()).filter(v => v.status === 'posted'); vs.forEach(v => v.lines.filter(l => codes.includes(l.gl)).forEach(l => rows.push({ date: v.date, vno: v.vno, det: (v.narration || '') + (l.accNo ? ' [' + l.accNo + ']' : ''), dr: num(l.dr), cr: num(l.cr) }))); }
+      for (const b of bs) { const vs = (await Data.vouchers(b, f.from, f.upto)).filter(v => v.status === 'posted'); vs.forEach(v => v.lines.filter(l => codes.includes(l.gl)).forEach(l => rows.push({ date: v.date, vno: v.vno, det: (v.narration || '') + (l.accNo ? ' [' + l.accNo + ']' : ''), dr: num(l.dr), cr: num(l.cr) }))); }
       rows.sort((a, b) => (a.date + a.vno).localeCompare(b.date + b.vno));
     } else {
       const byD = await GLX.range(bs, f.from, f.upto, true);
@@ -369,7 +370,7 @@ ReportPage({
     } const vals = [natMap(await GLX.range(bs, f.from, f.upto), ['3', '4']), await ieVals(bs, f.upto)];
     // Balance Migration / পুরোনো আদায় (ওপেনিং) এর আয় আগের সময়ের — এই সময়ের (This Period) থেকে বাদ, Cumulative এ থাকে
     for (const b of bs) {
-      const mv = (await db.collection('vouchers').where('bd', '>=', `${b}_${f.from}`).where('bd', '<=', `${b}_${f.upto}`).get()).docs.map(d => d.data()).filter(v => v.status === 'posted' && /ওপেনিং|Migration/i.test(v.narration || ''));
+      const mv = (await Data.vouchers(b, f.from, f.upto)).filter(v => v.status === 'posted' && /ওপেনিং|Migration/i.test(v.narration || ''));
       mv.forEach(v => v.lines.forEach(l => { const c = String(l.gl); if (c[0] !== '3' && c[0] !== '4') return; const x = c[0] === '3' ? num(l.cr) - num(l.dr) : num(l.dr) - num(l.cr); if (vals[0][c] !== undefined) vals[0][c] = r2(vals[0][c] - x); }));
     }
     const I = await treeMulti(vals, ['3']), E = await treeMulti(vals, ['4']);
@@ -428,7 +429,7 @@ ReportPage({
   run: async (f, mode) => {
     const lm = await Data.ledgerMap(); const bs = await GLX.branchesFor(f);
     const cashCodes = Object.keys(lm).filter(c => isCashGl(lm, c) && lm[c].leaf);
-    const vs = []; for (const b of bs) (await db.collection('vouchers').where('bd', '>=', b + '_' + f.from).where('bd', '<=', b + '_' + f.upto).get()).docs.forEach(d => { const v = d.data(); if (v.status === 'posted' && v.lines.some(l => cashCodes.includes(l.gl))) vs.push(v); });
+    const vs = []; for (const b of bs) (await Data.vouchers(b, f.from, f.upto)).forEach(v => { if (v.status === 'posted' && v.lines.some(l => cashCodes.includes(l.gl))) vs.push(v); });
     vs.sort((a, b) => (a.date + a.vno).localeCompare(b.date + b.vno));
     if (mode === 'dv' || mode === 'cv') {
       const pick = vs.filter(v => mode === 'dv' ? v.lines.some(l => cashCodes.includes(l.gl) && l.cr) : v.lines.some(l => cashCodes.includes(l.gl) && l.dr));
@@ -510,7 +511,7 @@ ReportPage({
 });
 
 // ── Back Date / Cancel Transaction ──
-const vRows = async (f, flt) => (await db.collection('vouchers').where('bd', '>=', f.branch + '_' + f.from).where('bd', '<=', f.branch + '_' + f.upto).get()).docs.map(d => d.data()).filter(flt).filter(v => (!f.user || sameUser(v.by, f.user))).sort((a, b) => (a.date + a.vno).localeCompare(b.date + b.vno));
+const vRows = async (f, flt) => (await Data.vouchers(f.branch, f.from, f.upto)).filter(flt).filter(v => (!f.user || sameUser(v.by, f.user))).sort((a, b) => (a.date + a.vno).localeCompare(b.date + b.vno));
 const userFilter = { k: 'user', l: 'User Name', t: 'select', opts: [['', '------------']] };
 const fillUsers = async (el, f) => { const us = (await db.collection('users').get()).docs.map(d => ({ id: d.id, ...d.data() })); UI.fill(UI.el(f, 'user'), us, u => u.id, u => u.userId || u.email, '------------'); };
 async function vName(f) { const aidx = await Data.accIdx(f.branch); const mem = await Data.memberIdx(f.branch); return v => { const a = (v.accs || [])[0]; const r = aidx[a]; return esc(r ? (r[5] || (mem[r[0]] || [])[0] || '') : ((v.ref && v.ref.memberId && (mem[v.ref.memberId] || [])[0]) || v.payer || '')); }; }

@@ -117,7 +117,7 @@ const Data = {
   branches: () => Cache.get('branches', async () => (await db.collection('branches').get()).docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => String(a.code).localeCompare(String(b.code)))),
   async branch(code) { return (await Data.branches()).find(b => b.code === code || b.id === code); },
   samities: (branch) => Cache.get('sam_' + branch, async () => (await db.collection('samities').where('branch', '==', branch).get()).docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => String(a.code).localeCompare(String(b.code)))),
-  async samity(code) { const d = await db.collection('samities').doc(code).get(); return d.exists ? { id: d.id, ...d.data() } : null; },
+  async samity(code) { if (!code) return null; return Data.doc1('samities', code); },
   employees: (branch) => Cache.get('emp_' + (branch || '*'), async () => {
     const q = branch ? db.collection('employees').where('branch', '==', branch) : db.collection('employees');
     return (await q.get()).docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => String(a.empId).localeCompare(String(b.empId)));
@@ -146,8 +146,12 @@ const Data = {
       .sort((a, b) => a.accNo.localeCompare(b.accNo));
   },
   async account(accNo) { const d = await db.collection('accounts').doc(accNo).get(); return d.exists ? { id: d.id, ...d.data() } : null; },
-  async member(id) { const d = await db.collection('members').doc(id).get(); return d.exists ? { id: d.id, ...d.data() } : null; },
+  async member(id) { if (!id) return null; return Data.doc1('members', id); },
   // শাখার সমিতি snapshot (ব্যালেন্স রিপোর্টের জন্য — প্রতি সমিতি ১ রিড)
+  // ভাউচার (তারিখ সীমা) — ৬০ সেকেন্ড ক্যাশ, যেকোনো লেখার পর মুছে যায়
+  async vouchers(b, from, upto) { return Cache.get('tx_v_' + b + '|' + from + '|' + upto, async () => (await db.collection('vouchers').where('bd', '>=', b + '_' + from).where('bd', '<=', b + '_' + upto).get()).docs.map(d => d.data()), 60000, true); },
+  // একক ডক ক্যাশ (সদস্য/একাউন্ট/সমিতি) — ৬০ সেকেন্ড
+  doc1(coll, id) { return Cache.get('tx_d_' + coll + '/' + id, async () => { const d = await db.collection(coll).doc(String(id)).get(); return d.exists ? { id: d.id, ...d.data() } : null; }, 60000, true); },
   async snaps(branch, samity) {
     const sams = samity ? [{ code: samity }] : await Data.samities(branch);
     // প্রতি সমিতির স্ন্যাপশট ক্যাশ (২ মিনিট, পেছনে রিফ্রেশ) — বারবার নেটওয়ার্ক না
