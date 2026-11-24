@@ -195,3 +195,8 @@ table tfoot td{background:#E7F0EC;color:var(--pine)}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 @media print{body{background:#fff}.card{border:1px solid #ddd}}
+/* পেজের ভেতরের রিপোর্ট ভিউ */
+#print-ov{position:fixed;inset:0;z-index:9999;background:#fff;display:flex;flex-direction:column}
+#print-ov .pov-bar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;background:#0E3B33;color:#fff;font-size:15px}
+#print-ov .pov-bar b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#print-ov iframe{flex:1;border:0;width:100%}

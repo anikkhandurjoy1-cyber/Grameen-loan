@@ -15,8 +15,12 @@ App.page('dashboard', {
     const f = $('.db-filter', el);
     await Pick.branch(f, 'branch'); await Pick.employee(f, 'employee', 'branch', { blank: '----------' });
     UI.el(f, 'date').value = await businessDate();
+    // পারমিশন: সব শাখার অনুমতি না থাকলে শুধু নিজের শাখা; ম্যানেজার/এডমিন না হলে শুধু নিজের (কর্মচারী) ডেটা
+    const u = App.user || {}, fl = u.flags || {};
+    if (!isAdmin() && !fl.controlling) { UI.el(f, 'btype').value = 'me'; UI.el(f, 'btype').disabled = true; }
+    if (!isBM()) { const e = UI.el(f, 'employee'); if (u.empId) { if (![...e.options].some(o => o.value === u.empId)) e.add(new Option(u.empId + ' - ' + (u.name || ''), u.empId)); e.value = u.empId; } e.disabled = true; }
     // eKisti: শাখা বদলালে শুধু কর্মচারীর তালিকা আর বিজনেস ডেট বদলায় — ডেটা আসে "Refresh Dashboard" এ
-    UI.el(f, 'branch').addEventListener('change', async () => { const b = UI.el(f, 'branch').value; UI.fill(UI.el(f, 'employee'), b ? await Data.employees(b) : [], e => e.empId, e => e.empId + ' - ' + e.name, '----------'); UI.el(f, 'date').value = await businessDate(b); });
+    UI.el(f, 'branch').addEventListener('change', async () => { const b = UI.el(f, 'branch').value; if (!isBM()) { UI.el(f, 'date').value = await businessDate(b); return; } UI.fill(UI.el(f, 'employee'), b ? await Data.employees(b) : [], e => e.empId, e => e.empId + ' - ' + e.name, '----------'); UI.el(f, 'date').value = await businessDate(b); });
     await Dash.load();
   },
 });
@@ -149,7 +153,8 @@ const Dash = {
         if (cl === 'disb') d.disb += num(t.amount);
         if (t.kind === 'dep' && t.tt !== 'PROFIT_POST') { if (t.dc === 'C') { d.depRcv += num(t.amount); d.depRcvG[DEP_GROUP(t.type)] += num(t.amount); } else { d.depPay += num(t.amount); d.depPayG[DEP_GROUP(t.type)] += num(t.amount); } }
       });
-      // নগদ, আয়, ব্যয়: GL থেকে
+      // নগদ, আয়, ব্যয়: GL থেকে — শাখার হিসাব, কর্মচারী (ম্যানেজার নয়) দেখতে পারবে না
+      if (!isBM()) continue;
       const gd = await db.collection('glDaily').doc(b + '_' + f.date).get(); const g = (gd.exists && gd.data().gl) || {};
       Object.entries(g).forEach(([code, x]) => { const L = lm[code] || {}; if (code.startsWith('111') || L.cashBank) { d.cashRcv += num(x.dr); d.cashPay += num(x.cr); } if (code.startsWith('3')) d.income += num(x.cr) - num(x.dr); if (code.startsWith('4')) d.expense += num(x.dr) - num(x.cr); });
       try { const up = await GLX.upto([b], f.date); d.cash += GLX.nat(REF.GL.cash, up[REF.GL.cash]); } catch (e) {}
@@ -162,6 +167,8 @@ const Dash = {
     const el = $('#page-dashboard'); if (!el) return;
     return guard(btn, async () => {
       const f = UI.get($('.db-filter', el));
+      if (!isBM()) f.employee = (App.user || {}).empId || '__none__'; // কর্মচারী শুধু নিজের ডেটা
+      if (!isAdmin() && !((App.user || {}).flags || {}).controlling) f.btype = 'me';
       if (!f.branch) { $('.dash-out', el).innerHTML = '<div class="card"><div class="alert">প্রথমে "সেটিংস → প্রাথমিক সেটআপ" চালান এবং শাখা যোগ করুন।</div></div>'; return; }
       const key = 'dash_' + JSON.stringify(f); if (force) Cache.drop(key);
       $('.dash-out', el).innerHTML = '<div class="mini">লোড হচ্ছে...</div>';

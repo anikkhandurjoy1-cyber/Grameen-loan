@@ -392,7 +392,7 @@ const CashSub = {
   show(w, key) {
     const [date, gl] = key.split('|'); const rows = CashSub.det[key] || [];
     Data.ledgerMap().then(lm => printHTML('Cash & Bank Details', UI.table([SL, { h: 'Transaction Details', f: r => esc(r.n) }, { h: 'Credit(Payment)', f: r => amt(r.py), r: 1, sum: 1, v: r => r.py }, { h: 'Debit(Receive)', f: r => amt(r.rc), r: 1, sum: 1, v: r => r.rc }], rows, { totalLabel: 'Total :' }),
-      { win: w, info: [['Reporting Date', date], ['Branch Name', esc(CashSub.meta.branch || '')], ['Branch Address', esc(CashSub.meta.addr || '')], ['Ledger Name', esc(gl + ' ' + ((lm[gl] || {}).name || ''))]] }));
+      { win: w || undefined, info: [['Reporting Date', date], ['Branch Name', esc(CashSub.meta.branch || '')], ['Branch Address', esc(CashSub.meta.addr || '')], ['Ledger Name', esc(gl + ' ' + ((lm[gl] || {}).name || ''))]] }));
   },
 };
 window.CashSub = CashSub;
@@ -477,7 +477,7 @@ ReportPage({
     const tR = sum(eRows, r => r.rcC + r.rcB), tP = sum(eRows, r => r.pyC + r.pyB);
     const info = [['রিপোর্ট তারিখ', `${fmtD(f.from)} - ${fmtD(f.upto)}`], ['ওপেনিং হাতে নগদ', amt(oCash)], ['মোট ওপেনিং টাকা', amt(oCash + oBank)], ['ব্যাংক ওপেনিং', amt(oBank)], ['শাখা', esc(br.name || '')], ['আজকের মোট গ্রহন', amt(tR)], ['আজকের উদৃত্ত হিসাব', amt(tR - tP)], ['আজকের মোট প্রদান', amt(tP)], ['Branch Address', esc(br.address || '')], ['Closing Cash', amt(c1)], ['Closing Balance', amt(c1 + b1)], ['Closing Bank', amt(b1)]];
     const foot = `<tfoot><tr><td colspan="3" class="r"><b>Total During This Period :</b></td>${[sum(eRows, r => r.rcC), sum(eRows, r => r.rcB), sum(eRows, r => r.pyC), sum(eRows, r => r.pyB), c1, b1].map(v => `<td class="r"><b>${amt(v)}</b></td>`).join('')}</tr><tr><td colspan="3" class="r"><b>Closing Total :</b></td>${[oCash + sum(eRows, r => r.rcC), oBank + sum(eRows, r => r.rcB), sum(eRows, r => r.pyC), sum(eRows, r => r.pyB), c1, b1].map(v => `<td class="r"><b>${amt(v)}</b></td>`).join('')}</tr></tfoot>`;
-    const link = r => { const k = esc(r.date + '|' + r.gl); const nm = esc((lm[r.gl] || {}).name || r.gl) + ' [' + r.gl + ']'; return `<a class="cb-l" href="javascript:void(0)" onclick="var w=window.open('','_blank');(window.opener||window).CashSub.show(w,'${k}')">${nm}</a>`; };
+    const link = r => { const k = esc(r.date + '|' + r.gl); const nm = esc((lm[r.gl] || {}).name || r.gl) + ' [' + r.gl + ']'; return `<a class="cb-l" href="javascript:void(0)" onclick="var P=(window.opener&&window.opener.CashSub)?window.opener:(window.parent.CashSub?window.parent:window);var w=window.innerWidth<800||P!==window.opener?null:window.open('','_blank');P.CashSub.show(w,'${k}')">${nm}</a>`; };
     const tbl = UI.table([SL, { h: 'Date', f: r => fmtD(r.date) }, { h: 'Particular', f: link }, { g: 'Receipt (Debit)', h: 'Cash', f: r => amt(r.rcC), r: 1 }, { g: 'Receipt (Debit)', h: 'Bank', f: r => amt(r.rcB), r: 1 }, { g: 'Payment (Credit)', h: 'Cash', f: r => amt(r.pyC), r: 1 }, { g: 'Payment (Credit)', h: 'Bank', f: r => amt(r.pyB), r: 1 }, { g: 'Balance', h: 'Cash', f: r => amt(r.bC), r: 1 }, { g: 'Balance', h: 'Bank', f: r => amt(r.bB), r: 1 }], eRows).replace('</table></div>', foot + '</table></div>');
     return { title: 'Cash & Bank Book Report', info, html: tbl };
   },

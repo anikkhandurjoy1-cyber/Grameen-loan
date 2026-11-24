@@ -478,9 +478,20 @@ body{font-family:'Hind Siliguri',Arial,sans-serif;color:#000;margin:0;background
   table.sheet th{background:transparent;font-size:9px;font-weight:700;padding:5px}table.sheet td{font-size:12px;height:40px;padding:5px}table.sheet td.r,table.sheet .nw{white-space:nowrap}
   @media print{table.sheet th{font-size:8px!important}table.sheet td{font-size:10px!important;height:34px}}
   @media print{.no-print{display:none!important}#wrap{max-width:100%}th{background:transparent!important;font-size:10px}td{font-size:10px}}`;
+// পেজের ভেতরে ফুল-স্ক্রিন রিপোর্ট ভিউ (পপ-আপ লাগে না)
+function printOverlay(title) {
+  let ov = document.getElementById('print-ov'); if (ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'print-ov';
+  ov.innerHTML = `<div class="pov-bar"><b>${esc(title)}</b><span><button class="btn btn-sm btn-primary" onclick="document.querySelector('#print-ov iframe').contentWindow.print()">🖨️ Print</button> <button class="btn btn-sm btn-danger" onclick="history.back()">✕ বন্ধ</button></span></div><iframe></iframe>`;
+  document.body.appendChild(ov); document.body.style.overflow = 'hidden';
+  const close = () => { ov.remove(); document.body.style.overflow = ''; window.removeEventListener('popstate', close); };
+  history.pushState({ pov: 1 }, ''); window.addEventListener('popstate', close);
+  const fw = ov.querySelector('iframe').contentWindow; fw.document.open(); return fw;
+}
 function printHTML(title, body, opts = {}) {
-  const w = opts.win || window.open('', '_blank');
-  if (!w) { toast('পপ-আপ ব্লক করা আছে — অনুমতি দিন', 'error'); return; }
+  // মোবাইলে/পপ-আপ ব্লক হলে পেজের ভেতরেই রিপোর্ট দেখাবে (eKisti এর মতো নতুন ট্যাব না লাগে)
+  let w = opts.win || (window.innerWidth < 800 ? null : window.open('', '_blank'));
+  if (!w) w = printOverlay(title);
   const info = opts.info || [];
   if (!opts.info && opts.sub) info.push(['', opts.sub]);
   const sigs = opts.sigs || ['Prepared By', 'Verified By', 'Approved By'];
