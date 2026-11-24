@@ -8,6 +8,16 @@ const ZERO_OPTS = [['all', 'With Zero (All)'], ['nz', 'Without Zero'], ['pos', '
 const zeroOk = (z, v) => z === 'nz' ? r2(v) !== 0 : z === 'pos' ? v > 0 : z === 'neg' ? v < 0 : true;
 
 // ── এ্যাকাউন্টস ব্যালেন্স ──
+// এ্যাকাউন্ট ব্যালেন্সে সদস্য আইডিতে ট্যাপ → সেই একাউন্টের স্টেটমেন্ট (eKisti ACCOUNT_STATEMENT)
+const AccSub = {
+  link: (m, acc, upto) => `<a class="cb-l" href="javascript:void(0)" onclick="var P=(window.opener&&window.opener.AccSub)?window.opener:(window.parent.AccSub?window.parent:window);var w=window.innerWidth<800||P!==window.opener?null:window.open('','_blank');P.AccSub.show(w,'${acc}','${upto || today()}')">${esc(m)}</a>`,
+  async show(w, acc, upto) {
+    const a = await Data.account(acc) || {}; const m = await Data.member(a.memberId) || {};
+    const html = await accStatementHTML(acc, '2000-01-01', upto);
+    printHTML('Account Statement', html, { win: w || undefined, info: [['Member', esc((a.memberId || '') + ' - ' + (m.name || ''))], ['Account Number', esc(acc)], ['Account Type', esc(typeFull(a.kind, a.type))], ['Reporting Date', fmtD(upto)]] });
+  },
+};
+window.AccSub = AccSub;
 ReportPage({
   id: 'rptAccBalance', infoMap: { 'Reporting Date': 'রিপোর্টিং তারিখ', 'Branch Name': 'শাখার নাম', 'Branch Address': 'শাখা ঠিকানা', 'Account Type': 'অ্যাকাউন্টের ধরন' }, title: 'এ্যাকাউন্টস ব্যালেন্স', landscape: true,
   filters: [F.branch, F.samity, F.employee, { k: 'kind', l: 'Account Type', t: 'select', opts: KIND_OPTS }, F.member, F.date, { k: 'zero', l: 'Show Zero Balance', t: 'select', opts: ZERO_OPTS }, ...LOC_F, { k: 'status', l: 'Customer Status', t: 'select', opts: [['', 'Choose'], ['active', 'Active'], ['inactive', 'Inactive'], ['closed', 'Closed']] }],
@@ -17,7 +27,7 @@ ReportPage({
     const lm0 = await locMembers(f); if (lm0) rows = rows.filter(s => lm0.has(s.m));
     rows.sort((a, b) => a.samity.localeCompare(b.samity) || a.accNo.localeCompare(b.accNo));
     const sgn = s => s.k === 'loan' ? -num(s.b) : num(s.b); const cr = s => s.k === 'loan' ? num(s.pt) : num(s.tc); const dr = s => s.k === 'loan' ? num(s.tr) : num(s.td);
-    return { title: 'Account Balance Report', html: UI.table([SL, { h: 'সদস্য আইডি', f: s => s.m }, { h: 'হিসাবের নাম', f: s => esc((mem[s.m] || [])[0] || '') + '<div class="mini">' + s.accNo + '</div>' }, { h: 'Address', f: s => esc((mem[s.m] || [])[6] || '') }, { h: 'Phone', f: s => esc((mem[s.m] || [])[2] || '') }, { h: 'অ্যাকাউন্টের ধরন', f: s => s.k === 'share' ? 'Share Accounts' : esc(typeFull(s.k, s.t).replace(/^\w+ - /, '')) }, { h: 'Credit(Receive)', f: s => amt(cr(s)), r: 1, sum: 1, v: cr }, { h: 'Debit(Payment)', f: s => amt(dr(s)), r: 1, sum: 1, v: dr }, { h: 'ব্যালেন্স', f: s => amt(sgn(s)), r: 1, sum: 1, v: sgn }], rows, { totalLabel: 'মোট :' }) };
+    return { title: 'Account Balance Report', html: UI.table([SL, { h: 'সদস্য আইডি', f: s => AccSub.link(s.m, s.accNo, f.date) }, { h: 'হিসাবের নাম', f: s => esc((mem[s.m] || [])[0] || '') + '<div class="mini">' + s.accNo + '</div>' }, { h: 'Address', f: s => esc((mem[s.m] || [])[6] || '') }, { h: 'Phone', f: s => esc((mem[s.m] || [])[2] || '') }, { h: 'অ্যাকাউন্টের ধরন', f: s => s.k === 'share' ? 'Share Accounts' : esc(typeFull(s.k, s.t).replace(/^\w+ - /, '')) }, { h: 'Credit(Receive)', f: s => amt(cr(s)), r: 1, sum: 1, v: cr }, { h: 'Debit(Payment)', f: s => amt(dr(s)), r: 1, sum: 1, v: dr }, { h: 'ব্যালেন্স', f: s => amt(sgn(s)), r: 1, sum: 1, v: sgn }], rows, { totalLabel: 'মোট :' }) };
   },
 });
 
@@ -152,14 +162,27 @@ async function treeMulti(valsList, prefixes, keepZero) {
 const natMap = (bal, pre) => { const o = {}; Object.entries(bal).forEach(([c, x]) => { if (pre.includes(c[0])) o[c] = GLX.nat(c, x); }); return o; };
 const rawMap = (bal, key) => { const o = {}; Object.entries(bal).forEach(([c, x]) => o[c] = num(x[key])); return o; };
 // পাশাপাশি দুই অংশের টেবিল (eKisti Statement ফরম্যাট)
-function sideBySide(lh, rh, cols, L, Rr, footL, footR) {
-  const cell = (r, lm) => r ? `<td style="padding-left:${4 + r.depth * 10}px">${r.leaf ? '' : '<b>'}${esc(r.name)} [${r.code}]${r.leaf ? '' : '</b>'}</td>${r.vals.map(v => `<td class="r">${r.leaf ? '' : '<b>'}${GLFMT(v)}${r.leaf ? '' : '</b>'}</td>`).join('')}` : `<td></td>${cols.map(() => '<td></td>').join('')}`;
+function sideBySide(lh, rh, cols, L, Rr, footL, footR, lk) {
+  const nm = r => lk && r.leaf ? lk(r) : esc(r.name) + ' [' + r.code + ']';
+  const cell = (r, lm) => r ? `<td style="padding-left:${4 + r.depth * 10}px">${r.leaf ? '' : '<b>'}${nm(r)}${r.leaf ? '' : '</b>'}</td>${r.vals.map(v => `<td class="r">${r.leaf ? '' : '<b>'}${GLFMT(v)}${r.leaf ? '' : '</b>'}</td>`).join('')}` : `<td></td>${cols.map(() => '<td></td>').join('')}`;
   const n = Math.max(L.length, Rr.length); let h = `<table><thead><tr><th>${lh}</th>${cols.map(c => `<th class="r">${c}</th>`).join('')}<th>${rh}</th>${cols.map(c => `<th class="r">${c}</th>`).join('')}</tr></thead><tbody>`;
   for (let i = 0; i < n; i++) h += `<tr>${cell(L[i])}${cell(Rr[i])}</tr>`;
-  const fr = (lab, vals) => `<td><b>${lab}</b></td>${vals.map(v => `<td class="r"><b>${GLFMT(v)}</b></td>`).join('')}`;
+  // eKisti: লাভ নীল, লোকসান লাল
+  const fr = (lab, vals) => { const c = /Profit/i.test(lab) ? 'color:#1d4ed8' : /Loss/i.test(lab) ? 'color:#dc2626' : ''; return `<td style="${c}"><b>${lab}</b></td>${vals.map(v => `<td class="r" style="${c}"><b>${GLFMT(v)}</b></td>`).join('')}`; };
   h += `</tbody><tfoot>${(footL || []).map((f, i) => `<tr>${fr(f[0], f[1])}${(footR || [])[i] ? fr(footR[i][0], footR[i][1]) : fr('', cols.map(() => 0))}</tr>`).join('')}</tfoot></table>`;
   return h;
 }
+// লাভ-ক্ষতির লেজার বিস্তারিত
+const PLSub = {
+  f: {},
+  async show(w, code) {
+    const f = PLSub.f; const lm = await Data.ledgerMap();
+    const r = await ReportPage.defs.rptLedgerStatement.run({ branch: f.branch, btype: f.btype, ledger: code, from: f.from, upto: f.upto, rtype: 'D' });
+    const inc = code[0] === '3';
+    printHTML(inc ? 'Income Ledger Details' : 'Expenditure Ledger Details', r.html, { win: w || undefined, landscape: true, info: [['Reporting Date', fmtD(f.from) + ' - ' + fmtD(f.upto)], ['Ledger Name', esc(code + ' ' + ((lm[code] || {}).name || ''))]] });
+  },
+};
+window.PLSub = PLSub;
 const GLFMT = v => r2(v) < 0 ? '(' + amt(-v) + ')' : amt(v);
 function treeTable(rows, colHeads, opts = {}) {
   return `<table><thead><tr>${opts.code ? '<th>Ledger Code</th>' : ''}<th>${opts.nameHead || 'Ledger Name'}</th>${colHeads.map(c => `<th class="r">${c}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${opts.code ? `<td>${r.code}</td>` : ''}<td style="padding-left:${4 + r.depth * 10}px">${r.leaf ? '' : '<b>'}${esc(r.name)} [${r.code}]${r.leaf ? '' : '</b>'}</td>${r.vals.map(v => `<td class="r">${r.leaf ? '' : '<b>'}${GLFMT(v)}${r.leaf ? '' : '</b>'}</td>`).join('')}</tr>`).join('')}</tbody>${opts.foot || ''}</table>`;
@@ -357,7 +380,10 @@ ReportPage({
       return { title: inc ? 'Income Statement' : 'Expense Statement', html: treeTable(rows, ['This Period', 'Cumulative'], { nameHead: inc ? 'INCOME' : 'EXPENSES', foot: `<tfoot><tr><td><b>${inc ? 'Total Income :' : 'Total Expense :'}</b></td>${tot.map(v => `<td class="r"><b>${GLFMT(v)}</b></td>`).join('')}</tr></tfoot>` }) };
     }
     const np = tI.map((v, i) => Math.max(0, r2(v - tE[i]))), nl = tI.map((v, i) => Math.max(0, r2(tE[i] - v)));
-    return { title: 'Statement of Profit & Loss', html: sideBySide('INCOME', 'EXPENSES', ['This Period', 'Cumulative'], I, E, [['Net Profit :', np]], [['Net Loss :', nl]]) };
+    // লেজারের নামে ট্যাপ → সেই সময়ের লেজার বিস্তারিত (eKisti INCOME/EXPENDITURE_LEDGER_DETAILS)
+    PLSub.f = { ...f };
+    const lk = r => `<a class="cb-l" href="javascript:void(0)" onclick="var P=(window.opener&&window.opener.PLSub)?window.opener:(window.parent.PLSub?window.parent:window);var w=window.innerWidth<800||P!==window.opener?null:window.open('','_blank');P.PLSub.show(w,'${r.code}')">${esc(r.name)} [${r.code}]</a>`;
+    return { title: 'Statement of Profit & Loss', html: sideBySide('INCOME', 'EXPENSES', ['This Period', 'Cumulative'], I, E, [['Net Profit :', np]], [['Net Loss :', nl]], lk) };
   },
 });
 

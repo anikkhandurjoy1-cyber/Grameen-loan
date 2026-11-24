@@ -445,7 +445,8 @@ ReportPage({
   run: async f => {
     const [kind, type] = (f.kind || '').split(':');
     // শুধু যার একাউন্ট দেখতে চান তারটাই — সদস্য / একাউন্ট নং / ফোন ছাড়া পুরো তালিকা দেখাবে না
-    if (!f.member && !(f.accNo || '').trim() && !(f.phone || '').trim()) fail('Member ID, Account নম্বর বা Phone Number দিন');
+    // তারিখ দিলে সেই সময়ে খোলা সব একাউন্ট (ধরন অনুযায়ী আলাদা) দেখাবে
+    if (!f.member && !(f.accNo || '').trim() && !(f.phone || '').trim() && !f.ofrom && !f.oupto) fail('Member ID, Account নম্বর, Phone Number অথবা From/Upto Date দিন');
     let accs = await Data.accountsOf(f.branch, f.member || null, kind || null, type || null);
     if (f.samity) accs = accs.filter(a => a.samity === f.samity);
     if (f.status) accs = accs.filter(a => (a.status || 'active') === f.status);
@@ -455,6 +456,7 @@ ReportPage({
     if (f.ofrom) accs = accs.filter(a => od(a) >= f.ofrom); if (f.oupto) accs = accs.filter(a => od(a) && od(a) <= f.oupto);
     const mem = await Data.memberIdx(f.branch);
     if (f.phone) accs = accs.filter(a => ((mem[a.memberId] || [])[2] || '').includes(f.phone));
+    accs.sort((x, y) => (x.kind + x.type).localeCompare(y.kind + y.type) || od(x).localeCompare(od(y)) || String(x.accNo).localeCompare(String(y.accNo)));
     return { landscape: true, html: UI.table([{ h: 'Branch Code', f: () => f.branch }, { h: 'Phone Number', f: a => esc((mem[a.memberId] || [])[2] || '') }, { h: 'Member ID', f: a => a.memberId }, { h: 'AC Type', f: a => typeFull(a.kind, a.type) }, { h: 'Account Number', f: a => a.accNo }, { h: 'Account Name', f: a => esc(a.title) }, { h: 'Address', f: a => esc(a.address || (mem[a.memberId] || [])[6] || '') }, { h: 'Total Credit', f: a => amt((snaps[a.accNo] || {}).tc || (snaps[a.accNo] || {}).pt), r: 1 }, { h: 'Total Debit', f: a => amt((snaps[a.accNo] || {}).td || (a.kind === 'loan' ? (snaps[a.accNo] || {}).tr : 0)), r: 1 }, { h: 'Current Balance', f: a => amt((snaps[a.accNo] || {}).b), r: 1, sum: 1, v: a => (snaps[a.accNo] || {}).b }, { h: 'Credit Limit', f: a => amt(a.creditLimit || 0), r: 1 }, { h: 'Is Active', f: a => a.status === 'closed' ? 'No' : 'Yes' }, { h: 'Opening Date', f: a => fmtD((snaps[a.accNo] || {}).od) }, { h: 'Closing Date', f: a => fmtD((snaps[a.accNo] || {}).cd) }, ...(isBM() ? [{ h: 'Action', f: a => UI.btn('🗑️ ডিলিট', `AccDelete.run('${a.accNo}',this)`, 'btn-danger btn-sm'), noPrint: 1 }] : [])], accs) + await AccDelete.logHtml(f.branch) };
   },
 });

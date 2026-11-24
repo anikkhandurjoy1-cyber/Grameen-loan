@@ -200,3 +200,7 @@ table tfoot td{background:#E7F0EC;color:var(--pine)}
 #print-ov .pov-bar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;background:#0E3B33;color:#fff;font-size:15px}
 #print-ov .pov-bar b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #print-ov iframe{flex:1;border:0;width:100%}
+/* eKisti এর মতো বিজনেস ডেট বড় করে */
+#hdrDate{font-size:16px!important;font-weight:700!important;color:#FFD66B!important;letter-spacing:.3px}
+@media (max-width:700px){#hdrDate{font-size:14px!important}}
+@media (max-width:767px){.hdr-info{display:flex!important;align-items:flex-end}.hdr-info #hdrBranch,.hdr-info #hdrUser{display:none}#hdrDate{font-size:13px!important;white-space:nowrap}}
