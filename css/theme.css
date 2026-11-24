@@ -218,3 +218,10 @@ table tfoot td{background:#E7F0EC;color:var(--pine)}
 .tb-stats .tb-st b{font-size:16px!important;color:#fff}
 @media (max-width:1100px){.today-band{grid-template-columns:1fr!important}.tb-sun{justify-self:center!important}}
 @media (max-width:640px){.tb-stats{grid-template-columns:1fr 1fr!important}}
+/* মোবাইল: বিজনেস ডেট হেডারের নিচে আলাদা স্ট্রিপে (লোগোর লেখার সাথে মিশে না) */
+@media (max-width:767px){
+  .hdr-info{position:absolute;top:100%;left:0;right:0;justify-content:center;align-items:center!important;background:#0b2f29;padding:3px 0;border-bottom:2px solid var(--gold,#D8A01E)}
+  #hdrDate{font-size:14px!important}
+  .main{margin-top:calc(var(--header-h) + 26px)!important}
+  .sidebar,.sidebar-overlay{top:calc(var(--header-h) + 26px)!important}
+}
