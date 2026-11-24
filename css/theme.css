@@ -204,3 +204,4 @@ table tfoot td{background:#E7F0EC;color:var(--pine)}
 #hdrDate{font-size:16px!important;font-weight:700!important;color:#FFD66B!important;letter-spacing:.3px}
 @media (max-width:700px){#hdrDate{font-size:14px!important}}
 @media (max-width:767px){.hdr-info{display:flex!important;align-items:flex-end}.hdr-info #hdrBranch,.hdr-info #hdrUser{display:none}#hdrDate{font-size:13px!important;white-space:nowrap}}
+.lang-btn{width:auto!important;padding:0 10px!important;font-size:12px!important;font-weight:600;border-radius:14px!important}
