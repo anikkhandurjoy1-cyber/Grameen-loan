@@ -29,14 +29,47 @@ ReportPage({
 });
 
 // eKisti পাসবুক: একাউন্টের তথ্য ব্লক + ক্রমিক নং | Date | Comments | Deposit Amount | Withdraw Amount | Balance | Posted By
+// eKisti পাসবুক — ঋণ: তথ্য ব্লক + Installment Due / Receive (Total, Charge, Due, Todays, Advance, As Of Total) / Todays Due / Loan Balance
+async function passbookLoanHTML(a, rows) {
+  const sch = Loan.schedule(a); const cumDue = d => sum(sch.filter(x => x.date <= d), x => x.amount);
+  const tr = num(a.totalRepay);
+  const isMig = t => /Balance Migration/i.test(t.narration || '') || t.tt === 'OPEN_BAL';
+  const all = rows.filter(t => !t.open && !(t.delta > 0 && (isMig(t) || /DISB/i.test(t.tt || '') || /Disburs/i.test(t.narration || ''))));
+  const rc = all.filter(t => num(t.delta) < 0);
+  const waive = rc.filter(t => /WAIV/i.test(t.tt || ''));
+  let paid = 0; const out = [];
+  rc.filter(t => !/WAIV/i.test(t.tt || '')).forEach(t => {
+    const amtv = r2(-num(t.delta)), pen = num(t.penalty);
+    const owe = r2(Math.max(0, cumDue(t.date) - paid)), dueB = r2(Math.max(0, cumDue(addDays(t.date, -1)) - paid));
+    const dR = Math.min(amtv, dueB), tR = Math.min(amtv - dR, Math.max(0, owe - dueB)), adv = r2(amtv - dR - tR);
+    paid = r2(paid + amtv);
+    out.push({ date: t.date, inst: owe, ich: 0, tot: amtv, ch: pen, due: dR, tod: tR, adv, asof: paid, by: t.byName || '', tdue: r2(Math.max(0, cumDue(t.date) - paid)), bal: r2(tr - paid) });
+  });
+  const st = Loan.status(a, today(), paid);
+  const lsn = (await Data.accountsOf(a.branch || App.branch, a.memberId, 'loan')).sort((x, y) => (x.openDate || '').localeCompare(y.openDate || '')).findIndex(x => x.accNo === a.accNo) + 1;
+  const sumP = k => sum(rc, t => num(t[k]));
+  const info = [['Account Type', esc(typeFull(a.kind, a.type).replace(/^\w+ - /, ''))], ['Open Date', fmtD(a.openDate)], ['Loan Amount', amt(a.principal)], ['Account Number', esc(a.accNo)],
+    ['Total Repayment Amount', amt(tr)], ['Closing Date', fmtD(a.closeDate)], ['Installment Amount', amt(a.instAmount)], ['Installment Expire Date', fmtD(a.expDate)],
+    ['No of Installment Due', st.dueCnt], ['No of Installment Payment', st.paidCnt], ['Loan Serial Number', lsn || 1], ['Loan Purpose', esc(a.purpose || '')],
+    ['Down Payment', amt(0)], ['Total Waiver', amt(sum(waive, t => -num(t.delta)))], ['Principal Waiver', amt(sum(waive, t => num(t.principal)))], ['Profit Waiver', amt(sum(waive, t => num(t.profit)))],
+    ['Total Penalty', amt(sumP('penalty'))], ['Penalty Waiver', amt(0)], ['Penalty Payment', amt(sumP('penalty'))], ['Penalty Due', amt(0)]];
+  const th = `<thead><tr><th rowspan="2">ক্রমিক নং</th><th rowspan="2">Date</th><th colspan="2">Installment Due</th><th colspan="7">Receive</th><th rowspan="2">Todays Due</th><th rowspan="2">Loan Balance</th></tr><tr><th>Installment</th><th>Charge</th><th>Total</th><th>Charge</th><th>Due</th><th>Todays</th><th>Advance</th><th>As Of Total</th><th>Posted By</th></tr></thead>`;
+  const tb = out.map((r, i) => `<tr><td>${i + 1}</td><td>${fmtD(r.date)}</td><td class="r">${amt(r.inst)}</td><td class="r">${amt(r.ich)}</td><td class="r">${amt(r.tot)}</td><td class="r">${amt(r.ch)}</td><td class="r">${amt(r.due)}</td><td class="r">${amt(r.tod)}</td><td class="r">${amt(r.adv)}</td><td class="r">${amt(r.asof)}</td><td>${esc(r.by)}</td><td class="r">${amt(r.tdue)}</td><td class="r">${amt(r.bal)}</td></tr>`).join('');
+  const ft = `<tfoot><tr><td colspan="3"><b>Total :</b></td><td class="r"><b>${amt(0)}</b></td><td class="r"><b>${amt(sum(out, r => r.tot))}</b></td><td class="r"><b>${amt(sum(out, r => r.ch))}</b></td><td class="r"><b>${amt(sum(out, r => r.due))}</b></td><td class="r"><b>${amt(sum(out, r => r.tod))}</b></td><td class="r"><b>${amt(sum(out, r => r.adv))}</b></td><td colspan="4"></td></tr></tfoot>`;
+  return `<div class="pb-acc" style="margin-top:14px">${UI.info(info)}<h4 style="margin:8px 0 4px">Installment Details</h4></div><div class="tbl-wrap"><table>${th}<tbody>${tb}</tbody>${ft}</table></div>`;
+}
 async function passbookAccHTML(accNo, from, upto) {
   const { a, isLoan, rows } = await accRows(accNo, from, upto);
+  if (isLoan) return passbookLoanHTML(a, rows);
+  // eKisti: মাইগ্রেশনের ব্যালেন্স ওপেনিং ব্যালেন্সে, বিবরণ "Deposit Inst Receive <সদস্য>"
+  const isMig = t => /Balance Migration|^Opening/i.test(t.narration || '') || t.tt === 'OPEN_BAL';
+  if (rows[0] && rows[0].open) { const mg = rows.filter(t => !t.open && isMig(t)); if (mg.length) { rows[0].bal = r2(rows[0].bal + sum(mg, t => num(t.delta))); rows[0].ob = sum(mg, t => num(t.delta)); for (let i = rows.length - 1; i > 0; i--) if (isMig(rows[i])) rows.splice(i, 1); } }
   const last = rows.filter(r => !r.open).slice(-1)[0];
   const dep = t => !t.open && (isLoan ? t.delta < 0 : t.delta > 0);
-  const com = t => t.open ? 'Opening Balance' : t.hist ? esc(t.narration) : esc((TT_EN[t.tt] || TT_NAME[t.tt] || t.tt) + ' ' + (a.memberId || '') + (t.narration && !/^Opening/.test(t.narration) ? ' ' + t.narration : ''));
+  const com = t => t.open ? 'Opening Balance' : t.hist ? esc(t.narration) : t.delta > 0 ? (a.kind === 'share' ? 'Share Receive ' : 'Deposit Inst Receive ') + esc(a.memberId || '') : 'Payment Deposit ID ' + esc(a.accNo) + (t.narration && !/^(member|sheet)$/.test(t.narration) ? ' ' + esc(t.narration) : '');
   const info = isLoan
     ? [['Account Type', esc(typeFull(a.kind, a.type))], ['Open Date', fmtD(a.openDate)], ['Loan Amount', amt(a.principal)], ['Total Repay', amt(a.totalRepay)], ['Account Number', esc(a.accNo)], ['Installment', amt(a.instAmount) + ' × ' + (a.n || '') + ' (' + (FREQ_EN[a.freq] || a.freq || '') + ')'], ['Outstanding', amt(a.balance)], ['Last Transaction Date', last ? fmtD(last.date) : ''], ['Profit Rate', n2(a.rate)], ['Expire Date', fmtD(a.expDate)], ['Closing Date', fmtD(a.closeDate)]]
-    : [['Account Type', esc(typeFull(a.kind, a.type))], ['Open Date', fmtD(a.openDate)], ['Account Balance', amt(a.balance)], ['Last Transaction Date', last ? fmtD(last.date) : ''], ['Account Number', esc(a.accNo)], ['Profit Rate', n2(a.rate)], ['Maturity Date', fmtD(a.maturityDate)], ['Closing Date', fmtD(a.closeDate)]];
+    : [['Account Type', esc(a.kind === 'share' ? 'Share Account' : typeFull(a.kind, a.type).replace(/^\w+ - /, ''))], ['Open Date', fmtD(a.openDate)], ['Account Balance', amt(a.balance)], ['Last Transaction Date', last ? fmtD(last.date) : ''], ['Account Number', esc(a.accNo)], ['Profit Rate', n2(a.rate)], ['Maturity Date', fmtD(a.maturityDate)], ['Closing Date', fmtD(a.closeDate)]];
   const cols = [SL, { h: 'Date', f: t => fmtD(t.date) }, { h: 'Comments', f: com },
     { h: isLoan ? 'Installment Amount' : 'Deposit Amount', f: t => t.open ? '0.00' : dep(t) ? amt(Math.abs(t.delta)) : '0.00', r: 1, sum: 1, v: t => dep(t) ? Math.abs(t.delta) : 0 },
     { h: isLoan ? 'Disburse Amount' : 'Withdraw Amount', f: t => t.open ? '0.00' : !dep(t) ? amt(Math.abs(t.delta)) : '0.00', r: 1, sum: 1, v: t => !t.open && !dep(t) ? Math.abs(t.delta) : 0 },
