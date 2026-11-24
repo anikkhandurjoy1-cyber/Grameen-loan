@@ -3,6 +3,8 @@
 // + glDaily/glMonthly সারাংশ + সমিতি snapshot — সব এক WriteBatch-এ (atomic)
 // ═══════════════════════════════════════════════════════════════
 const Eng = {
+  // লেনদেনের পর ক্যাশ পরিষ্কার — রিপোর্ট/ড্যাশবোর্ড সাথে সাথে নতুন ডেটা পায়
+  fresh() { try { ['snapd_', 'dash_', 'gl_', 'tx_'].forEach(k => Cache.drop(k)); } catch (e) {} },
   productGl(kind, type) {
     if (kind === 'dep') return (REF.DEP[type] || {}).gl;
     if (kind === 'loan') return (REF.LOAN[type] || {}).gl;
@@ -45,7 +47,7 @@ const Eng = {
     if (v.pre) await v.pre(batch, vno);           // নতুন ডক তৈরি (আপডেটের আগে)
     if (!pending) Eng._apply(batch, vno, v.branch, v.date, payload, 1);
     if (v.extra) await v.extra(batch, vno);
-    await batch.commit();
+    await batch.commit(); Eng.fresh();
     return vno;
   },
   // একাধিক ভাউচার একসাথে (শীট পোস্টিং) — প্রতি ব্যাচে ~৪০০ অপারেশন
@@ -67,7 +69,7 @@ const Eng = {
       Eng._apply(batch, vno, v.branch, v.date, payload, 1);
       ops += est; out.push(vno); done++; if (onProgress) onProgress(done, list.length);
     }
-    if (ops) await batch.commit();
+    if (ops) await batch.commit(); Eng.fresh();
     return out;
   },
   // প্রভাব প্রয়োগ (sign = 1 পোস্ট, -1 রিভার্স)
@@ -134,7 +136,7 @@ const Eng = {
       ts.forEach(d => batch.update(d.ref, { cancelled: true, cancelBy: App.user.userId || App.user.uid, cancelOn: FV.serverTimestamp() }));
     }
     batch.update(vd.ref, { status: 'cancelled', cancelBy: App.user.userId || App.user.uid, cancelOn: FV.serverTimestamp(), cancelReason: reason || '' });
-    await batch.commit();
+    await batch.commit(); Eng.fresh();
     return v;
   },
   async approve(vno) {
@@ -144,7 +146,7 @@ const Eng = {
     const batch = db.batch();
     Eng._apply(batch, vno, v.branch, v.date, v.payload, 1);
     batch.update(vd.ref, { status: 'posted', payload: null, accOps: (v.payload.accOps || []).map(a => ({ accNo: a.accNo, samity: a.samity || '', inc: a.inc || {}, snapInc: a.snapInc || {}, undoSet: a.undoSet || null, meta: a.meta || null })), authBy: App.user.userId || App.user.uid, authOn: FV.serverTimestamp() });
-    await batch.commit();
+    await batch.commit(); Eng.fresh();
   },
   // সাধারণ নগদ/অন্য লেজার লাইন
   cashLine(dr, cr, ledger) { return { gl: ledger || REF.GL.cash, dr: dr || 0, cr: cr || 0 }; },
@@ -170,7 +172,12 @@ const Loan = {
     return freq === 'D' || !isFriday(r) ? r : addDays(r, 1);
   },
   _nextDate(d, freq, i) {
-    if (freq === 'D') { let x = isFriday(d) ? addDays(d, 1) : d; for (let k = 0; k < i; k++) { x = addDays(x, 1); if (isFriday(x)) x = addDays(x, 1); } return x; }
+    if (freq === 'D') {
+      // দ্রুত হিসাব (লুপ ছাড়া): শুক্রবার বাদে সপ্তাহে ৬ কর্মদিবস — শনি=0 … বৃহঃ=5
+      const x0 = isFriday(d) ? addDays(d, 1) : d; if (!i) return x0;
+      const p = (parseD(x0).getDay() + 1) % 7; const q = p + i;
+      return addDays(x0, Math.floor(q / 6) * 7 + (q % 6) - p);
+    }
     if (freq === 'W') return addDays(d, 7 * i);
     if (freq === 'F') return addDays(d, 15 * i);
     if (freq === 'M') return addMonths(d, i);

@@ -117,13 +117,15 @@ const Dash = {
     let migProfit = 0;
     for (const b of bs) {
       const ff = { branch: b, employee: f.employee };
+      // সমান্তরালে আনা (দ্রুত)
+      const pTx = R.txns(ff, f.date, f.date), pGd = isBM() ? db.collection('glDaily').doc(b + '_' + f.date).get() : null, pUp = isBM() ? GLX.upto([b], f.date).catch(() => ({})) : null;
       const c = await R.snaps(ff, f.date);
       d.samities += Object.values(c.sm).filter(s => s.status !== 'closed' && (!f.employee || s.foId === f.employee)).length;
       const memRows = Object.entries(c.mem).filter(([id, r]) => !f.employee || c.fo(r[1]) === f.employee);
       d.members.total += memRows.length; d.members.active += memRows.filter(([, r]) => r[3] !== 'closed' && r[3] !== 'inactive').length; d.members.inactive += memRows.filter(([, r]) => r[3] === 'inactive').length;
       // Balance Migration / Opening Paid আজকের লেনদেন নয় (eKisti এর মতো বাদ)
       const isMig = t => t.tt === 'OPEN_PAID' || t.tt === 'OPEN_BAL' || /^Balance Migration/.test(t.narration || '');
-      const tsAll = await R.txns(ff, f.date, f.date); const ts = tsAll.filter(t => !isMig(t));
+      const tsAll = await pTx; const ts = tsAll.filter(t => !isMig(t));
       migProfit += sum(tsAll.filter(t => isMig(t) && t.kind === 'loan' && t.dc === 'C'), t => num(t.profit));
       const got = {}; ts.forEach(t => { if (t.kind === 'loan' && t.dc === 'C' && t.tt !== 'EMI_WAIVE') got[t.accNo] = (got[t.accNo] || 0) + num(t.amount); });
       c.list.forEach(s => {
@@ -155,9 +157,9 @@ const Dash = {
       });
       // নগদ, আয়, ব্যয়: GL থেকে — শাখার হিসাব, কর্মচারী (ম্যানেজার নয়) দেখতে পারবে না
       if (!isBM()) continue;
-      const gd = await db.collection('glDaily').doc(b + '_' + f.date).get(); const g = (gd.exists && gd.data().gl) || {};
+      const gd = await pGd; const g = (gd.exists && gd.data().gl) || {};
       Object.entries(g).forEach(([code, x]) => { const L = lm[code] || {}; if (code.startsWith('111') || L.cashBank) { d.cashRcv += num(x.dr); d.cashPay += num(x.cr); } if (code.startsWith('3')) d.income += num(x.cr) - num(x.dr); if (code.startsWith('4')) d.expense += num(x.dr) - num(x.cr); });
-      try { const up = await GLX.upto([b], f.date); d.cash += GLX.nat(REF.GL.cash, up[REF.GL.cash]); } catch (e) {}
+      try { const up = await pUp; d.cash += GLX.nat(REF.GL.cash, up[REF.GL.cash]); } catch (e) {}
     }
     d.income = Math.max(0, r2(d.income - migProfit));
     d.loan.regular = Math.max(0, d.loan.total - d.loan.overdue - d.loan.expire - d.loan.advance);

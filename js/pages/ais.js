@@ -12,22 +12,25 @@ const GLX = {
   },
   add(acc, gl) { Object.entries(gl || {}).forEach(([c, x]) => { acc[c] = acc[c] || { dr: 0, cr: 0 }; acc[c].dr += num(x.dr); acc[c].cr += num(x.cr); }); },
   // [from, upto] এর মধ্যে দৈনিক মোট {code:{dr,cr}}; byDate=true হলে {date:{code:{dr,cr}}}
-  async range(branches, from, upto, byDate, field = 'gl') {
+  // ৬০ সেকেন্ড ক্যাশ (যেকোনো লেখার পর মুছে যায়)
+  async range(branches, from, upto, byDate, field = 'gl') { return structuredClone(await Cache.get('gl_r_' + [branches.join(','), from, upto, byDate ? 1 : 0, field].join('|'), () => GLX._range(branches, from, upto, byDate, field), 60000, true)); },
+  async _range(branches, from, upto, byDate, field = 'gl') {
     const out = {};
-    for (const b of branches) {
-      const s = await db.collection('glDaily').where(DOCID(), '>=', b + '_' + from).where(DOCID(), '<=', b + '_' + upto).get();
+    const qs = await Promise.all(branches.map(b => db.collection('glDaily').where(DOCID(), '>=', b + '_' + from).where(DOCID(), '<=', b + '_' + upto).get()));
+    for (const s of qs) {
       s.forEach(d => { const x = d.data(); if (byDate) { out[x.date] = out[x.date] || {}; GLX.add(out[x.date], x[field]); } else GLX.add(out, x[field]); });
     }
     return out;
   },
   // date এর আগ পর্যন্ত সমষ্টি (ওপেনিং)
-  async before(branches, date) {
+  async before(branches, date) { return structuredClone(await Cache.get('gl_b_' + branches.join(',') + '|' + date, () => GLX._before(branches, date), 60000, true)); },
+  async _before(branches, date) {
     const out = {}; const month = date.slice(0, 7);
-    for (const b of branches) {
-      const ms = await db.collection('glMonthly').where(DOCID(), '>=', b + '_0000').where(DOCID(), '<', b + '_' + month).get();
-      ms.forEach(d => GLX.add(out, d.data().gl));
-      if (date.slice(8) !== '01') { const ds = await db.collection('glDaily').where(DOCID(), '>=', b + '_' + month + '-01').where(DOCID(), '<', b + '_' + date).get(); ds.forEach(d => GLX.add(out, d.data().gl)); }
-    }
+    await Promise.all(branches.map(async b => {
+      const [ms, ds] = await Promise.all([db.collection('glMonthly').where(DOCID(), '>=', b + '_0000').where(DOCID(), '<', b + '_' + month).get(),
+        date.slice(8) !== '01' ? db.collection('glDaily').where(DOCID(), '>=', b + '_' + month + '-01').where(DOCID(), '<', b + '_' + date).get() : null]);
+      ms.forEach(d => GLX.add(out, d.data().gl)); if (ds) ds.forEach(d => GLX.add(out, d.data().gl));
+    }));
     return out;
   },
   async upto(branches, date) { return GLX.before(branches, addDays(date, 1)); },

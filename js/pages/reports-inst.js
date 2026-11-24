@@ -12,8 +12,8 @@ const R = {
   },
   // তারিখ সীমার লেনদেন (একাধিক শাখা সাপোর্ট)
   async txns(f, from, upto, branches) {
-    const bs = branches || [f.branch]; let out = [];
-    for (const b of bs) out = out.concat((await db.collection('txns').where('bd', '>=', b + '_' + from).where('bd', '<=', b + '_' + upto).get()).docs.map(d => d.data()));
+    const bs = branches || [f.branch];
+    let out = await Cache.get('tx_' + bs.join(',') + '|' + from + '|' + upto, async () => { let o = []; (await Promise.all(bs.map(b => db.collection('txns').where('bd', '>=', b + '_' + from).where('bd', '<=', b + '_' + upto).get()))).forEach(q => { o = o.concat(q.docs.map(d => d.data())); }); return o; }, 60000, true);
     return out.filter(t => !t.cancelled && (!f.samity || t.samity === f.samity) && (!f.employee || t.foId === f.employee) && (!f.member || t.memberId === f.member) && (!f.user || sameUser(t.by, f.user)));
   },
   name: (mem, id) => esc((mem[id] || [])[0] || ''),

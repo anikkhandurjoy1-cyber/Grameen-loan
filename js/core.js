@@ -13,6 +13,8 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 try { db.enablePersistence({ synchronizeTabs: true }).catch(() => {}); } catch (e) {}
+// যেকোনো লেখার পর (batch/set/update) স্ন্যাপশট ও ড্যাশবোর্ড ক্যাশ পরিষ্কার — দ্রুত ক্যাশ কিন্তু সবসময় সঠিক
+try { const _b = db.batch.bind(db); db.batch = () => { const b = _b(); const c = b.commit.bind(b); b.commit = async () => { const r = await c(); try { ['snapd_', 'dash_', 'gl_', 'tx_'].forEach(k => Cache.drop(k)); } catch (e) {} return r; }; return b; }; } catch (e) {}
 const FV = firebase.firestore.FieldValue;
 const IMGBB_KEY = '3b6c1d56d21a4c3f52beb52c55859a28';
 const LOGIN_DOMAIN = '@gaa-somity.app';
@@ -96,10 +98,10 @@ const allowedBranches = () => {
 const Cache = {
   _m: {},
   // stale-while-revalidate: মেয়াদ শেষ হলেও পুরনো ডেটা সাথে সাথে দেয়, পেছনে নতুন আনে — ট্যাপ করলেই পেজ খোলে
-  async get(key, loader, ttl = 5 * 60000) {
+  async get(key, loader, ttl = 5 * 60000, strict) {
     const e = this._m[key];
     if (e && Date.now() - e.t < ttl) return e.p;
-    if (e && e.ok && !e.busy) {
+    if (e && e.ok && !e.busy && !strict) {
       e.busy = true;
       loader().then(v => { this._m[key] = { t: Date.now(), p: Promise.resolve(v), ok: true }; }).catch(() => { e.busy = false; });
       return e.p;
@@ -148,9 +150,10 @@ const Data = {
   // শাখার সমিতি snapshot (ব্যালেন্স রিপোর্টের জন্য — প্রতি সমিতি ১ রিড)
   async snaps(branch, samity) {
     const sams = samity ? [{ code: samity }] : await Data.samities(branch);
-    const docs = await Promise.all(sams.map(s => db.collection('snap').doc(s.code).get()));
+    // প্রতি সমিতির স্ন্যাপশট ক্যাশ (২ মিনিট, পেছনে রিফ্রেশ) — বারবার নেটওয়ার্ক না
+    const docs = await Promise.all(sams.map(s => Cache.get('snapd_' + s.code, async () => { const d = await db.collection('snap').doc(s.code).get(); return (d.exists && d.data().a) || {}; }, 90000, true)));
     const out = [];
-    docs.forEach((d, i) => { const a = (d.exists && d.data().a) || {}; Object.entries(a).forEach(([accNo, v]) => out.push({ accNo, samity: sams[i].code, ...v })); });
+    docs.forEach((a, i) => { a = a || {}; Object.entries(a).forEach(([accNo, v]) => out.push({ accNo, samity: sams[i].code, ...v })); });
     return out;
   },
 };
