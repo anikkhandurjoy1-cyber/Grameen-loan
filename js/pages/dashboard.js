@@ -8,6 +8,7 @@
 App.page('dashboard', {
   title: 'ড্যাশবোর্ড', icon: '🏠', always: true,
   render: () => ''
+    + `<div class="today-band" id="todayBand"><div class="tb-l"><div class="tb-hello">${esc(Dash.hello())}, ${esc((App.user && (App.user.name || App.user.userId)) || '')}</div><div class="tb-meta">আজকের হিসাব লোড হচ্ছে…</div><div class="pend ok" data-pendbox><span>অনুমোদনের অপেক্ষায়</span><b data-pend>—</b></div></div><div class="tb-sun">${Dash.sun(0)}<div class="tb-fig"><b>—</b><span>আজকের ঋণ আদায়</span></div></div><div class="tb-stats"></div></div>`
     + `<div class="card db-filter"><div class="db-welcome"><h3>Welcome back, ${esc((App.user && (App.user.name || App.user.userId)) || '')} !</h3><div class="mini">Track your somity activity, leads and deals here.</div></div>
     ${UI.grid([{ ...F.branch, l: 'Branch Name' }, { k: 'btype', l: 'Branch Type', t: 'select', opts: [['me', 'Only Me'], ['all', 'All Branch'], ['others', 'All Others Branch']] }, { k: 'employee', l: 'Employee Name', t: 'select' }, { k: 'date', l: 'Business Date', t: 'date', req: 1 }], 4)}
     <div class="actions">${UI.btn('Refresh Dashboard', 'Dash.load(this,true)', 'btn-info')}</div></div><div class="dash-out"><div class="mini">লোড হচ্ছে...</div></div>`,
@@ -89,7 +90,12 @@ const Dash = {
     const b = await Data.branch(f.branch); const pct = d.receivable ? d.rcv / d.receivable * 100 : 0;
     el.querySelector('.tb-meta').innerHTML = `<b>${esc(b ? b.code + ' - ' + b.name : f.branch)}</b><br>বিজনেস ডেট <b>${fmtD(f.date)}</b>${isFriday(f.date) ? ' (শুক্রবার — বন্ধ)' : ''}`;
     el.querySelector('.tb-sun').innerHTML = Dash.sun(pct) + `<div class="tb-fig"><b>${n0(d.rcv)}</b><span>আজকের আদায় • আদায়যোগ্য ${n0(d.receivable)}</span></div>`;
-    el.querySelector('.tb-stats').innerHTML = [['হাতে নগদ', d.cash], ['আজ নগদ গ্রহণ', d.cashRcv], ['আজ নগদ প্রদান', d.cashPay], ['আজকের বকেয়া', Math.max(0, d.receivable - d.rcv), 'warn']].map(([l, v, c]) => `<div class="${c || ''}"><small>${l}</small><b>${n0(v)}</b></div>`).join('');
+    const st = [['💰', 'হাতে নগদ', d.cash, '#22c55e'], ['📥', 'আজ নগদ গ্রহণ', d.cashRcv, '#38bdf8'], ['📤', 'আজ নগদ প্রদান', d.cashPay, '#f97316'], ['⏳', 'আজকের বকেয়া', Math.max(0, d.receivable - d.rcv), '#f43f5e'],
+      ['🏦', 'আজকের ঋণ বিতরণ', d.disb, '#a78bfa'], ['🐷', 'আজকের সঞ্চয় জমা', d.depRcv, '#2dd4bf'], ['↩️', 'আজকের সঞ্চয় ফেরত', d.depPay, '#fb7185'], ['📈', 'আজকের আয়', d.income, '#facc15']];
+    if (!isBM()) st.splice(0, 3); // কর্মচারী: শাখার নগদ দেখায় না
+    el.querySelector('.tb-stats').innerHTML = st.map(([ic, l, v, c]) => `<div class="tb-st" style="--c:${c}"><i>${ic}</i><span><small>${l}</small><b>${n0(v)}</b></span></div>`).join('');
+    // অনুমোদনের অপেক্ষা
+    try { const bs = await R.branchesFor(f); let p = 0; for (const b2 of bs) p += (await Data.vouchers(b2, f.date, f.date)).filter(v => v.status === 'pending').length; const pe = el.querySelector('[data-pend]'); const box = el.querySelector('[data-pendbox]'); pe.textContent = p; box.classList.toggle('ok', !p); box.onclick = p ? () => App.go('tranAuthList') : null; box.style.cursor = p ? 'pointer' : ''; } catch (e) {}
   },
   // আজকের ভাউচার তালিকা + অনুমোদনের অপেক্ষা
   async feed(f) {
@@ -175,6 +181,7 @@ const Dash = {
       const key = 'dash_' + JSON.stringify(f); if (force) Cache.drop(key);
       $('.dash-out', el).innerHTML = '<div class="mini">লোড হচ্ছে...</div>';
       const d = await Cache.get(key, () => Dash.compute(f), 10 * 60000);
+      Dash.band(f, d).catch(e => console.warn(e));
       const en = await R.empName(); const emps = await Data.employees('');
       const n0 = x => Math.round(x).toLocaleString('en-IN');
       const pct = d.receivable ? Math.min(100, r2(d.rcv / d.receivable * 100)) : 0;

@@ -205,3 +205,16 @@ table tfoot td{background:#E7F0EC;color:var(--pine)}
 @media (max-width:700px){#hdrDate{font-size:14px!important}}
 @media (max-width:767px){.hdr-info{display:flex!important;align-items:flex-end}.hdr-info #hdrBranch,.hdr-info #hdrUser{display:none}#hdrDate{font-size:13px!important;white-space:nowrap}}
 .lang-btn{width:auto!important;padding:0 10px!important;font-size:12px!important;font-weight:600;border-radius:14px!important}
+/* ড্যাশবোর্ড আজকের ব্যান্ড — রঙিন */
+.today-band{background:linear-gradient(120deg,#0E3B33 0%,#137A5B 55%,#1f8f6a 75%,#D8A01E 140%)!important;grid-template-columns:1fr 240px 1.5fr!important;align-items:center;box-shadow:0 10px 30px rgba(14,59,51,.25)}
+.today-band .tb-l{position:relative;z-index:1}
+.today-band .pend{display:inline-flex;gap:10px;align-items:center;margin-top:12px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:6px 14px;color:#fff;font-size:13px}
+.today-band .pend b{background:#f43f5e;color:#fff;border-radius:999px;min-width:26px;text-align:center;padding:1px 8px}
+.today-band .pend.ok b{background:#22c55e}
+.tb-stats{grid-template-columns:repeat(4,1fr)!important;gap:10px!important}
+.tb-stats .tb-st{display:flex;gap:8px;align-items:center;border:0!important;padding:10px!important;border-radius:12px;background:rgba(255,255,255,.1);border-left:4px solid var(--c)!important}
+.tb-stats .tb-st i{font-style:normal;font-size:18px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--c);flex:none}
+.tb-stats .tb-st small{color:rgba(255,255,255,.8)!important;font-size:11.5px!important;line-height:1.2}
+.tb-stats .tb-st b{font-size:16px!important;color:#fff}
+@media (max-width:1100px){.today-band{grid-template-columns:1fr!important}.tb-sun{justify-self:center!important}}
+@media (max-width:640px){.tb-stats{grid-template-columns:1fr 1fr!important}}
