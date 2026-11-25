@@ -4,7 +4,9 @@
 const ACC_STATUS_F = { k: 'ast', l: 'Account Status', t: 'select', opts: [['open', 'All Open Only'], ['closedUpto', 'Upto Date Closed Only'], ['openBetween', 'Open From and Upto Date'], ['closedBetween', 'Closed From and Upto Date'], ['matBetween', 'Maturity Date Between'], ['openUpto', 'Upto Date Open Only']] };
 const regFilters = (typeF, extra = []) => [F.branch, typeF, F.samity, F.employee, F.member, { ...F.from, req: 1 }, { ...F.upto, req: 1 }, ...extra];
 async function accDocs(f, kind, types) {
-  let rows = (await db.collection('accounts').where('branch', '==', f.branch).where('kind', '==', kind).get()).docs.map(d => d.data());
+  // রিড কমানো: সদস্য/সমিতি দিলে শুধু সেগুলো আনে; ফলাফল ৫ মিনিট ক্যাশ (লেখার পর মুছে যায়)
+  const q = f.member ? db.collection('accounts').where('memberId', '==', f.member) : f.samity ? db.collection('accounts').where('samity', '==', f.samity) : db.collection('accounts').where('branch', '==', f.branch).where('kind', '==', kind);
+  let rows = (await Cache.get('tx_ad_' + [f.branch, kind, f.member || '', f.samity || ''].join('|'), async () => (await q.get()).docs.map(d => d.data()), 5 * 60000, true)).filter(a => a.kind === kind && a.branch === f.branch);
   if (types) rows = rows.filter(a => types.includes(a.type));
   const sm = await R.sams(f.branch);
   return rows.filter(a => a.status !== 'cancelled' && (!f.samity || a.samity === f.samity) && (!f.member || a.memberId === f.member) && (!f.employee || (sm[a.samity] || {}).foId === f.employee));
@@ -212,7 +214,8 @@ llpPage('rptWriteOff', 'ঋণ অবলোপন তালিকা', true, 'Wr
 async function memberDocs(f) {
   const q = f.samity ? db.collection('members').where('samity', '==', f.samity) : db.collection('members').where('branch', '==', f.branch);
   const sm = await R.sams(f.branch);
-  return (await q.get()).docs.map(d => ({ id: d.id, ...d.data() })).filter(m => (!f.member || m.memberId === f.member) && (!f.employee || (sm[m.samity] || {}).foId === f.employee));
+  const all = f.member ? [await Data.member(f.member)].filter(Boolean) : await Cache.get('tx_mb_' + (f.samity ? 's' + f.samity : f.branch), async () => (await q.get()).docs.map(d => ({ id: d.id, ...d.data() })), 10 * 60000, true);
+  return all.filter(m => (!f.member || m.memberId === f.member) && (!f.employee || (sm[m.samity] || {}).foId === f.employee));
 }
 const ageOf = (dob, d) => dob ? Math.floor(daysBetween(dob, d) / 365.25) : '';
 ReportPage({

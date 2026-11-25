@@ -98,8 +98,14 @@ const allowedBranches = () => {
 const Cache = {
   _m: {},
   // stale-while-revalidate: মেয়াদ শেষ হলেও পুরনো ডেটা সাথে সাথে দেয়, পেছনে নতুন আনে — ট্যাপ করলেই পেজ খোলে
+  // ফোনে সংরক্ষিত ক্যাশ (রিলোডেও থাকে) — Firebase রিড কমাতে। মিনিট হিসেবে মেয়াদ
+  _P: { dash_: 3, ledgers: 30, holidays: 30, purposes: 30, instset: 30, emp_: 30, sam_: 10, midx_: 5, aidx_: 5 },
+  _pt(key) { for (const k in this._P) if (key === k || (k.endsWith('_') && key.startsWith(k))) return this._P[k] * 60000; return 0; },
   async get(key, loader, ttl = 5 * 60000, strict) {
-    const e = this._m[key];
+    let e = this._m[key];
+    const pt = this._pt(key);
+    if (!e && pt) { try { const j = JSON.parse(localStorage.getItem('gc:' + key) || 'null'); if (j && Date.now() - j.t < pt) { e = this._m[key] = { t: j.t, p: Promise.resolve(j.v), ok: true }; } } catch (er) {} }
+    if (pt) { const ld = loader; loader = async () => { const v = await ld(); try { localStorage.setItem('gc:' + key, JSON.stringify({ t: Date.now(), v })); } catch (er) {} return v; }; }
     if (e && Date.now() - e.t < ttl) return e.p;
     if (e && e.ok && !e.busy && !strict) {
       e.busy = true;
@@ -111,7 +117,7 @@ const Cache = {
     p.then(() => { ent.ok = true; }, () => {});
     return p;
   },
-  drop(prefix) { Object.keys(this._m).forEach(k => { if (!prefix || k.startsWith(prefix)) delete this._m[k]; }); },
+  drop(prefix) { Object.keys(this._m).forEach(k => { if (!prefix || k.startsWith(prefix)) delete this._m[k]; }); try { Object.keys(localStorage).forEach(k => { if (k.startsWith('gc:' + (prefix || ''))) localStorage.removeItem(k); }); } catch (e) {} },
 };
 const Data = {
   branches: () => Cache.get('branches', async () => (await db.collection('branches').get()).docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => String(a.code).localeCompare(String(b.code)))),
@@ -149,13 +155,13 @@ const Data = {
   async member(id) { if (!id) return null; return Data.doc1('members', id); },
   // শাখার সমিতি snapshot (ব্যালেন্স রিপোর্টের জন্য — প্রতি সমিতি ১ রিড)
   // ভাউচার (তারিখ সীমা) — ৬০ সেকেন্ড ক্যাশ, যেকোনো লেখার পর মুছে যায়
-  async vouchers(b, from, upto) { return Cache.get('tx_v_' + b + '|' + from + '|' + upto, async () => (await db.collection('vouchers').where('bd', '>=', b + '_' + from).where('bd', '<=', b + '_' + upto).get()).docs.map(d => d.data()), 60000, true); },
+  async vouchers(b, from, upto) { return Cache.get('tx_v_' + b + '|' + from + '|' + upto, async () => (await db.collection('vouchers').where('bd', '>=', b + '_' + from).where('bd', '<=', b + '_' + upto).get()).docs.map(d => d.data()), 3 * 60000, true); },
   // একক ডক ক্যাশ (সদস্য/একাউন্ট/সমিতি) — ৬০ সেকেন্ড
-  doc1(coll, id) { return Cache.get('tx_d_' + coll + '/' + id, async () => { const d = await db.collection(coll).doc(String(id)).get(); return d.exists ? { id: d.id, ...d.data() } : null; }, 60000, true); },
+  doc1(coll, id) { return Cache.get('tx_d_' + coll + '/' + id, async () => { const d = await db.collection(coll).doc(String(id)).get(); return d.exists ? { id: d.id, ...d.data() } : null; }, 5 * 60000, true); },
   async snaps(branch, samity) {
     const sams = samity ? [{ code: samity }] : await Data.samities(branch);
     // প্রতি সমিতির স্ন্যাপশট ক্যাশ (২ মিনিট, পেছনে রিফ্রেশ) — বারবার নেটওয়ার্ক না
-    const docs = await Promise.all(sams.map(s => Cache.get('snapd_' + s.code, async () => { const d = await db.collection('snap').doc(s.code).get(); return (d.exists && d.data().a) || {}; }, 90000, true)));
+    const docs = await Promise.all(sams.map(s => Cache.get('snapd_' + s.code, async () => { const d = await db.collection('snap').doc(s.code).get(); return (d.exists && d.data().a) || {}; }, 5 * 60000, true)));
     const out = [];
     docs.forEach((a, i) => { a = a || {}; Object.entries(a).forEach(([accNo, v]) => out.push({ accNo, samity: sams[i].code, ...v })); });
     return out;
@@ -463,7 +469,7 @@ function locMatch(f, m) {
 // ফিল্টার থাকলে শাখার সদস্য ডক থেকে মেলা সদস্যদের সেট (না থাকলে null)
 async function locMembers(f) {
   if (!locActive(f)) return null;
-  const ms = (await db.collection('members').where('branch', '==', f.branch).get()).docs.map(d => ({ id: d.id, ...d.data() }));
+  const ms = await Cache.get('tx_mb_' + f.branch, async () => (await db.collection('members').where('branch', '==', f.branch).get()).docs.map(d => ({ id: d.id, ...d.data() })), 10 * 60000, true);
   return new Set(ms.filter(m => locMatch(f, m)).map(m => m.memberId || m.id));
 }
 const PRINT_CSS = `td .btn,td button{display:none!important}a.cb-l{color:#3f2929;font-weight:500;text-decoration:none}a.cb-l:hover{text-decoration:underline}

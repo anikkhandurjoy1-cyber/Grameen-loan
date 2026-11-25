@@ -13,7 +13,7 @@ const GLX = {
   add(acc, gl) { Object.entries(gl || {}).forEach(([c, x]) => { acc[c] = acc[c] || { dr: 0, cr: 0 }; acc[c].dr += num(x.dr); acc[c].cr += num(x.cr); }); },
   // [from, upto] এর মধ্যে দৈনিক মোট {code:{dr,cr}}; byDate=true হলে {date:{code:{dr,cr}}}
   // ৬০ সেকেন্ড ক্যাশ (যেকোনো লেখার পর মুছে যায়)
-  async range(branches, from, upto, byDate, field = 'gl') { return structuredClone(await Cache.get('gl_r_' + [branches.join(','), from, upto, byDate ? 1 : 0, field].join('|'), () => GLX._range(branches, from, upto, byDate, field), 60000, true)); },
+  async range(branches, from, upto, byDate, field = 'gl') { return structuredClone(await Cache.get('gl_r_' + [branches.join(','), from, upto, byDate ? 1 : 0, field].join('|'), () => GLX._range(branches, from, upto, byDate, field), 3 * 60000, true)); },
   async _range(branches, from, upto, byDate, field = 'gl') {
     const out = {};
     const qs = await Promise.all(branches.map(b => db.collection('glDaily').where(DOCID(), '>=', b + '_' + from).where(DOCID(), '<=', b + '_' + upto).get()));
@@ -23,7 +23,7 @@ const GLX = {
     return out;
   },
   // date এর আগ পর্যন্ত সমষ্টি (ওপেনিং)
-  async before(branches, date) { return structuredClone(await Cache.get('gl_b_' + branches.join(',') + '|' + date, () => GLX._before(branches, date), 60000, true)); },
+  async before(branches, date) { return structuredClone(await Cache.get('gl_b_' + branches.join(',') + '|' + date, () => GLX._before(branches, date), 3 * 60000, true)); },
   async _before(branches, date) {
     const out = {}; const month = date.slice(0, 7);
     await Promise.all(branches.map(async b => {
