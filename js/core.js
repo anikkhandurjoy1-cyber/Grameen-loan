@@ -36,7 +36,7 @@ const addMonths = (s, n) => { const d = parseD(s); const day = d.getDate(); d.se
 const daysBetween = (a, b) => Math.round((parseD(b) - parseD(a)) / 86400000);
 const fmtD = s => { if (!s) return ''; const [y, m, d] = String(s).split('-'); return d + '-' + m + '-' + y; };
 const fmtDT = d => { if (!d) return ''; const p = n => String(n).padStart(2, '0'); return p(d.getDate()) + '-' + p(d.getMonth() + 1) + '-' + d.getFullYear() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); };
-const tsStr = t => { if (!t) return ''; const d = t.toDate ? t.toDate() : new Date(t); return isNaN(d) ? '' : fmtD(ymd(d)) + ' ' + pad(d.getHours(), 2) + ':' + pad(d.getMinutes(), 2); };
+const tsStr = t => { if (!t) return ''; const d = t.toDate ? t.toDate() : t.seconds ? new Date(t.seconds * 1000) : new Date(t); return isNaN(d) ? '' : fmtD(ymd(d)) + ' ' + pad(d.getHours(), 2) + ':' + pad(d.getMinutes(), 2); };
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const WEEKDAYS_BN = { Sunday: 'রবিবার', Monday: 'সোমবার', Tuesday: 'মঙ্গলবার', Wednesday: 'বুধবার', Thursday: 'বৃহস্পতিবার', Friday: 'শুক্রবার', Saturday: 'শনিবার' };
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
