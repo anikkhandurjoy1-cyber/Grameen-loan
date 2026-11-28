@@ -151,7 +151,8 @@ ReportPage({
 const glName = (lm, c) => esc(((lm[c] || {}).name || c) + ' [' + c + ']');
 const prevMonthEnd = d => addDays(d.slice(0, 7) + '-01', -1);
 const prevYearEnd = d => (Number(d.slice(0, 4)) - 1) + '-12-31';
-const isCashGl = (lm, c) => c.startsWith('111') || (lm[c] || {}).cashBank;
+// নগদ/ব্যাংক শুধু সম্পদ (1xxx) লেজার — ভুল করে সঞ্চয় লেজারে Cash/Bank টিক থাকলেও ক্যাশবুকে উত্তোলন দেখাবে না
+const isCashGl = (lm, c) => c.startsWith('111') || (c[0] === '1' && (lm[c] || {}).cashBank);
 const isBankGl = c => c.startsWith('1112');
 // লেজার ট্রি (একাধিক কলাম): vals[i][code] = leaf মান → গ্রুপে রোলআপ
 async function treeMulti(valsList, prefixes, keepZero) {

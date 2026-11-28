@@ -164,7 +164,7 @@ const Dash = {
       // নগদ, আয়, ব্যয়: GL থেকে — শাখার হিসাব, কর্মচারী (ম্যানেজার নয়) দেখতে পারবে না
       if (!isBM()) continue;
       const gd = await pGd; const g = (gd.exists && gd.data().gl) || {};
-      Object.entries(g).forEach(([code, x]) => { const L = lm[code] || {}; if (code.startsWith('111') || L.cashBank) { d.cashRcv += num(x.dr); d.cashPay += num(x.cr); } if (code.startsWith('3')) d.income += num(x.cr) - num(x.dr); if (code.startsWith('4')) d.expense += num(x.dr) - num(x.cr); });
+      Object.entries(g).forEach(([code, x]) => { const L = lm[code] || {}; if (code.startsWith('111') || (code[0] === '1' && L.cashBank)) { d.cashRcv += num(x.dr); d.cashPay += num(x.cr); } if (code.startsWith('3')) d.income += num(x.cr) - num(x.dr); if (code.startsWith('4')) d.expense += num(x.dr) - num(x.cr); });
       try { const up = await pUp; d.cash += GLX.nat(REF.GL.cash, up[REF.GL.cash]); } catch (e) {}
     }
     d.income = Math.max(0, r2(d.income - migProfit));

@@ -9,7 +9,7 @@ App.page('ibRequest', {
     + `<div class="mini">অনুরোধ পাঠানোর পর প্রেরক শাখা "স্থানান্তর অনুরোধের তালিকা" থেকে Approve করলে দুই শাখার হিসাবে পোস্ট হবে।</div><div class="actions">${UI.btn('Post Transaction', 'IB.request(this)', 'btn-success')}</div>`),
   init: async el => {
     await Pick.branch(el, 'branch'); const bs = await Data.branches(); UI.fill(UI.el(el, 'sender'), bs, b => b.code, b => b.code + ' - ' + b.name);
-    await Pick.ledger(UI.el(el, 'ledger'), l => l.cashBank && l.leaf); UI.el(el, 'ledger').value = REF.GL.cash;
+    await Pick.ledger(UI.el(el, 'ledger'), l => l.cashBank && l.leaf && String(l.code)[0] === '1'); UI.el(el, 'ledger').value = REF.GL.cash;
     UI.el(el, 'date').value = await businessDate(); UI.el(el, 'branch').addEventListener('change', async () => UI.el(el, 'date').value = await businessDate(UI.el(el, 'branch').value));
   },
 });

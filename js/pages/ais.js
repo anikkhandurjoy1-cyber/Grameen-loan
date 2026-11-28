@@ -54,7 +54,7 @@ App.page('accTxn', {
     { k: 'comments', l: 'Comments', t: 'textarea' }, { k: 'payerPhone', l: 'Receiver/Payer Phone' }, { k: 'payerName', l: 'Receiver/Payer Name' }, { k: 'file', l: 'Upload Documents', t: 'file', accept: 'image/*' }], 4)
     + `<div class="actions">${UI.btn('Post Transaction', 'AccTxn.save(this)', 'btn-success')}</div>`) + UI.card('সাম্প্রতিক লেনদেন', '<div class="tl"></div>'),
   init: async el => {
-    await Pick.branch(el, 'branch'); await Pick.ledger(UI.el(el, 'method'), l => l.cashBank && l.leaf); UI.el(el, 'method').value = REF.GL.cash;
+    await Pick.branch(el, 'branch'); await Pick.ledger(UI.el(el, 'method'), l => l.cashBank && l.leaf && String(l.code)[0] === '1'); UI.el(el, 'method').value = REF.GL.cash;
     UI.el(el, 'date').value = await businessDate();
     const load = async () => { const t = REF.ACC_TT.find(x => x[0] === UI.el(el, 'tt').value); const list = t ? (await Data.accountsOf(UI.el(el, 'branch').value, null, 'other', t[2])).filter(a => a.status !== 'closed') : []; UI.fill(UI.el(el, 'account'), list, a => a.accNo, a => a.accNo + ' - ' + a.title); };
     UI.el(el, 'tt').addEventListener('change', load); UI.el(el, 'branch').addEventListener('change', load);
@@ -91,7 +91,7 @@ App.page('ledgerTxn', {
     await Pick.branch(el, 'branch'); UI.el(el, 'date').value = await businessDate();
     UI.el(el, 'tt').addEventListener('change', async () => {
       const k = (REF.LEDGER_TT.find(x => x[0] === UI.el(el, 'tt').value) || [])[2];
-      const flt = k === 'BD' || k === 'BW' ? l => l.leaf && l.cashBank && l.code !== REF.GL.cash : k === 'EXP' ? l => l.leaf && l.code[0] === '4' : k === 'INC' ? l => l.leaf && l.code[0] === '3' : k === 'HR' || k === 'HP' ? l => l.code === '28000002' : () => false;
+      const flt = k === 'BD' || k === 'BW' ? l => l.leaf && l.cashBank && String(l.code)[0] === '1' && l.code !== REF.GL.cash : k === 'EXP' ? l => l.leaf && l.code[0] === '4' : k === 'INC' ? l => l.leaf && l.code[0] === '3' : k === 'HR' || k === 'HP' ? l => l.code === '28000002' : () => false;
       await Pick.ledger(UI.el(el, 'ledger'), flt);
     });
     UI.el(el, 'ledger').addEventListener('change', async () => { UI.el(el, 'balance').value = UI.el(el, 'ledger').value ? await GLX.ledgerBalance(UI.el(el, 'branch').value, UI.el(el, 'ledger').value, UI.el(el, 'date').value) : ''; });

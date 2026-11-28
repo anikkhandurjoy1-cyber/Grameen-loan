@@ -89,7 +89,7 @@ const Voucher = {
   async print(vno) {
     const vd = await db.collection('vouchers').doc(vno).get(); if (!vd.exists) return toast('ভাউচার পাওয়া যায়নি', 'error');
     const v = vd.data(); const lm = await Data.ledgerMap();
-    const cashGl = Object.keys(lm).filter(c => lm[c].cashBank || c.startsWith('111'));
+    const cashGl = Object.keys(lm).filter(c => (lm[c].cashBank && c[0] === '1') || c.startsWith('111'));
     const cashDr = sum(v.lines.filter(l => cashGl.includes(l.gl)), l => l.dr), cashCr = sum(v.lines.filter(l => cashGl.includes(l.gl)), l => l.cr);
     const title = cashCr && !cashDr ? 'Payment Voucher' : cashDr && !cashCr ? 'Receipt Voucher' : 'Journal Voucher';
     const titles = {}; for (const l of v.lines) if (l.accNo && !titles[l.accNo]) { const a = await Data.account(l.accNo); titles[l.accNo] = a ? a.title : l.accNo; }

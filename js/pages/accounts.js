@@ -156,7 +156,7 @@ const LoanForm = {
     UI.el(el, 'openDate').value = await businessDate();
     const purs = (await Data.purposes()).filter(p => p.active !== false);
     UI.fill(UI.el(el, 'purpose'), purs, p => p.code, p => p.name); if (purs.length) UI.el(el, 'purpose').value = purs[0].code;
-    if (UI.el(el, 'payLedger')) await Pick.ledger(UI.el(el, 'payLedger'), l => l.cashBank && l.leaf);
+    if (UI.el(el, 'payLedger')) await Pick.ledger(UI.el(el, 'payLedger'), l => l.cashBank && l.leaf && String(l.code)[0] === '1');
     if (UI.el(el, 'payLedger')) UI.el(el, 'payLedger').value = REF.GL.cash;
     // Super Admin: পুরোনো ঋণ ওপেনিং — ক্যাশ নয়, Adjustment লেজারের বিপরীতে
     if (UI.el(el, 'payLedger') && isAdmin()) { const s = UI.el(el, 'payLedger'); const op = document.createElement('option'); op.value = '20010000'; op.textContent = '20010000 — ওপেনিং ব্যালেন্স (পুরোনো ঋণ, ক্যাশ নয়)'; s.appendChild(op); }
